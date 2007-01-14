@@ -1,0 +1,31 @@
+AC_INIT(TntZenoReader, 0.1, [Tommi Maekitalo <tommi@tntnet.org>])
+AM_INIT_AUTOMAKE([subdir-objects])
+
+abi_current=0
+abi_revision=0
+abi_age=0
+sonumber=${abi_current}:${abi_revision}:${abi_age}
+AC_SUBST(sonumber)
+
+AC_CONFIG_HEADERS([src/config.h])
+AC_CONFIG_SRCDIR([src/zenolib/file.cpp])
+
+AC_PROG_CXX
+AC_DISABLE_STATIC
+AC_PROG_LIBTOOL
+
+AC_LANG(C++)
+AC_SUBST(tntnetdir, [${libdir}/tntnet])
+
+#LDFLAGS+=-ltntnet -lcxxtools -ltntdb
+
+# output
+AC_CONFIG_FILES([
+  Makefile
+  src/zenolib/Makefile
+  src/zenoDump/Makefile
+  src/webapp/Makefile
+  include/Makefile
+  ])
+
+AC_OUTPUT

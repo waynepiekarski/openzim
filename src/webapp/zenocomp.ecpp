@@ -1,0 +1,32 @@
+<%pre>
+#include <zeno/file.h>
+#include <zeno/article.h>
+</%pre>
+<%config>
+ZenoFile = "wikipedia.zeno";
+</%config>
+<%application>
+zeno::File file(ZenoFile.c_str());
+</%application>
+<%cpp>
+
+cxxtools::QueryParams q;
+q.parse_url(request.getPathInfo());
+if (q.paramcount() == 0)
+  return HTTP_NOT_FOUND;
+
+zeno::Article article = file.getArticle(q[0]);
+if (!article)
+  return DECLINED;
+
+log_debug("article " << request.getPathInfo() << " fetched - mime-type " << article.getLibraryMimeType());
+
+</%cpp>
+<html>
+ <head>
+  <base href="http://localhost:8000/"></base>
+ </head>
+ <body>
+<$$ article.getData() $>
+ </body>
+</html>

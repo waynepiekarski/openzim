@@ -141,12 +141,11 @@ namespace zeno
     {
       QUnicodeChar uc1;
       is1 >> uc1;
-      if (!is1)
-        break;
 
       QUnicodeChar uc2;
       is2 >> uc2;
-      if (!is2)
+
+      if (!is1 || !is2)
         break;
 
       if (uc1.getValue() < uc2.getValue())
@@ -155,7 +154,7 @@ namespace zeno
         return 1;
     }
 
-    return 0;
+    return is1 ? 1 : is2 ? -1 : 0;
   }
 
 }

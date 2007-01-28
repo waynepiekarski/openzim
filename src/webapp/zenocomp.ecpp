@@ -2,18 +2,12 @@
 #include <zeno/file.h>
 #include <zeno/article.h>
 </%pre>
-<%config>
-ZenoFile = "wikipedia.zeno";
-</%config>
-<%application>
-</%application>
 <%cpp>
 
-std::string zenoFileName = ZenoFile;
-if (request.getArgs().size() > 0)
-  zenoFileName = request.getArg(0);
+if (request.getArgs().size() == 0)
+  return HTTP_NOT_FOUND;
 
-zeno::File file(zenoFileName.c_str());
+zeno::File file(request.getArg(0));
 
 cxxtools::QueryParams q;
 q.parse_url(request.getPathInfo());

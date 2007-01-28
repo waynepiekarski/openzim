@@ -29,9 +29,26 @@ namespace zeno
   class Dirent
   {
     public:
-      static const uint8_t zenocompDefault = 0;
-      static const uint8_t zenocompNone = 1;
-      static const uint8_t zenocompZip = 2;
+      enum CompressionType
+      {
+        zenocompDefault,
+        zenocompNone,
+        zenocompZip
+      };
+
+      enum MimeType
+      {
+        zenoMimeTextHtml,
+        zenoMimeTextPlain,
+        zenoMimeImageJpeg,
+        zenoMimeImagePng,
+        zenoMimeImageTiff,
+        zenoMimeTextCss,
+        zenoMimeImageGif,
+        zenoMimeIndex,
+        zenoMimeApplicationJavaScript,
+        zenoMimeImageIcon
+      };
 
     private:
 
@@ -46,9 +63,9 @@ namespace zeno
 
       offset_type getOffset() const        { return fromLittleEndian<offset_type>(header); }
       size_type   getSize() const          { return fromLittleEndian<size_type>(header + 8); }
-      uint8_t     getCompression() const   { return static_cast<uint8_t>(header[12]); }
+      CompressionType getCompression() const { return static_cast<CompressionType>(header[12]); }
       bool        isCompressionZip() const { return getCompression() == zenocompZip; }
-      uint8_t     getMimeType() const      { return static_cast<uint8_t>(header[13]); }
+      MimeType    getMimeType() const      { return static_cast<MimeType>(header[13]); }
       uint8_t     getSubtype() const       { return static_cast<uint8_t>(header[14]); }
       size_type   getSubtypeParent() const { return fromLittleEndian<size_type>(header + 16); }
       uint16_t    getExtraLen() const      { return fromLittleEndian<uint16_t>(header + 24); }

@@ -17,8 +17,6 @@ AC_PROG_LIBTOOL
 AC_LANG(C++)
 AC_SUBST(tntnetdir, [${libdir}/tntnet])
 
-#LDFLAGS+=-ltntnet -lcxxtools -ltntdb
-
 # output
 AC_CONFIG_FILES([
   Makefile

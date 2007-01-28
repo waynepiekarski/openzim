@@ -29,59 +29,66 @@ namespace zeno
 {
   class Article
   {
-        Dirent dirent;
-        File file;
-        size_type idx;
-        mutable bool dataRead;
-        mutable std::string data;
-        mutable std::string uncompressedData;
-        mutable unsigned countArticles;
+    public:
+      typedef Dirent::CompressionType CompressionType;
+      typedef Dirent::MimeType MimeType;
 
-      public:
-        Article() { }
-        Article(size_type idx_, const Dirent& dirent_, const File& file_,
-                const std::string& data_)
-          : file(file_),
-            idx(idx_),
-            dirent(dirent_),
-            dataRead(true),
-            data(data_),
-            countArticles(0)
-            { }
-        Article(size_type idx_, const Dirent& dirent_, const File& file_)
-          : file(file_),
-            idx(idx_),
-            dirent(dirent_),
-            dataRead(false),
-            countArticles(0)
-            { }
+    private:
+      Dirent dirent;
+      File file;
+      size_type idx;
+      mutable bool dataRead;
+      mutable std::string data;
+      mutable std::string uncompressedData;
+      mutable unsigned countArticles;
 
-        const File& getFile() const             { return file; }
-        File&       getFile()                   { return file; }
-        size_type   getIndex() const            { return idx; }
-        const std::string&
-                    getExtra() const            { return dirent.getExtra(); }
-        offset_type getDataOffset() const       { return dirent.getOffset(); }
-        size_type   getDataLen() const          { return dirent.getSize(); }
-        uint8_t     getCompression() const      { return dirent.getCompression(); }
-        bool        isCompressionZip() const    { return dirent.isCompressionZip(); }
-        uint8_t     getType() const             { return dirent.getExtra()[0]; }
-        std::string getUrl() const              { return dirent.getTitle(); }
-        int         getLibraryMimeType() const  { return dirent.getMimeType(); }
-        int         getSubtype() const          { return dirent.getSubtype(); }
-        size_type   getSubtypeParent() const    { return dirent.getSubtypeParent(); }
-        bool        isMainArticle() const       { return getSubtype() == 0; }
-        unsigned    getCountSubarticles() const;
+    public:
+      Article() { }
+      Article(size_type idx_, const Dirent& dirent_, const File& file_,
+              const std::string& data_)
+        : file(file_),
+          idx(idx_),
+          dirent(dirent_),
+          dataRead(true),
+          data(data_),
+          countArticles(0)
+          { }
+      Article(size_type idx_, const Dirent& dirent_, const File& file_)
+        : file(file_),
+          idx(idx_),
+          dirent(dirent_),
+          dataRead(false),
+          countArticles(0)
+          { }
 
-        operator bool()   { return getDataOffset() != 0; }
+      const File& getFile() const             { return file; }
+      File&       getFile()                   { return file; }
+      size_type   getIndex() const            { return idx; }
+      const std::string&
+                  getExtra() const            { return dirent.getExtra(); }
+      offset_type getDataOffset() const       { return dirent.getOffset(); }
+      size_type   getDataLen() const          { return dirent.getSize(); }
+      CompressionType getCompression() const      { return dirent.getCompression(); }
+      bool        isCompressionZip() const    { return dirent.isCompressionZip(); }
+      uint8_t     getType() const             { return dirent.getExtra()[0]; }
+      std::string getUrl() const              { return dirent.getTitle(); }
+      MimeType    getLibraryMimeType() const  { return dirent.getMimeType(); }
+      const std::string&
+                  getMimeType() const;
+      int         getSubtype() const          { return dirent.getSubtype(); }
+      size_type   getSubtypeParent() const    { return dirent.getSubtypeParent(); }
+      bool        isMainArticle() const       { return getSubtype() == 0; }
+      unsigned    getCountSubarticles() const;
 
-        const std::string& getRawData() const;
-        const std::string& getData() const;
+      operator bool()   { return getDataOffset() != 0; }
 
-        class const_iterator;
+      const std::string& getRawData() const;
+      const std::string& getData() const;
 
-        const_iterator begin() const;
-        const_iterator end() const;
+      class const_iterator;
+
+      const_iterator begin() const;
+      const_iterator end() const;
   };
 
   class Article::const_iterator : public std::iterator<std::bidirectional_iterator_tag, Article>

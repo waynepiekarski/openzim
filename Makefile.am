@@ -3,3 +3,5 @@ SUBDIRS = \
 	src/zenoDump \
 	src/webapp \
 	include
+
+EXTRA_DIST = tntnet.conf tntnet.properties

@@ -48,7 +48,7 @@ namespace zeno
     offset_type rIndexPtrPos = fromLittleEndian<offset_type>(header + 0x20);
     size_type rIndexPtrLen = fromLittleEndian<size_type>(header + 0x28);
 
-    log_info("read " << rIndexPtrLen << " bytes");
+    log_debug("read " << rIndexPtrLen << " bytes");
     std::vector<size_type> buffer(rCount);
     zenoFile.seekg(rIndexPtrPos);
     zenoFile.read(reinterpret_cast<char*>(&buffer[0]), rIndexPtrLen);
@@ -58,23 +58,29 @@ namespace zeno
          it != buffer.end(); ++it)
       indexOffsets.push_back(static_cast<offset_type>(rIndexPos + fromLittleEndian<size_type>(&*it)));
 
-    log_info("read " << indexOffsets.size() << " index-entries ready");
+    log_debug("read " << indexOffsets.size() << " index-entries ready");
   }
 
   Article FileImpl::getArticle(const std::string& url)
   {
-    log_info("get article \"" << url << '"');
+    log_debug("get article \"" << url << '"');
     std::pair<bool, size_type> s = findArticle(url);
     if (!s.first)
+    {
+      log_warn("article \"" << url << "\" not found");
       return Article();
+    }
 
     Dirent d = readDirentNolock(indexOffsets[s.second]);
+
+    log_info("article \"" << url << "\" size " << d.getSize() << " mime-type " << d.getMimeType());
+
     return Article(s.second, d, File(this));
   }
 
   std::pair<bool, size_type> FileImpl::findArticle(const std::string& url)
   {
-    log_info("find article \"" << url << '"');
+    log_debug("find article \"" << url << '"');
 
     cxxtools::MutexLock lock(mutex);
 

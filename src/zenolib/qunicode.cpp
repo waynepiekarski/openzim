@@ -114,27 +114,41 @@ namespace zeno
     std::istringstream is1(value);
     std::istringstream is2(v.value);
 
-    while (is1 && is2)
+    while (true)
     {
       QUnicodeChar uc1;
-      QUnicodeChar uc2;
       is1 >> uc1;
+      if (!is1)
+        break;
+
+      QUnicodeChar uc2;
       is2 >> uc2;
+      if (!is2)
+        break;
+
       if (uc1 < uc2)
         return -1;
       else if (uc2 < uc1)
         return 1;
     }
 
+    is1.clear();
     is1.seekg(0);
+    is2.clear();
     is2.seekg(0);
 
     while (is1 && is2)
     {
       QUnicodeChar uc1;
-      QUnicodeChar uc2;
       is1 >> uc1;
+      if (!is1)
+        break;
+
+      QUnicodeChar uc2;
       is2 >> uc2;
+      if (!is2)
+        break;
+
       if (uc1.getValue() < uc2.getValue())
         return -1;
       else if (uc2.getValue() < uc1.getValue())

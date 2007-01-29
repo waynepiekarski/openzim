@@ -48,7 +48,7 @@ if (!Skin.empty())
 
   static const std::string head = "<!--%%HEAD%%-->";
   static const std::string content = "<!--%%CONTENT%%-->";
-  std::string headdata = "<base href=\"http://" + host + "/\"></base>";
+  std::string headdata = "<base href='http://" + host + "/'></base>";
   std::string data = skindata;
   std::string::size_type pos = 0;
   log_debug("replace head");

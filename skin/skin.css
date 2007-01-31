@@ -1,0 +1,32 @@
+body
+{
+  background-color: #eee;
+}
+
+div.content
+{
+  background-color: white;
+  margin-left: 200;
+  padding: 5;
+}
+
+div.search
+{
+}
+
+div.navi
+{
+  float: left;
+  text-align: center;
+}
+
+img.logo
+{
+  width: 180;
+  margin-bottom: 5;
+}
+
+div.logo
+{
+  margin-bottom: 20;
+}

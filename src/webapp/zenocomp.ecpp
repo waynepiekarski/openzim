@@ -40,8 +40,11 @@ if (host.empty())
 if (!Skin.empty())
 {
   zenoreader::Skin skin(Skin, host, article.getData());
-  reply.out() << skin.getData();
-  return HTTP_OK;
+  if (!skin.getData().empty())
+  {
+    reply.out() << skin.getData();
+    return HTTP_OK;
+  }
 }
 
 </%cpp>

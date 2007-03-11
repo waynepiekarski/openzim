@@ -21,17 +21,19 @@
 #define ZENO_SKIN_H
 
 #include <string>
+#include <sstream>
+#include <iostream>
 
 namespace zenoreader
 {
-  class Skin
+  class Skin : public std::ostream
   {
-      std::string data;
+      std::string skindata;
+      std::ostringstream data;
 
     public:
-      Skin(const std::string& skin, const std::string& host, const std::string& content);
-      const std::string& getData() const
-        { return data; }
+      explicit Skin(const std::string& skin);
+      std::string getData(const std::string& host) const;
   };
 };
 

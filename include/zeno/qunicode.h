@@ -26,20 +26,26 @@ namespace zeno
 {
   class QUnicodeChar
   {
-      int value;
+      unsigned value;
 
     public:
+      QUnicodeChar(char hi, char lo)
+        : value(static_cast<unsigned>(static_cast<unsigned char>(hi)) << 8
+              | static_cast<unsigned>(static_cast<unsigned char>(lo)))
+        { }
       QUnicodeChar(char ch)
+        : value(static_cast<unsigned char>(ch))
+        { }
+      QUnicodeChar(unsigned ch = 0)
         : value(ch)
         { }
-      QUnicodeChar(int ch = 0)
-        : value(ch)
-        { }
-      int getValue() const  { return value; }
+      unsigned getValue() const  { return value; }
       unsigned char getCollateValue() const;
 
       bool operator< (const QUnicodeChar& v) const
-      { return getCollateValue() < v.getCollateValue(); }
+      { return getCollateValue() != v.getCollateValue()
+                  ? getCollateValue() < v.getCollateValue()
+                  : value < v.value; }
 
       bool operator== (const QUnicodeChar& v) const
       { return value == v.value; }
@@ -52,9 +58,11 @@ namespace zeno
       std::string value;
 
     public:
-      QUnicodeString(const std::string& v)
+      QUnicodeString()   { }
+      explicit QUnicodeString(const std::string& v)
         : value(v)
         { }
+      static QUnicodeString fromUtf8(const std::string& v);
 
       const std::string& getValue() const { return value; }
 
@@ -75,6 +83,9 @@ namespace zeno
 
       std::string toXML() const;
   };
+
+  std::ostream& operator<< (std::ostream& out, const QUnicodeString& str);
+  std::ostream& operator<< (std::ostream& out, const QUnicodeChar& ch);
 }
 
 #endif // ZENO_QUNICODE_H

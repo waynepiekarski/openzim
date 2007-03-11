@@ -43,7 +43,7 @@ namespace zeno
       mutable unsigned countArticles;
 
     public:
-      Article() { }
+      Article() : dataRead(true) { }
       Article(size_type idx_, const Dirent& dirent_, const File& file_,
               const std::string& data_)
         : file(file_),

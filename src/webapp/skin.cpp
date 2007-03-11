@@ -20,57 +20,95 @@
 #include "skin.h"
 #include <fstream>
 #include <algorithm>
+#include <sstream>
 #include <cxxtools/log.h>
 
 log_define("zenoreader.skin")
 
 namespace zenoreader
 {
-  Skin::Skin(const std::string& skin, const std::string& host, const std::string& content)
+  Skin::Skin(const std::string& skin)
+    : std::ostream(data.rdbuf())
   {
-    log_debug("read skinfile \"skin/" << skin << '"');
+    if (skin.empty())
+    {
+      log_debug("empty skin, using default");
+      std::ostringstream d;
+      d <<
+        "<html>\n"
+        " <head>\n"
+        "  <title>TntZenoReader</title>\n"
+        "  <base href=\"http://<!--%%HOST%%-->/\"></base>\n"
+        " </head>\n"
+        " <body bgcolor='#eee'>\n"
+        "<!--%%CONTENT%%-->\n"
+        " </body>\n"
+        "</html>\n";
+      skindata = d.str();
+    }
+    else
+    {
+      log_debug("read skinfile \"skin/" << skin << '"');
 
-    std::ifstream in(("skin/" + skin).c_str());
-    std::copy(std::istreambuf_iterator<char>(in),
-              std::istreambuf_iterator<char>(),
-              std::back_inserter(data));
+      std::ifstream in(("skin/" + skin).c_str());
+      std::copy(std::istreambuf_iterator<char>(in),
+                std::istreambuf_iterator<char>(),
+                std::back_inserter(skindata));
 
-    log_debug("skinfile has " << data.size() << " bytes");
+      log_debug("skinfile has " << skindata.size() << " bytes");
+    }
+  }
 
+  std::string Skin::getData(const std::string& host) const
+  {
+    static const std::string hostTag = "<!--%%HOST%%-->";
     static const std::string headTag = "<!--%%HEAD%%-->";
     static const std::string contentTag = "<!--%%CONTENT%%-->";
     static const std::string searchformTag = "<!--%%SEARCH%%-->";
+
+    std::string ret = skindata;
 
     std::string headdata = "<base href='http://" + host + "/'></base>";
     std::string searchform = "<form action='search'><input type='text' name='search' size='20'><br><input type='submit' name='getpage' value='Artikel'><input type='submit' name='dosearch' value='Volltext'></form>\n";
 
     std::string::size_type pos = 0;
     log_debug("replace head");
-    while ((pos = data.find(headTag, pos)) != std::string::npos)
+    while ((pos = ret.find(headTag, pos)) != std::string::npos)
     {
       log_debug("head found at pos " << pos);
-      data.replace(pos, headTag.size(), headdata);
+      ret.replace(pos, headTag.size(), headdata);
+      pos += headdata.size();
+    }
+
+    pos = 0;
+    log_debug("replace host");
+    while ((pos = ret.find(hostTag, pos)) != std::string::npos)
+    {
+      log_debug("host found at pos " << pos);
+      ret.replace(pos, hostTag.size(), data.str());
       pos += headdata.size();
     }
 
     pos = 0;
     log_debug("replace content");
-    while ((pos = data.find(contentTag, pos)) != std::string::npos)
+    while ((pos = ret.find(contentTag, pos)) != std::string::npos)
     {
       log_debug("content found at pos " << pos);
-      data.replace(pos, contentTag.size(), content);
+      ret.replace(pos, contentTag.size(), data.str());
       pos += headdata.size();
     }
 
     pos = 0;
     log_debug("replace searchform");
-    while ((pos = data.find(searchformTag, pos)) != std::string::npos)
+    while ((pos = ret.find(searchformTag, pos)) != std::string::npos)
     {
       log_debug("searchform found at pos " << pos);
-      data.replace(pos, searchformTag.size(), searchform);
+      ret.replace(pos, searchformTag.size(), searchform);
       pos += headdata.size();
     }
 
-    log_debug("data has " << data.size() << " bytes");
+    log_debug("data has " << ret.size() << " bytes");
+
+    return ret;
   }
 }

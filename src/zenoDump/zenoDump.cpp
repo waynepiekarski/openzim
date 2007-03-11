@@ -75,13 +75,12 @@ void ZenoDumper::dumpArticle(bool raw)
 
 void ZenoDumper::listArticles(bool info)
 {
-  std::cout << "articles:\n";
   for (zeno::File::const_iterator it = pos; it != file.end(); ++it)
   {
     if (info)
       listArticle(*it);
     else
-      std::cout << "url:\t" << it->getUrl() << '\n';
+      std::cout << it->getUrl() << '\n';
   }
 }
 

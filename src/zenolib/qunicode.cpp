@@ -39,6 +39,40 @@ namespace zeno
     }
   }
 
+  QUnicodeString QUnicodeString::fromUtf8(const std::string& v)
+  {
+    QUnicodeString ret;
+
+    char hi = '\0';
+    for (std::string::const_iterator it = v.begin(); it != v.end(); ++it)
+    {
+      if (hi)
+      {
+        if (*it == '\0')
+        {
+          ret.value += '\2';
+          ret.value += hi;
+          ret.value += '\1';
+        }
+        else
+        {
+          ret.value += '\1';
+          ret.value += hi;
+          ret.value += *it;
+        }
+        hi = '\0';
+      }
+      else if (*it & '\x80')
+      {
+        hi = *it;
+      }
+      else
+        ret.value += *it;
+    }
+
+    return ret;
+  }
+
   unsigned char QUnicodeChar::getCollateValue() const
   {
     return value < sizeof(qunicode) ? qunicode[value] : '\x2d';
@@ -46,26 +80,28 @@ namespace zeno
 
   std::istream& operator>> (std::istream& in, QUnicodeChar& qc)
   {
-    int ch;
-    ch = in.get();
+    char ch;
+    in.get(ch);
     if (in)
     {
       switch (ch)
       {
-        case 1:
+        case '\1':
         {
-          int lo = in.get();
-          int hi = in.get();
+          char lo, hi;
+          in.get(lo);
+          in.get(hi);
           if (in)
-            qc = QUnicodeChar(hi << 8 | lo);
+            qc = QUnicodeChar(hi, lo);
           break;
         }
-        case 2:
+        case '\2':
         {
-          int lo = in.get();
-          int hi = in.get();
+          char lo, hi;
+          in.get(lo);
+          in.get(hi);
           if (in)
-            qc = QUnicodeChar(hi << 8);
+            qc = QUnicodeChar(hi, '\0');
           break;
         }
         default:
@@ -118,19 +154,23 @@ namespace zeno
     {
       QUnicodeChar uc1;
       is1 >> uc1;
-      if (!is1)
-        break;
 
       QUnicodeChar uc2;
       is2 >> uc2;
-      if (!is2)
+
+      if (!is1 || !is2)
         break;
 
-      if (uc1 < uc2)
+      if (uc1.getCollateValue() < uc2.getCollateValue())
         return -1;
-      else if (uc2 < uc1)
+      else if (uc2.getCollateValue() < uc1.getCollateValue())
         return 1;
     }
+
+    if (is1)
+      return 1;
+    else if (is2)
+      return -1;
 
     is1.clear();
     is1.seekg(0);
@@ -157,4 +197,15 @@ namespace zeno
     return is1 ? 1 : is2 ? -1 : 0;
   }
 
+  std::ostream& operator<< (std::ostream& out, const QUnicodeString& str)
+  {
+    // TODO
+    return out << str.getValue();
+  }
+
+  std::ostream& operator<< (std::ostream& out, const QUnicodeChar& ch)
+  {
+    // TODO
+    return out << static_cast<char>(ch.getValue());
+  }
 }

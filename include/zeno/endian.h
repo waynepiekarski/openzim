@@ -75,9 +75,9 @@ T fromLittleEndian(std::istream& in, bool fromBigEndian = isBigEndian())
 
 ////////////////////////////////////////////////////////////////////////
 template <typename T>
-T fromBigEndian(const T* ptr, bool fromBigEndian = isBigEndian())
+T fromBigEndian(const T* ptr, bool fromBigEndian_ = isBigEndian())
 {
-  if (fromBigEndian)
+  if (fromBigEndian_)
   {
     return *ptr;
   }
@@ -92,19 +92,19 @@ T fromBigEndian(const T* ptr, bool fromBigEndian = isBigEndian())
 }
 
 template <typename T>
-T fromBigEndian(T* ptr, bool fromBigEndian = isBigEndian())
-{ return fromBigEndian(static_cast<const T*>(ptr), fromBigEndian); }
+T fromBigEndian(T* ptr, bool fromBigEndian_ = isBigEndian())
+{ return fromBigEndian(static_cast<const T*>(ptr), fromBigEndian_); }
 
 template <typename T>
-T fromBigEndian(const void* ptr, bool fromBigEndian = isBigEndian())
-{ return fromBigEndian(static_cast<const T*>(ptr), fromBigEndian); }
+T fromBigEndian(const void* ptr, bool fromBigEndian_ = isBigEndian())
+{ return fromBigEndian(static_cast<const T*>(ptr), fromBigEndian_); }
 
 template <typename T>
-T fromBigEndian(std::istream& in, bool fromBigEndian = isBigEndian())
+T fromBigEndian(std::istream& in, bool fromBigEndian_ = isBigEndian())
 {
   T data;
   in.read(reinterpret_cast<char*>(&data), sizeof(T));
-  return fromBigEndian(&data, fromBigEndian);
+  return fromBigEndian(&data, fromBigEndian_);
 }
 
 #endif // ENDIAN_H

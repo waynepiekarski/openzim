@@ -2,58 +2,72 @@
 #include <zeno/file.h>
 #include <zeno/article.h>
 #include "skin.h"
+#include <map>
+#include <cxxtools/iconvstream.h>
+
+typedef std::map<std::string, zeno::File> zenoFilesType;
+
 </%pre>
 <%config>
 Skin = "";
 </%config>
+<%application>
+zenoFilesType zenoFiles;
+</%application>
 <%cpp>
 
-if (request.getArgs().size() == 0)
-  return HTTP_NOT_FOUND;
+  if (request.getArgs().size() == 0)
+    return DECLINED;
 
-zeno::File file(request.getArg(0));
+  zeno::File file;
 
-// ugly way to html-unescape path-info
-cxxtools::QueryParams q;
-q.parse_url(request.getPathInfo());
-if (q.paramcount() == 0)
-  return HTTP_NOT_FOUND;
-
-zeno::Article article = file.getArticle(q[0]);
-if (!article)
-  return DECLINED;
-
-log_debug("article " << request.getPathInfo() << " fetched - mime-type "
-  << article.getLibraryMimeType());
-
-if (article.getLibraryMimeType() != zeno::Dirent::zenoMimeTextHtml)
-{
-  reply.setContentType(article.getMimeType());
-  reply.out() << article.getData();
-  return HTTP_OK;
-}
-
-std::string host = request.getHeader(tnt::httpheader::host);
-if (host.empty())
-  host = "localhost";
-
-if (!Skin.empty())
-{
-  zenoreader::Skin skin(Skin, host, article.getData());
-  if (!skin.getData().empty())
+  std::string zenoFileName = request.getArg(0);
+  zenoFilesType::const_iterator it = zenoFiles.find(zenoFileName);
+  if (it == zenoFiles.end())
   {
-    reply.out() << skin.getData();
-    return HTTP_OK;
+    file = zeno::File(zenoFileName);
+    zenoFiles[zenoFileName] = file;
   }
-}
+  else
+  {
+    file = it->second;
+  }
+
+  // ugly way to html-unescape path-info
+  cxxtools::QueryParams q;
+  q.parse_url(request.getPathInfo());
+  if (q.paramcount() == 0)
+    return HTTP_NOT_FOUND;
+
+  zeno::Article article = file.getArticle(q[0]);
+  if (!article)
+  {
+    log_warn("article " << request.getPathInfo() << " not found");
+  }
+  else
+  {
+    log_debug("article " << request.getPathInfo() << " fetched - mime-type "
+      << article.getLibraryMimeType());
+
+    if (article.getLibraryMimeType() != zeno::Dirent::zenoMimeTextHtml)
+    {
+      log_debug("send non-html data");
+      reply.setContentType(article.getMimeType());
+      reply.out() << article.getData();
+      return HTTP_OK;
+    }
+  }
+
+  reply.setContentType("text/html; charset=utf-8");
+
+  zenoreader::Skin skin(Skin);
+  cxxtools::iconvstream conv(skin, "UTF-8", "ISO-8859-1");
+  conv << article.getData();
+
+  std::string host = request.getHeader(tnt::httpheader::host);
+  if (host.empty())
+    host = "localhost";
+
+  reply.out() << skin.getData(host);
 
 </%cpp>
-<html>
- <head>
-  <title>TntZenoReader</title>
-  <base href="http://<$host$>/"></base>
- </head>
- <body bgcolor='#eee'>
-<$$ article.getData() $>
- </body>
-</html>

@@ -98,6 +98,7 @@ namespace zeno
       std::string title;
       while (true)
       {
+        log_debug("l=" << l << " u=" << u << " p=" << p << " pp=" << pp);
         Dirent d = readDirentNolock(indexOffsets[p]);
         title = d.getTitle();
         if (!title.empty() || p == u)
@@ -106,14 +107,24 @@ namespace zeno
       }
 
       if (p == u)
+      {
+        log_debug("u => " << pp << '*');
         u = pp;
+      }
       else
       {
-        int c = QUnicodeString(url).compare(title);
+        int c = QUnicodeString(url).compare(QUnicodeString(title));
+        log_debug("compare \"" << url << "\" with \"" << title << "\" => " << c);
         if (c < 0)
+        {
+          log_debug("u => " << p);
           u = uu = p;
+        }
         else if (c > 0)
+        {
+          log_debug("l => " << p);
           l = p;
+        }
         else
         {
           log_debug("article found after " << itcount << " iterations");

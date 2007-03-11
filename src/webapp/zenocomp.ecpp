@@ -4,6 +4,7 @@
 #include "skin.h"
 #include <map>
 #include <cxxtools/iconvstream.h>
+#include <cxxtools/hdstream.h>
 
 typedef std::map<std::string, zeno::File> zenoFilesType;
 
@@ -33,13 +34,7 @@ zenoFilesType zenoFiles;
     file = it->second;
   }
 
-  // ugly way to html-unescape path-info
-  cxxtools::QueryParams q;
-  q.parse_url(request.getPathInfo());
-  if (q.paramcount() == 0)
-    return HTTP_NOT_FOUND;
-
-  zeno::Article article = file.getArticle(q[0]);
+  zeno::Article article = file.getArticle(request.getPathInfo());
   if (!article)
   {
     log_warn("article " << request.getPathInfo() << " not found");

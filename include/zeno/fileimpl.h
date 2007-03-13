@@ -20,11 +20,11 @@
 #ifndef ZENO_FILEIMPL_H
 #define ZENO_FILEIMPL_H
 
-#include <tntdb/refcounted.h>
 #include <cxxtools/thread.h>
 #include <fstream>
 #include <string>
 #include <vector>
+#include <zeno/refcounted.h>
 #include <zeno/zeno.h>
 
 namespace zeno
@@ -32,7 +32,7 @@ namespace zeno
   class Dirent;
   class Article;
 
-  class FileImpl : public tntdb::RefCounted
+  class FileImpl : public RefCounted
   {
       std::ifstream zenoFile;
       cxxtools::Mutex mutex;

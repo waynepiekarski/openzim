@@ -1,0 +1,89 @@
+<%args>
+dosearch;
+getpage;
+search;
+</%args>
+<%config>
+Skin = "";
+</%config>
+<%pre>
+#include <zeno/file.h>
+#include <zeno/article.h>
+#include "skin.h"
+
+typedef std::vector<std::pair<zeno::Article, unsigned> > resultType;
+typedef std::map<zeno::size_type, unsigned> indexType;
+
+class resultCompare : public std::binary_function<resultType::value_type, resultType::value_type, bool>
+{
+  public:
+    result_type operator() (first_argument_type obj1, second_argument_type obj2) const
+    {
+      return obj1.second < obj2.second
+          || obj1.second < obj2.second
+           && obj1.first < obj2.first;
+    }
+};
+
+</%pre>
+<%cpp>
+
+  if (!getpage.empty())
+  {
+    log_debug("redirect to article \"" << search << '"');
+    return reply.redirect("A/" + search);
+  }
+
+  if (request.getArgs().size() < 2)
+    return DECLINED;
+
+  log_debug("open indexfile " << request.getArg(0));
+  zeno::File indexfile(request.getArg(0));
+
+  log_debug("open articlefile " << request.getArg(1));
+  zeno::File articlefile(request.getArg(1));
+
+  std::istringstream ssearch(search);
+  std::string token;
+  typedef std::map<zeno::size_type, unsigned> indexType;
+  indexType index;
+  while (ssearch >> token)
+  {
+    log_debug("search for token \"" << token << '"');
+
+    zeno::Article indexarticle = indexfile.getArticle("X/" + token);
+    std::string data = indexarticle.getData();
+    for (unsigned off = 0; off + 4 <= data.size(); off += 4)
+    {
+      uint32_t articleIdx = fromLittleEndian(reinterpret_cast<const uint32_t*>(data.data() + off));
+      log_debug("token \"" << token << "\" found in article " << articleIdx);
+      ++index[articleIdx];
+    }
+  }
+
+  log_debug("copy " << index.size() << " articles into sortable vector");
+  resultType result;
+  for (indexType::const_iterator it = index.begin(); it != index.end(); ++it)
+  {
+    zeno::Article article = articlefile.getArticle(it->first);
+    result.push_back(resultType::value_type(article, it->second));
+  }
+
+  log_debug("sort articles");
+  std::sort(result.begin(), result.end(), resultCompare());
+
+  log_debug("output result");
+
+  std::string host = request.getHeader(tnt::httpheader::host);
+  if (host.empty())
+    host = "localhost";
+
+  zenoreader::Skin skin(Skin, host);
+  skin << "<ul>\n";
+  for (resultType::const_iterator it = result.begin(); it != result.end(); ++it)
+    skin << "<li><a href=\"" << it->first.getUrl() << "\">" << it->first.getUrl() << " (" << it->first.getIndex() << ")</li>\n";
+  skin << "</ul>\n";
+
+  reply.out() << skin;
+
+</%cpp>

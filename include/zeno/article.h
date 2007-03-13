@@ -68,7 +68,7 @@ namespace zeno
                   getExtra() const            { return dirent.getExtra(); }
       offset_type getDataOffset() const       { return dirent.getOffset(); }
       size_type   getDataLen() const          { return dirent.getSize(); }
-      CompressionType getCompression() const      { return dirent.getCompression(); }
+      CompressionType getCompression() const  { return dirent.getCompression(); }
       bool        isCompressionZip() const    { return dirent.isCompressionZip(); }
       uint8_t     getType() const             { return dirent.getExtra()[0]; }
       std::string getUrl() const              { return dirent.getTitle(); }

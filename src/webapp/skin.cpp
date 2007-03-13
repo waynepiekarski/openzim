@@ -27,8 +27,18 @@ log_define("zenoreader.skin")
 
 namespace zenoreader
 {
-  Skin::Skin(const std::string& skin)
-    : std::ostream(data.rdbuf())
+  namespace
+  {
+    static const std::string hostTag = "<!--%%HOST%%-->";
+    static const std::string headTag = "<!--%%HEAD%%-->";
+    static const std::string contentTag = "<!--%%CONTENT%%-->";
+    static const std::string searchformTag = "<!--%%SEARCH%%-->";
+    static const std::string searchform = "<form action='search'><input type='text' name='search' size='20'><br><input type='submit' name='getpage' value='Artikel'><input type='submit' name='dosearch' value='Volltext'></form>\n";
+  }
+
+  Skin::Skin(const std::string& skin, const std::string& host_)
+    : std::ostream(data.rdbuf()),
+      host(host_)
   {
     if (skin.empty())
     {
@@ -59,17 +69,10 @@ namespace zenoreader
     }
   }
 
-  std::string Skin::getData(const std::string& host) const
+  std::string Skin::getData() const
   {
-    static const std::string hostTag = "<!--%%HOST%%-->";
-    static const std::string headTag = "<!--%%HEAD%%-->";
-    static const std::string contentTag = "<!--%%CONTENT%%-->";
-    static const std::string searchformTag = "<!--%%SEARCH%%-->";
-
     std::string ret = skindata;
-
     std::string headdata = "<base href='http://" + host + "/'></base>";
-    std::string searchform = "<form action='search'><input type='text' name='search' size='20'><br><input type='submit' name='getpage' value='Artikel'><input type='submit' name='dosearch' value='Volltext'></form>\n";
 
     std::string::size_type pos = 0;
     log_debug("replace head");
@@ -85,7 +88,7 @@ namespace zenoreader
     while ((pos = ret.find(hostTag, pos)) != std::string::npos)
     {
       log_debug("host found at pos " << pos);
-      ret.replace(pos, hostTag.size(), data.str());
+      ret.replace(pos, hostTag.size(), host);
       pos += headdata.size();
     }
 
@@ -110,5 +113,59 @@ namespace zenoreader
     log_debug("data has " << ret.size() << " bytes");
 
     return ret;
+  }
+
+  std::ostream& operator<< (std::ostream& out, const Skin& skin)
+  {
+    const std::string& str = skin.skindata;
+    std::string::size_type pos = 0;
+    std::string::size_type hostPos = str.find(hostTag);
+    std::string::size_type headPos = str.find(headTag);
+    std::string::size_type contentPos = str.find(contentTag);
+    std::string::size_type searchformPos = str.find(searchformTag);
+
+    while (pos < str.size())
+    {
+      std::string::size_type nextPos = str.size();
+      if (hostPos != std::string::npos && hostPos < nextPos)
+        nextPos = hostPos;
+      if (headPos != std::string::npos && headPos < nextPos)
+        nextPos = headPos;
+      if (contentPos != std::string::npos && contentPos < nextPos)
+        nextPos = contentPos;
+      if (searchformPos != std::string::npos && searchformPos < nextPos)
+        nextPos = searchformPos;
+
+      std::copy(str.begin() + pos, str.begin() + nextPos, std::ostreambuf_iterator<char>(out));
+
+      if (nextPos == hostPos)
+      {
+        out << skin.host;
+        pos = nextPos + hostTag.size();
+        hostPos = str.find(hostTag, pos);
+      }
+      else if (nextPos == headPos)
+      {
+        out << "<base href='http://" << skin.host << "/'></base>";
+        pos = nextPos + headTag.size();
+        headPos = str.find(headTag, pos);
+      }
+      else if (nextPos == contentPos)
+      {
+        out << skin.data.str();
+        pos = nextPos + contentTag.size();
+        contentPos = str.find(contentTag, pos);
+      }
+      else if (nextPos == searchformPos)
+      {
+        out << searchform;
+        pos = nextPos + searchformTag.size();
+        searchformPos = str.find(searchformTag, pos);
+      }
+      else
+        pos = nextPos;
+    }
+
+    return out;
   }
 }

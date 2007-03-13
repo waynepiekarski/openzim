@@ -2,19 +2,12 @@
 #include <zeno/file.h>
 #include <zeno/article.h>
 #include "skin.h"
-#include <map>
 #include <cxxtools/iconvstream.h>
-#include <cxxtools/hdstream.h>
-
-typedef std::map<std::string, zeno::File> zenoFilesType;
-
 </%pre>
 <%config>
 Skin = "";
 </%config>
-<%application>
-zenoFilesType zenoFiles;
-</%application>
+<%include>global.ecpp</%include>
 <%cpp>
 
   if (request.getArgs().size() == 0)
@@ -34,7 +27,9 @@ zenoFilesType zenoFiles;
     file = it->second;
   }
 
-  zeno::Article article = file.getArticle(request.getPathInfo());
+  if (article.getUrl() != request.getPathInfo())
+    article = file.getArticle(request.getPathInfo());
+
   if (!article)
   {
     log_warn("article " << request.getPathInfo() << " not found");
@@ -55,14 +50,14 @@ zenoFilesType zenoFiles;
 
   reply.setContentType("text/html; charset=utf-8");
 
-  zenoreader::Skin skin(Skin);
-  cxxtools::iconvstream conv(skin, "UTF-8", "ISO-8859-1");
-  conv << article.getData();
-
   std::string host = request.getHeader(tnt::httpheader::host);
   if (host.empty())
     host = "localhost";
 
-  reply.out() << skin.getData(host);
+  zenoreader::Skin skin(Skin, host);
+  cxxtools::iconvstream conv(skin, "UTF-8", "ISO-8859-1");
+  conv << article.getData();
+
+  reply.out() << skin;
 
 </%cpp>

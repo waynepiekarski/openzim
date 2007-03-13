@@ -1,0 +1,8 @@
+<%pre>
+#include <map>
+typedef std::map<std::string, zeno::File> zenoFilesType;
+</%pre>
+<%application>
+zenoFilesType zenoFiles;
+zeno::Article article;
+</%application>

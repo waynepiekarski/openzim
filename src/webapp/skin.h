@@ -28,13 +28,17 @@ namespace zenoreader
 {
   class Skin : public std::ostream
   {
+      friend std::ostream& operator<< (std::ostream& out, const Skin& s);
       std::string skindata;
       std::ostringstream data;
+      std::string host;
 
     public:
-      explicit Skin(const std::string& skin);
-      std::string getData(const std::string& host) const;
+      explicit Skin(const std::string& skin, const std::string& host);
+      std::string getData() const;
   };
+
+  std::ostream& operator<< (std::ostream& out, const Skin& s);
 };
 
 #endif

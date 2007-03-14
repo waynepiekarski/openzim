@@ -23,6 +23,7 @@
 #include <string>
 #include <sstream>
 #include <iostream>
+#include <cxxtools/hirestime.h>
 
 namespace zenoreader
 {
@@ -32,10 +33,10 @@ namespace zenoreader
       std::string skindata;
       std::ostringstream data;
       std::string host;
+      cxxtools::HiresTime t0;
 
     public:
       explicit Skin(const std::string& skin, const std::string& host);
-      std::string getData() const;
   };
 
   std::ostream& operator<< (std::ostream& out, const Skin& s);

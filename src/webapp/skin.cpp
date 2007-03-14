@@ -33,13 +33,16 @@ namespace zenoreader
     static const std::string headTag = "<!--%%HEAD%%-->";
     static const std::string contentTag = "<!--%%CONTENT%%-->";
     static const std::string searchformTag = "<!--%%SEARCH%%-->";
+    static const std::string timeTag = "<!--%%TIME%%-->";
     static const std::string searchform = "<form action='search'><input type='text' name='search' size='20'><br><input type='submit' name='getpage' value='Artikel'><input type='submit' name='dosearch' value='Volltext'></form>\n";
   }
 
   Skin::Skin(const std::string& skin, const std::string& host_)
     : std::ostream(data.rdbuf()),
-      host(host_)
+      host(host_),
+      t0(cxxtools::HiresTime::gettimeofday())
   {
+
     if (skin.empty())
     {
       log_debug("empty skin, using default");
@@ -69,52 +72,6 @@ namespace zenoreader
     }
   }
 
-  std::string Skin::getData() const
-  {
-    std::string ret = skindata;
-    std::string headdata = "<base href='http://" + host + "/'></base>";
-
-    std::string::size_type pos = 0;
-    log_debug("replace head");
-    while ((pos = ret.find(headTag, pos)) != std::string::npos)
-    {
-      log_debug("head found at pos " << pos);
-      ret.replace(pos, headTag.size(), headdata);
-      pos += headdata.size();
-    }
-
-    pos = 0;
-    log_debug("replace host");
-    while ((pos = ret.find(hostTag, pos)) != std::string::npos)
-    {
-      log_debug("host found at pos " << pos);
-      ret.replace(pos, hostTag.size(), host);
-      pos += headdata.size();
-    }
-
-    pos = 0;
-    log_debug("replace content");
-    while ((pos = ret.find(contentTag, pos)) != std::string::npos)
-    {
-      log_debug("content found at pos " << pos);
-      ret.replace(pos, contentTag.size(), data.str());
-      pos += headdata.size();
-    }
-
-    pos = 0;
-    log_debug("replace searchform");
-    while ((pos = ret.find(searchformTag, pos)) != std::string::npos)
-    {
-      log_debug("searchform found at pos " << pos);
-      ret.replace(pos, searchformTag.size(), searchform);
-      pos += headdata.size();
-    }
-
-    log_debug("data has " << ret.size() << " bytes");
-
-    return ret;
-  }
-
   std::ostream& operator<< (std::ostream& out, const Skin& skin)
   {
     const std::string& str = skin.skindata;
@@ -123,6 +80,7 @@ namespace zenoreader
     std::string::size_type headPos = str.find(headTag);
     std::string::size_type contentPos = str.find(contentTag);
     std::string::size_type searchformPos = str.find(searchformTag);
+    std::string::size_type timePos = str.find(timeTag);
 
     while (pos < str.size())
     {
@@ -135,6 +93,8 @@ namespace zenoreader
         nextPos = contentPos;
       if (searchformPos != std::string::npos && searchformPos < nextPos)
         nextPos = searchformPos;
+      if (timePos != std::string::npos && timePos < nextPos)
+        nextPos = timePos;
 
       std::copy(str.begin() + pos, str.begin() + nextPos, std::ostreambuf_iterator<char>(out));
 
@@ -161,6 +121,14 @@ namespace zenoreader
         out << searchform;
         pos = nextPos + searchformTag.size();
         searchformPos = str.find(searchformTag, pos);
+      }
+      else if (nextPos == timePos)
+      {
+        cxxtools::HiresTime t1 = cxxtools::HiresTime::gettimeofday();
+        out.precision(3);
+        out << (t1 - skin.t0);
+        pos = nextPos + timeTag.size();
+        timePos = str.find(timeTag, pos);
       }
       else
         pos = nextPos;

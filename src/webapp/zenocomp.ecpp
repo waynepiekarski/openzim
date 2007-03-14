@@ -6,12 +6,20 @@
 </%pre>
 <%config>
 Skin = "";
+bool DisableCache = false;
+Charset = "iso-8859-1";
 </%config>
 <%include>global.ecpp</%include>
 <%cpp>
 
   if (request.getArgs().size() == 0)
     return DECLINED;
+
+  std::string host = request.getHeader(tnt::httpheader::host);
+  if (host.empty())
+    host = "localhost";
+
+  zenoreader::Skin skin(Skin, host);
 
   zeno::File file;
 
@@ -27,7 +35,7 @@ Skin = "";
     file = it->second;
   }
 
-  if (article.getUrl() != request.getPathInfo())
+  if (DisableCache || article.getUrl() != request.getPathInfo())
     article = file.getArticle(request.getPathInfo());
 
   if (!article)
@@ -48,15 +56,15 @@ Skin = "";
     }
   }
 
-  reply.setContentType("text/html; charset=utf-8");
+  if (Charset != "iso-8859-1")
+  {
+    cxxtools::iconvstream conv(skin, Charset.c_str(), "ISO-8859-1");
+    conv << article.getData();
+  }
+  else
+    skin << article.getData();
 
-  std::string host = request.getHeader(tnt::httpheader::host);
-  if (host.empty())
-    host = "localhost";
-
-  zenoreader::Skin skin(Skin, host);
-  cxxtools::iconvstream conv(skin, "UTF-8", "ISO-8859-1");
-  conv << article.getData();
+  reply.setContentType("text/html; charset=" + Charset);
 
   reply.out() << skin;
 

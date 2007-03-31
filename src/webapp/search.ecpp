@@ -1,18 +1,10 @@
+<%include>global.ecpp</%include>
 <%args>
 dosearch;
 getpage;
 search;
 </%args>
-<%config>
-Skin = "";
-</%config>
 <%pre>
-#include <zeno/file.h>
-#include <zeno/article.h>
-#include "skin.h"
-
-typedef std::vector<std::pair<zeno::Article, unsigned> > resultType;
-typedef std::map<zeno::size_type, unsigned> indexType;
 
 class resultCompare : public std::binary_function<resultType::value_type, resultType::value_type, bool>
 {
@@ -62,15 +54,14 @@ class resultCompare : public std::binary_function<resultType::value_type, result
   }
 
   log_debug("copy " << index.size() << " articles into sortable vector");
-  resultType result;
   for (indexType::const_iterator it = index.begin(); it != index.end(); ++it)
   {
     zeno::Article article = articlefile.getArticle(it->first);
-    result.push_back(resultType::value_type(article, it->second));
+    searchResult.push_back(resultType::value_type(article, it->second));
   }
 
   log_debug("sort articles");
-  std::sort(result.begin(), result.end(), resultCompare());
+  std::sort(searchResult.begin(), searchResult.end(), resultCompare());
 
   log_debug("output result");
 
@@ -78,12 +69,5 @@ class resultCompare : public std::binary_function<resultType::value_type, result
   if (host.empty())
     host = "localhost";
 
-  zenoreader::Skin skin(Skin, host);
-  skin << "<ul>\n";
-  for (resultType::const_iterator it = result.begin(); it != result.end(); ++it)
-    skin << "<li><a href=\"" << it->first.getUrl() << "\">" << it->first.getUrl() << " (" << it->first.getIndex() << ")</li>\n";
-  skin << "</ul>\n";
-
-  reply.out() << skin;
-
 </%cpp>
+<& skin qparam nextComp="searchresults" >

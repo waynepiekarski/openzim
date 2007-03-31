@@ -1,8 +1,18 @@
 <%pre>
 #include <map>
+#include <vector>
+#include <zeno/file.h>
+#include <zeno/article.h>
+
 typedef std::map<std::string, zeno::File> zenoFilesType;
+typedef std::vector<std::pair<zeno::Article, unsigned> > resultType;
+typedef std::map<zeno::size_type, unsigned> indexType;
+
 </%pre>
-<%application>
+<%application scope="global">
 zenoFilesType zenoFiles;
 zeno::Article article;
 </%application>
+<%request scope="global">
+resultType searchResult;
+</%request>

@@ -1,0 +1,7 @@
+<%include>global.ecpp</%include>
+<%cpp>
+
+  reply.setContentType(article.getMimeType());
+  reply.out() << article.getData();
+
+</%cpp>

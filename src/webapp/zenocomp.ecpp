@@ -1,11 +1,9 @@
 <%pre>
 #include <zeno/file.h>
 #include <zeno/article.h>
-#include "skin.h"
 #include <cxxtools/iconvstream.h>
 </%pre>
 <%config>
-Skin = "";
 bool DisableCache = false;
 Charset = "iso-8859-1";
 </%config>
@@ -18,8 +16,6 @@ Charset = "iso-8859-1";
   std::string host = request.getHeader(tnt::httpheader::host);
   if (host.empty())
     host = "localhost";
-
-  zenoreader::Skin skin(Skin, host);
 
   zeno::File file;
 
@@ -36,7 +32,12 @@ Charset = "iso-8859-1";
   }
 
   if (DisableCache || article.getUrl() != request.getPathInfo())
+  {
+    log_debug("search article " << request.getPathInfo());
     article = file.getArticle(request.getPathInfo());
+  }
+  else
+    log_debug("article " << request.getPathInfo());
 
   if (!article)
   {
@@ -50,22 +51,10 @@ Charset = "iso-8859-1";
     if (article.getLibraryMimeType() != zeno::Dirent::zenoMimeTextHtml)
     {
       log_debug("send non-html data");
-      reply.setContentType(article.getMimeType());
-      reply.out() << article.getData();
+      callComp("article", request, reply);
       return HTTP_OK;
     }
   }
 
-  if (Charset != "iso-8859-1")
-  {
-    cxxtools::iconvstream conv(skin, Charset.c_str(), "ISO-8859-1");
-    conv << article.getData();
-  }
-  else
-    skin << article.getData();
-
-  reply.setContentType("text/html; charset=" + Charset);
-
-  reply.out() << skin;
-
 </%cpp>
+<& skin qparam nextComp="article" >

@@ -1,8 +1,8 @@
 <%include>global.ecpp</%include>
 <%args>
-dosearch;
-getpage;
-search;
+go; // Artikel
+ft; // Volltext
+e;  // Begriff
 </%args>
 <%pre>
 
@@ -20,10 +20,10 @@ class resultCompare : public std::binary_function<resultType::value_type, result
 </%pre>
 <%cpp>
 
-  if (!getpage.empty())
+  if (!go.empty())
   {
-    log_debug("redirect to article \"" << search << '"');
-    return reply.redirect("A/" + search);
+    log_debug("redirect to article \"" << e << '"');
+    return reply.redirect("/A/" + e);
   }
 
   if (request.getArgs().size() < 2)
@@ -35,7 +35,7 @@ class resultCompare : public std::binary_function<resultType::value_type, result
   log_debug("open articlefile " << request.getArg(1));
   zeno::File articlefile(request.getArg(1));
 
-  std::istringstream ssearch(search);
+  std::istringstream ssearch(e);
   std::string token;
   typedef std::map<zeno::size_type, unsigned> indexType;
   indexType index;

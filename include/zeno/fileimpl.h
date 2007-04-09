@@ -45,6 +45,10 @@ namespace zeno
       Dirent readDirentNolock();
       Dirent readDirentNolock(offset_type off);
 
+      std::string zcache;
+      offset_type zcacheOffset;
+      size_type zcacheCount;
+
     public:
       FileImpl(const char* fname);
 
@@ -55,6 +59,7 @@ namespace zeno
       size_type getCountArticles() const  { return indexOffsets.size(); }
 
       std::string readData(offset_type off, size_type count);
+      void cacheData(offset_type off, size_type count);
   };
 
 }

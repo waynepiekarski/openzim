@@ -56,6 +56,8 @@ namespace zeno
       const_iterator begin();
       const_iterator end();
       const_iterator find(const std::string& url);
+
+      void cacheData(offset_type off, size_type count);
   };
 
 }

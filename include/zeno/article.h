@@ -72,6 +72,7 @@ namespace zeno
       bool        isCompressionZip() const    { return dirent.isCompressionZip(); }
       uint8_t     getType() const             { return dirent.getExtra()[0]; }
       std::string getUrl() const              { return dirent.getTitle(); }
+      std::string getTitle() const;
       MimeType    getLibraryMimeType() const  { return dirent.getMimeType(); }
       const std::string&
                   getMimeType() const;

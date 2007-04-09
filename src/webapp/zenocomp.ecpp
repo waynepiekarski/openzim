@@ -1,8 +1,3 @@
-<%pre>
-#include <zeno/file.h>
-#include <zeno/article.h>
-#include <cxxtools/iconvstream.h>
-</%pre>
 <%config>
 bool DisableCache = false;
 Charset = "iso-8859-1";
@@ -56,5 +51,7 @@ Charset = "iso-8859-1";
     }
   }
 
+  title = article.getTitle();
+
 </%cpp>
-<& skin qparam nextComp="article" >
+<& skin qparam nextComp="article" type=(typeArticle) >

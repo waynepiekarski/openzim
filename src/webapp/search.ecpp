@@ -70,4 +70,4 @@ class resultCompare : public std::binary_function<resultType::value_type, result
     host = "localhost";
 
 </%cpp>
-<& skin qparam nextComp="searchresults" >
+<& skin qparam nextComp="searchresults" type=(typeSpecial)>

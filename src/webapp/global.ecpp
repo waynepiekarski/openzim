@@ -8,10 +8,15 @@ typedef std::map<std::string, zeno::File> zenoFilesType;
 typedef std::vector<std::pair<zeno::Article, unsigned> > resultType;
 typedef std::map<zeno::size_type, unsigned> indexType;
 
+static const int typeSpecial = -1;
+static const int typeArticle = 0;
+static const int typeHistory = 1;
+
 </%pre>
 <%application scope="global">
 zenoFilesType zenoFiles;
 zeno::Article article;
+std::string title;
 </%application>
 <%request scope="global">
 resultType searchResult;

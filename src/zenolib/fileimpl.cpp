@@ -23,6 +23,8 @@
 #include <zeno/dirent.h>
 #include <zeno/qunicode.h>
 #include <cxxtools/log.h>
+#include <tnt/deflatestream.h>
+#include <sstream>
 
 log_define("zeno.file.impl")
 
@@ -206,4 +208,30 @@ namespace zeno
     return dirent;
   }
 
+  void FileImpl::cacheData(offset_type off, size_type count)
+  {
+    log_debug("cacheData(" << off << ", " << count << ')');
+
+    cxxtools::MutexLock lock(mutex);
+    std::ostringstream data;
+    tnt::DeflateStream zstream(data);
+    zenoFile.seekg(off);
+
+    char buffer[256];
+    size_type c = count;
+    while (c > 0)
+    {
+      zenoFile.read(buffer, std::min(static_cast<size_type>(sizeof(buffer)), c));
+      if (!zenoFile)
+        throw ZenoFileFormatError("format-error: error reading data");
+      zstream.write(buffer, zenoFile.gcount());
+      c -= zenoFile.gcount();
+    }
+    zstream.end();
+    zcache = data.str();
+    zcacheOffset = off;
+    zcacheCount = count;
+
+    log_debug(zcacheCount << " bytes in cache, " << zcache.size() << " compressed");
+  }
 }

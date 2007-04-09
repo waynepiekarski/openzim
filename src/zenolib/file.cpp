@@ -158,4 +158,8 @@ namespace zeno
     return *this;
   }
 
+  void File::cacheData(offset_type off, size_type count)
+  {
+    impl->cacheData(off, count);
+  }
 }

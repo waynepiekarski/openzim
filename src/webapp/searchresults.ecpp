@@ -1,6 +1,52 @@
 <%include>global.ecpp</%include>
+<%args>
+unsigned p = 0;  // current page
+unsigned n = 20; // items per page
+</%args>
+<%cpp>
+
+unsigned s = p * n;
+
+if (s > result.size())
+{
+  p = 0;
+  s = 0;
+}
+
+unsigned t = s + n;
+if (t > result.size())
+  t = result.size();
+
+</%cpp>
+<div class="sstat">
+Artikel gesamt: <$ result.size() $>
+</div>
+<table id="z_browsenum">
+ <tr>
+  <td>
+% for (unsigned pp = 0; pp < p; ++pp) {
+    <a href="/~/search?p=<$ pp $>"><$ (pp + 1) * n $></a>
+% }
+   <span class="z_azact">
+    <$ s + 1 $> - <$ t $>
+   </span>
+% if (t < result.size()) {
+    <a href="/~/search?p=<$ p + 1 $>"><$ (p + 2) * n $></a> ...
+% }
+  </td>
+
+  <td align="right">
+% if (p > 0) {
+   <a href="/~/search?p=<$ p - 1 $>">&lt; Zur&uuml;ck</a>
+% }
+% if (t < result.size()) {
+   <a href="/~/search?p=<$ p + 1 $>">Vor &gt;</a>
+% }
+  </td>
+ </tr>
+</table>
 <ul>
-% for (zeno::Search::Results::const_iterator it = result.begin(); it != result.end(); ++it) {
-    <li><a href="<$ it->getArticle().getUrl() $> "><$ it->getArticle().getTitle() $></a></li>
+% for (unsigned i = s; i < t; ++i) {
+    <li><a href="<$ result[i].getArticle().getUrl() $> "><$ result[i].getArticle().getTitle() $></a></li>
 % }
 </ul>

@@ -66,5 +66,7 @@ Charset = "iso-8859-1";
 
   title = article.getTitle();
 
+  int type = request.getPathInfo()[0] == '-' ? typeSpecial : typeArticle;
+
 </%cpp>
-<& skin qparam nextComp="article" type=(typeArticle) >
+<& skin qparam nextComp="article" type=(type) >

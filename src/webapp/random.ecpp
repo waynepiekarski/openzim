@@ -1,0 +1,24 @@
+<%include>global.ecpp</%include>
+<%pre>
+
+#include <time.h>
+#include <stdlib.h>
+
+unsigned int seed = static_cast<unsigned int>(time(0));
+
+</%pre>
+<%cpp>
+
+do
+{
+  zeno::size_type idx = static_cast<zeno::size_type>(static_cast<double>(articleFile.getCountArticles()) * rand_r(&seed) / RAND_MAX);
+  log_debug("read article " << idx);
+  article = articleFile.getArticle(idx);
+
+} while (!article.isMainArticle());
+
+log_debug("choose article " << article.getIndex());
+
+return reply.redirect("/A/" + article.getTitle());
+  
+</%cpp>

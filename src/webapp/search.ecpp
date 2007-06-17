@@ -22,11 +22,17 @@ double weightDistinctWords = zeno::Search::getWeightDistinctWords();
     return reply.redirect("/A/" + e);
   }
 
-  log_debug("serach expression \"" << e << '"');
-  zeno::Search search(indexFile, articleFile);
-  result = search.search(e);
+  if (!ft.empty())
+  {
+    log_debug("search expression \"" << e << '"');
+    searchExpression = e;
+    zeno::Search search(indexFile, articleFile);
+    result = search.search(e);
 
-  log_debug(result.size() << " articles found");
+    log_debug(result.size() << " articles found");
+  }
+
+  title = "Suche nach: " + searchExpression;
 
 </%cpp>
-<& skin qparam nextComp="searchresults" type=(typeArticle) >
+<& skin qparam nextComp="searchresults" type=(typeSpecial) >

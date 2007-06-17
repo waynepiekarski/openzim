@@ -1,6 +1,6 @@
 <%include>global.ecpp</%include>
 <ul>
-% for (resultType::const_iterator it = searchResult.begin(); it != searchResult.end(); ++it) {
-    <li><a href="<$ it->first.getUrl() $> "><$ it->first.getUrl() $> (<$ it->first.getIndex() $></li>
+% for (zeno::Search::Results::const_iterator it = result.begin(); it != result.end(); ++it) {
+    <li><a href="<$ it->getArticle().getUrl() $> "><$ it->getArticle().getTitle() $></a></li>
 % }
 </ul>

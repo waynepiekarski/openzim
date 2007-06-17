@@ -5,19 +5,15 @@ ft; // Volltext
 e;  // Begriff
 </%args>
 <%pre>
-
-class resultCompare : public std::binary_function<resultType::value_type, resultType::value_type, bool>
-{
-  public:
-    result_type operator() (first_argument_type obj1, second_argument_type obj2) const
-    {
-      return obj1.second < obj2.second
-          || obj1.second < obj2.second
-           && obj1.first < obj2.first;
-    }
-};
-
+#include <zeno/search.h>
 </%pre>
+<%config>
+double weightOcc = zeno::Search::getWeightOcc();
+double weightOccOff = zeno::Search::getWeightOccOff();
+double weightDist = zeno::Search::getWeightDist();
+double weightPos = zeno::Search::getWeightPos();
+double weightDistinctWords = zeno::Search::getWeightDistinctWords();
+</%config>
 <%cpp>
 
   if (!go.empty())
@@ -26,48 +22,11 @@ class resultCompare : public std::binary_function<resultType::value_type, result
     return reply.redirect("/A/" + e);
   }
 
-  if (request.getArgs().size() < 2)
-    return DECLINED;
+  log_debug("serach expression \"" << e << '"');
+  zeno::Search search(indexFile, articleFile);
+  result = search.search(e);
 
-  log_debug("open indexfile " << request.getArg(0));
-  zeno::File indexfile(request.getArg(0));
-
-  log_debug("open articlefile " << request.getArg(1));
-  zeno::File articlefile(request.getArg(1));
-
-  std::istringstream ssearch(e);
-  std::string token;
-  typedef std::map<zeno::size_type, unsigned> indexType;
-  indexType index;
-  while (ssearch >> token)
-  {
-    log_debug("search for token \"" << token << '"');
-
-    zeno::Article indexarticle = indexfile.getArticle("X/" + token);
-    std::string data = indexarticle.getData();
-    for (unsigned off = 0; off + 4 <= data.size(); off += 4)
-    {
-      uint32_t articleIdx = fromLittleEndian(reinterpret_cast<const uint32_t*>(data.data() + off));
-      log_debug("token \"" << token << "\" found in article " << articleIdx);
-      ++index[articleIdx];
-    }
-  }
-
-  log_debug("copy " << index.size() << " articles into sortable vector");
-  for (indexType::const_iterator it = index.begin(); it != index.end(); ++it)
-  {
-    zeno::Article article = articlefile.getArticle(it->first);
-    searchResult.push_back(resultType::value_type(article, it->second));
-  }
-
-  log_debug("sort articles");
-  std::sort(searchResult.begin(), searchResult.end(), resultCompare());
-
-  log_debug("output result");
-
-  std::string host = request.getHeader(tnt::httpheader::host);
-  if (host.empty())
-    host = "localhost";
+  log_debug(result.size() << " articles found");
 
 </%cpp>
-<& skin qparam nextComp="searchresults" type=(typeSpecial)>
+<& skin qparam nextComp="searchresults" type=(typeArticle) >

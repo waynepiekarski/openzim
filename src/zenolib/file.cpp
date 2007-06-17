@@ -28,41 +28,11 @@ namespace zeno
 {
   File::File(const std::string& fname)
     : impl(new FileImpl(fname.c_str()))
-  {
-    impl->addRef();
-  }
+  { }
 
   File::File(FileImpl* impl_)
     : impl(impl_)
-  {
-    if (impl)
-      impl->addRef();
-  }
-
-  File::File(const File& f)
-    : impl(f.impl)
-  {
-    if (impl)
-      impl->addRef();
-  }
-
-  File& File::operator= (const File& f)
-  {
-    if (impl != f.impl)
-    {
-      if (impl)
-        impl->release();
-      impl = f.impl;
-      if (impl)
-        impl->addRef();
-    }
-  }
-
-  File::~File()
-  {
-    if (impl)
-      impl->release();
-  }
+  { }
 
   std::string File::readData(offset_type off, size_type count)
   {

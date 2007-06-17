@@ -82,6 +82,7 @@ namespace zeno
       unsigned    getCountSubarticles() const;
 
       operator bool()   { return getDataOffset() != 0; }
+      bool operator< (const Article& a) const   { return getUrl() < a.getUrl(); }
 
       const std::string& getRawData() const;
       const std::string& getData() const;

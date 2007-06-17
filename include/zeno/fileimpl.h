@@ -35,6 +35,8 @@ namespace zeno
   class FileImpl : public RefCounted
   {
       std::ifstream zenoFile;
+      std::string filename;
+
       cxxtools::Mutex mutex;
 
       typedef std::vector<offset_type> IndexOffsetsType;
@@ -51,6 +53,8 @@ namespace zeno
 
     public:
       FileImpl(const char* fname);
+
+      const std::string& getFilename() const   { return filename; }
 
       Article getArticle(const std::string& url);
       Article getArticle(size_type idx);

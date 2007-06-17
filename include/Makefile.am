@@ -7,4 +7,5 @@ nobase_include_HEADERS = \
 	zeno/fileimpl.h \
 	zeno/fileiterator.h \
 	zeno/qunicode.h \
+	zeno/search.h \
 	zeno/zeno.h

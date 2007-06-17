@@ -3,21 +3,35 @@
 #include <vector>
 #include <zeno/file.h>
 #include <zeno/article.h>
+#include <zeno/search.h>
 
-typedef std::map<std::string, zeno::File> zenoFilesType;
-typedef std::vector<std::pair<zeno::Article, unsigned> > resultType;
-typedef std::map<zeno::size_type, unsigned> indexType;
+typedef std::map<std::string, zeno::File> ZenoFilesType;
 
 static const int typeSpecial = -1;
 static const int typeArticle = 0;
 static const int typeHistory = 1;
 
 </%pre>
+<%config>
+
+ZenoPath = "./";
+ZenoFile = ZenoPath + "wikipedia.zeno";
+ZenoIndex = ZenoPath + "wikipedia.index.zeno";
+ZenoImages = ZenoPath + "wikipedia.images.zeno";
+
+</%config>
 <%application scope="global">
-zenoFilesType zenoFiles;
-zeno::Article article;
-std::string title;
+
+ZenoFilesType zenoFiles;
+zeno::File articleFile(ZenoFile);
+zeno::File indexFile(ZenoIndex);
+zeno::File imagesFile(ZenoImages);
+
 </%application>
-<%request scope="global">
-resultType searchResult;
-</%request>
+<%session scope="global">
+
+zeno::Article article;
+zeno::Search::Results result;
+std::string title;
+
+</%session>

@@ -14,21 +14,33 @@ Charset = "iso-8859-1";
 
   zeno::File file;
 
-  std::string zenoFileName = request.getArg(0);
-  zenoFilesType::const_iterator it = zenoFiles.find(zenoFileName);
-  if (it == zenoFiles.end())
+  if (request.getArgs().size() > 0)
   {
-    file = zeno::File(zenoFileName);
-    zenoFiles[zenoFileName] = file;
-  }
-  else
-  {
-    file = it->second;
+    std::string zenoFileName = request.getArg(0);
+    if (zenoFileName == ZenoFile)
+      file = articleFile;
+    else if (zenoFileName == ZenoIndex)
+      file = indexFile;
+    else if (zenoFileName == ZenoImages)
+      file = imagesFile;
+    else
+    {
+      ZenoFilesType::const_iterator it = zenoFiles.find(zenoFileName);
+      if (it == zenoFiles.end())
+      {
+        file = zeno::File(zenoFileName);
+        zenoFiles[zenoFileName] = file;
+      }
+      else
+      {
+        file = it->second;
+      }
+    }
   }
 
   if (DisableCache || article.getUrl() != request.getPathInfo())
   {
-    log_debug("search article " << request.getPathInfo());
+    log_debug("search article \"" << request.getPathInfo() << "\" in file \"" << file.getFilename() << '"');
     article = file.getArticle(request.getPathInfo());
   }
   else
@@ -37,6 +49,7 @@ Charset = "iso-8859-1";
   if (!article)
   {
     log_warn("article " << request.getPathInfo() << " not found");
+    return DECLINED;
   }
   else
   {
@@ -46,7 +59,7 @@ Charset = "iso-8859-1";
     if (article.getLibraryMimeType() != zeno::Dirent::zenoMimeTextHtml)
     {
       log_debug("send non-html data");
-      callComp("article", request, reply);
+      callComp("article", request, reply, qparam);
       return HTTP_OK;
     }
   }

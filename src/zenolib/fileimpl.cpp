@@ -39,6 +39,8 @@ namespace zeno
     if (!zenoFile)
       throw ZenoFileFormatError(std::string("can't open zeno-file \"") + fname + '"');
 
+    filename = fname;
+
     const unsigned headerSize = 0x3c;
     char header[headerSize];
     if (!zenoFile.read(header, headerSize) || zenoFile.gcount() !=  headerSize)
@@ -98,7 +100,7 @@ namespace zeno
 
       IndexOffsetsType::size_type pp = p;
       std::string title;
-      while (true)
+      while (p < u)
       {
         log_debug("l=" << l << " u=" << u << " p=" << p << " pp=" << pp);
         Dirent d = readDirentNolock(indexOffsets[p]);

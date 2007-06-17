@@ -23,28 +23,27 @@
 #include <string>
 #include <iterator>
 #include <zeno/zeno.h>
+#include <zeno/smartptr.h>
+#include <zeno/fileimpl.h>
 
 namespace zeno
 {
-  class FileImpl;
   class Article;
   class Dirent;
 
   class File
   {
-      FileImpl* impl;
+      zeno::SmartPtr<FileImpl> impl;
 
     public:
       File()
-        : impl(0)
         { }
       explicit File(const std::string& fname);
       explicit File(FileImpl* impl);
-      File(const File& f);
-      File& operator= (const File& f);
-      ~File();
 
       std::string readData(offset_type off, size_type count);
+
+      const std::string& getFilename() const   { return impl->getFilename(); }
 
       Article getArticle(const std::string& url);
       Article getArticle(size_type idx);

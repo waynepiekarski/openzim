@@ -46,6 +46,12 @@ namespace zeno
     return impl->getArticle(url);
   }
 
+  Article File::getArticle(const QUnicodeString& url)
+  {
+    log_debug("getArticle(\"" << url << "\")");
+    return impl->getArticle(url);
+  }
+
   Article File::getArticle(size_type idx)
   {
     log_debug("getArticle(" << idx << ')');
@@ -76,7 +82,7 @@ namespace zeno
 
   File::const_iterator File::find(const std::string& url)
   {
-    return const_iterator(this, impl->findArticle(url).second);
+    return const_iterator(this, impl->findArticle(QUnicodeString(url)).second);
   }
 
   File::const_iterator::const_iterator(File* file_)

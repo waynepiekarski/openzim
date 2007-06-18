@@ -26,6 +26,7 @@
 #include <vector>
 #include <zeno/refcounted.h>
 #include <zeno/zeno.h>
+#include <zeno/qunicode.h>
 
 namespace zeno
 {
@@ -56,9 +57,10 @@ namespace zeno
 
       const std::string& getFilename() const   { return filename; }
 
+      Article getArticle(const QUnicodeString& url);
       Article getArticle(const std::string& url);
       Article getArticle(size_type idx);
-      std::pair<bool, size_type> findArticle(const std::string& url);
+      std::pair<bool, size_type> findArticle(const QUnicodeString& url);
       Dirent getDirent(size_type idx);
       size_type getCountArticles() const  { return indexOffsets.size(); }
 

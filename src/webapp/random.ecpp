@@ -19,6 +19,6 @@ do
 
 log_debug("choose article " << article.getIndex());
 
-return reply.redirect("/A/" + article.getTitle());
+return reply.redirect("/A/" + article.getTitle().toUtf8());
   
 </%cpp>

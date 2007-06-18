@@ -65,7 +65,7 @@ namespace zeno
     log_debug("read " << indexOffsets.size() << " index-entries ready");
   }
 
-  Article FileImpl::getArticle(const std::string& url)
+  Article FileImpl::getArticle(const QUnicodeString& url)
   {
     log_debug("get article \"" << url << '"');
     std::pair<bool, size_type> s = findArticle(url);
@@ -82,7 +82,12 @@ namespace zeno
     return Article(s.second, d, File(this));
   }
 
-  std::pair<bool, size_type> FileImpl::findArticle(const std::string& url)
+  Article FileImpl::getArticle(const std::string& url)
+  {
+    return getArticle(QUnicodeString(url));
+  }
+
+  std::pair<bool, size_type> FileImpl::findArticle(const QUnicodeString& url)
   {
     log_debug("find article \"" << url << '"');
 
@@ -117,7 +122,7 @@ namespace zeno
       }
       else
       {
-        int c = QUnicodeString(url).compare(QUnicodeString(title));
+        int c = url.compare(QUnicodeString(title));
         log_debug("compare \"" << url << "\" with \"" << title << "\" => " << c);
         if (c < 0)
         {

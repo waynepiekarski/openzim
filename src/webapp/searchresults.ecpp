@@ -47,6 +47,6 @@ Artikel gesamt: <$ result.size() $>
 </table>
 <ul>
 % for (unsigned i = s; i < t; ++i) {
-    <li><a href="<$ result[i].getArticle().getUrl() $> "><$ result[i].getArticle().getTitle() $></a></li>
+    <li><a href="<$$ result[i].getArticle().getUrl().toXML() $>"><$$ result[i].getArticle().getTitle().toXML() $> (<$ result[i].getArticle().getIndex() $>)</a></li>
 % }
 </ul>

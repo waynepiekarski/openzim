@@ -115,10 +115,10 @@ namespace zeno
     return const_iterator(const_cast<Article*>(this), idx + 1 + const_cast<Article*>(this)->getCountSubarticles());
   }
 
-  std::string Article::getTitle() const
+  QUnicodeString Article::getTitle() const
   {
-    std::string url = getUrl();
+    std::string url = dirent.getTitle();
     std::string::size_type n = url.find_last_of('/');
-    return n == std::string::npos ? url : url.substr(n + 1);
+    return QUnicodeString(n == std::string::npos ? url : url.substr(n + 1));
   }
 }

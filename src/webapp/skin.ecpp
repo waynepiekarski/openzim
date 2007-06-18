@@ -11,7 +11,7 @@ e;
    <base href='http://<$request.getHeader(tnt::httpheader::host)$>/'></base>
    <link rel="shortcut icon" href="-/favicon.ico" />
    <link rel="copyright" href="http://www.gnu.org/copyleft/fdl.html" />
-    <title><$title$> - Wikipedia</title>
+    <title><$$title.toXML()$> - Wikipedia</title>
     <style type="text/css" media="screen,projection">/*<![CDATA[*/ @import "-/main.css"; /*]]>*/</style>
     <link rel="stylesheet" type="text/css" media="print" href="-/commonPrint.css" />
     <!--[if lt IE 5.5000]><style type="text/css">@import "-/IE50Fixes.css";</style><![endif]-->
@@ -49,8 +49,8 @@ e;
       <div id="column-content">
         <div id="content">
           <a name="top" id="top"></a>
-% if (!title.empty()) {
-          <h1 class="firstHeading"><$title$></h1>
+% if (!title.getValue().empty()) {
+          <h1 class="firstHeading"><$$title.toXML()$></h1>
 % }
           <div id="bodyContent">
             <h3 id="siteSub">aus Wikipedia, der freien Enzyklop&auml;die</h3>

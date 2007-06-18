@@ -24,6 +24,7 @@
 #include <zeno/zeno.h>
 #include <zeno/file.h>
 #include <zeno/dirent.h>
+#include <zeno/qunicode.h>
 
 namespace zeno
 {
@@ -71,8 +72,8 @@ namespace zeno
       CompressionType getCompression() const  { return dirent.getCompression(); }
       bool        isCompressionZip() const    { return dirent.isCompressionZip(); }
       uint8_t     getType() const             { return dirent.getExtra()[0]; }
-      std::string getUrl() const              { return dirent.getTitle(); }
-      std::string getTitle() const;
+      QUnicodeString getUrl() const           { return QUnicodeString(dirent.getTitle()); }
+      QUnicodeString getTitle() const;
       MimeType    getLibraryMimeType() const  { return dirent.getMimeType(); }
       const std::string&
                   getMimeType() const;

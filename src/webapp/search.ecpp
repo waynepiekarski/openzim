@@ -32,7 +32,7 @@ double weightDistinctWords = zeno::Search::getWeightDistinctWords();
     log_debug(result.size() << " articles found");
   }
 
-  title = "Suche nach: " + searchExpression;
+  title = zeno::QUnicodeString("Suche nach: " + searchExpression);
 
 </%cpp>
 <& skin qparam nextComp="searchresults" type=(typeSpecial) >

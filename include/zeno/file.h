@@ -46,6 +46,7 @@ namespace zeno
       const std::string& getFilename() const   { return impl->getFilename(); }
 
       Article getArticle(const std::string& url);
+      Article getArticle(const QUnicodeString& url);
       Article getArticle(size_type idx);
       Dirent getDirent(size_type idx);
       size_type getCountArticles() const;

@@ -38,22 +38,23 @@ Charset = "iso-8859-1";
     }
   }
 
-  if (DisableCache || article.getUrl() != request.getPathInfo())
+  zeno::QUnicodeString pathInfo = zeno::QUnicodeString::fromUtf8(request.getPathInfo());
+  if (DisableCache || article.getUrl() != pathInfo)
   {
-    log_debug("search article \"" << request.getPathInfo() << "\" in file \"" << file.getFilename() << '"');
-    article = file.getArticle(request.getPathInfo());
+    log_debug("search article \"" << pathInfo << "\" in file \"" << file.getFilename() << '"');
+    article = file.getArticle(pathInfo);
   }
   else
-    log_debug("article " << request.getPathInfo());
+    log_debug("article " << pathInfo);
 
   if (!article)
   {
-    log_warn("article " << request.getPathInfo() << " not found");
+    log_warn("article " << pathInfo << " not found");
     return DECLINED;
   }
   else
   {
-    log_debug("article " << request.getPathInfo() << " fetched - mime-type "
+    log_debug("article " << pathInfo << " fetched - mime-type "
       << article.getLibraryMimeType());
 
     if (article.getLibraryMimeType() != zeno::Dirent::zenoMimeTextHtml)

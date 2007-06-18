@@ -82,10 +82,10 @@ namespace zeno
         { !(*this < v); }
 
       std::string toXML() const;
+      std::string toUtf8() const;
   };
 
   std::ostream& operator<< (std::ostream& out, const QUnicodeString& str);
-  std::ostream& operator<< (std::ostream& out, const QUnicodeChar& ch);
 }
 
 #endif // ZENO_QUNICODE_H

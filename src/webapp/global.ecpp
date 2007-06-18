@@ -4,6 +4,7 @@
 #include <zeno/file.h>
 #include <zeno/article.h>
 #include <zeno/search.h>
+#include <zeno/qunicode.h>
 
 typedef std::map<std::string, zeno::File> ZenoFilesType;
 
@@ -33,6 +34,6 @@ zeno::File imagesFile(ZenoImages);
 zeno::Article article;
 std::string searchExpression;
 zeno::Search::Results result;
-std::string title;
+zeno::QUnicodeString title;
 
 </%session>

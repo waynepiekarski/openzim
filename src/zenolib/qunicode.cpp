@@ -44,27 +44,44 @@ namespace zeno
     QUnicodeString ret;
 
     char hi = '\0';
+    unsigned bytes = 0;
+    uint16_t uvalue = 0;
     for (std::string::const_iterator it = v.begin(); it != v.end(); ++it)
     {
-      if (hi)
+      unsigned char ch = static_cast<unsigned char>(*it);
+      if (bytes)
       {
-        if (*it == '\0')
+        uvalue = ((uvalue << 6) | ch & 0x3f);
+        if (--bytes == 0)
         {
-          ret.value += '\2';
-          ret.value += hi;
-          ret.value += '\1';
+          if (uvalue & 0xff)
+          {
+            ret.value += '\1';
+            ret.value += uvalue & 0xff;
+            ret.value += uvalue >> 8;
+          }
+          else
+          {
+            ret.value += '\2';
+            ret.value += '\1';
+            ret.value += uvalue >> 8;
+          }
         }
-        else
-        {
-          ret.value += '\1';
-          ret.value += hi;
-          ret.value += *it;
-        }
-        hi = '\0';
       }
-      else if (*it & '\x80')
+      else if (ch >= 0xf0)
       {
-        hi = *it;
+        bytes = 3;
+        uvalue = ch & 0x07;
+      }
+      else if (ch >= 0xe0)
+      {
+        bytes = 2;
+        uvalue = ch & 0x0f;
+      }
+      else if (ch >= 0xc0)
+      {
+        bytes = 1;
+        uvalue = ch & 0x1f;
       }
       else
         ret.value += *it;
@@ -113,30 +130,86 @@ namespace zeno
 
   std::string QUnicodeString::toXML() const
   {
+    std::ostringstream ret;
+    for (std::string::size_type n = 0; n < value.size(); ++n)
+    {
+      switch(value[n])
+      {
+        case '\1':
+        {
+          unsigned char lo = value[++n];
+          unsigned char hi = value[++n];
+          uint16_t uvalue = static_cast<uint16_t>(hi) << 8 | static_cast<uint16_t>(lo);
+          ret << "&#" << uvalue << ';';
+          break;
+        }
+
+        case '\2':
+        {
+          unsigned char hi = value[++n];
+          ++n;
+          uint16_t uvalue = static_cast<uint16_t>(hi) << 8;
+          ret << "&#" << uvalue << ';';
+          break;
+        }
+
+        default:
+          ret <<value[n];
+      }
+    }
+    return ret.str();
+  }
+
+  std::string QUnicodeString::toUtf8() const
+  {
     std::string ret;
     for (std::string::size_type n = 0; n < value.size(); ++n)
     {
       switch(value[n])
       {
         case '\1':
+        {
+          unsigned char lo = value[++n];
+          unsigned char hi = value[++n];
+          uint16_t uvalue = static_cast<uint16_t>(hi) << 8 | static_cast<uint16_t>(lo);
+
+          if (uvalue < 128)
+            ret += static_cast<char>(uvalue);
+          else if (uvalue < 2048)
           {
-            ret += "&#x";
-            unsigned char c1 = value[++n];
-            unsigned char c2 = value[++n];
-            appendHex4(ret, static_cast<uint16_t>(c1) << 8 | static_cast<uint16_t>(c2));
-            ret += ';';
+            ret += ('\xc0' | (uvalue >> 6));
+            ret += ('\x80' | (uvalue & 0x3f));
+          }
+          else
+          {
+            ret += ('\xe0' | (uvalue >> 12));
+            ret += ('\x80' | ((uvalue >> 6) & 0x3f));
+            ret += ('\x80' | (uvalue & 0x3f));
           }
           break;
+        }
 
         case '\2':
+        {
+          unsigned char hi = value[++n];
+          ++n;
+          uint16_t uvalue = static_cast<uint16_t>(hi) << 8;
+
+          if (uvalue < 128)
+            ret += static_cast<char>(uvalue);
+          else if (uvalue < 2048)
           {
-            ret += "&#x";
-            unsigned char c1 = value[++n];
-            ++n;
-            appendHex4(ret, static_cast<uint16_t>(c1) << 8);
-            ret += ';';
+            ret += ('\xc0' | (uvalue >> 6));
+            ret += ('\x80' | (uvalue & 0x3f));
+          }
+          else
+          {
+            ret += ('\xe0' | (uvalue >> 12));
+            ret += ('\x80' | ((uvalue >> 6) & 0x3f));
+            ret += ('\x80' | (uvalue & 0x3f));
           }
           break;
+        }
 
         default:
           ret += value[n];
@@ -199,13 +272,7 @@ namespace zeno
 
   std::ostream& operator<< (std::ostream& out, const QUnicodeString& str)
   {
-    // TODO
-    return out << str.getValue();
+    return out << str.toUtf8();
   }
 
-  std::ostream& operator<< (std::ostream& out, const QUnicodeChar& ch)
-  {
-    // TODO
-    return out << static_cast<char>(ch.getValue());
-  }
 }

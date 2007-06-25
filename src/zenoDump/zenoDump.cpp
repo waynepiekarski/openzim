@@ -95,7 +95,7 @@ void ZenoDumper::listArticle(const zeno::Article& article, bool listsubs)
     std::cout <<
     "\tuncompressedlen: " << article.getData().size() << "\n";
   std::cout <<
-    "\ttype:            " << static_cast<unsigned>(article.getType()) << "\n"
+    "\tnamespace:       " << static_cast<unsigned>(article.getNamespace()) << "\n"
     "\tmime-type:       " << article.getLibraryMimeType() << "\n"
     "\tsubtype:         " << article.getSubtype() << "\n"
     "\tsubtype-parent:  " << article.getSubtypeParent() << "\n"

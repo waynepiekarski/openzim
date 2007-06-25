@@ -12,13 +12,16 @@ unsigned int seed = static_cast<unsigned int>(time(0));
 do
 {
   zeno::size_type idx = static_cast<zeno::size_type>(static_cast<double>(articleFile.getCountArticles()) * rand_r(&seed) / RAND_MAX);
-  log_debug("read article " << idx);
+
   article = articleFile.getArticle(idx);
+  log_debug("consider article " << article.getIndex() << ": " << article.getTitle());
 
-} while (!article.isMainArticle());
+} while (!(article.isMainArticle()
+            && article.getLibraryMimeType() == zeno::Dirent::zenoMimeTextHtml
+            && article.getNamespace() == 'A'));
 
-log_debug("choose article " << article.getIndex());
+log_info("choose article " << article.getIndex() << ": " << article.getTitle());
 
-return reply.redirect("/A/" + article.getTitle().toUtf8());
+return reply.redirect('/' + article.getUrl().toUtf8());
   
 </%cpp>

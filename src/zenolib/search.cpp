@@ -46,14 +46,26 @@ namespace zeno
   {
     if (!wordList.empty() && priority == 0.0)
     {
+      log_debug("weightOcc=" << Search::getWeightOcc()
+            << " weightOccOff=" << Search::getWeightOccOff()
+            << " weightDist=" << Search::getWeightDist()
+            << " weightPos=" << Search::getWeightPos()
+            << " weightDistinctWords=" << Search::getWeightDistinctWords());
+
       priority = 1.0;
+
+      log_debug("getPriority, " << wordList.size() << " words");
 
       // weight occurencies of words
       for (WordListType::const_iterator itw = wordList.begin(); itw != wordList.end(); ++itw)
         priority *= 1.0 + log(itw->second * zeno::Search::getWeightOcc()) + zeno::Search::getWeightOccOff();
 
+      log_debug("priority1: " << priority);
+
       // weight distinct words
       priority += zeno::Search::getWeightDistinctWords() * wordList.size();
+
+      log_debug("priority2: " << priority);
 
       // weight distance between different words
       PosListType::const_iterator itp = posList.begin();
@@ -72,11 +84,13 @@ namespace zeno
         pos = itp->first + word.size();
       }
 
+      log_debug("priority3: " << priority);
+
       // weight position of words in the document
       for (itp = posList.begin(); itp != posList.end(); ++itp)
         priority += zeno::Search::getWeightPos() * itp->first / article.getDataLen();
 
-      log_debug("priority of article \"" << article.getTitle() << "\", " << wordList.size() << " words: " << priority);
+      log_debug("priority of article " << article.getIndex() << " \"" << article.getTitle() << "\", " << wordList.size() << " words: " << priority);
     }
 
     return priority;
@@ -101,7 +115,7 @@ namespace zeno
 
       log_debug("search for token \"" << token << '"');
 
-      zeno::Article indexarticle = indexfile.getArticle("X/" + token);
+      zeno::Article indexarticle = indexfile.getArticle(QUnicodeString::fromUtf8("X/" + token));
       std::string data = indexarticle.getData();
       log_debug(data.size() / 8 << " articles found; collect statistics");
       for (unsigned off = 0; off + 4 <= data.size(); off += 8)
@@ -123,6 +137,8 @@ namespace zeno
     {
       if (it->second.getCountPositions() > 1)
         searchResult.push_back(it->second);
+      else
+        log_debug("discard article " << it->first);
     }
 
     if (searchResult.empty())

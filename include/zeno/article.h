@@ -71,7 +71,7 @@ namespace zeno
       size_type   getDataLen() const          { return dirent.getSize(); }
       CompressionType getCompression() const  { return dirent.getCompression(); }
       bool        isCompressionZip() const    { return dirent.isCompressionZip(); }
-      uint8_t     getType() const             { return dirent.getExtra()[0]; }
+      char        getNamespace() const        { return dirent.getTitle()[0]; }
       QUnicodeString getUrl() const           { return QUnicodeString(dirent.getTitle()); }
       QUnicodeString getTitle() const;
       MimeType    getLibraryMimeType() const  { return dirent.getMimeType(); }

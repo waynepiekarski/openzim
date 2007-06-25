@@ -2,10 +2,10 @@
 <%args>
 go; // Artikel
 ft; // Volltext
-e;  // Begriff
 </%args>
 <%pre>
 #include <zeno/search.h>
+#include <zeno/fileiterator.h>
 </%pre>
 <%config>
 double weightOcc = zeno::Search::getWeightOcc();
@@ -16,23 +16,71 @@ double weightDistinctWords = zeno::Search::getWeightDistinctWords();
 </%config>
 <%cpp>
 
+  zeno::Search::setWeightOcc(weightOcc);
+  zeno::Search::setWeightOccOff(weightOccOff);
+  zeno::Search::setWeightDist(weightDist);
+  zeno::Search::setWeightPos(weightPos);
+  zeno::Search::setWeightDistinctWords(weightDistinctWords);
+
   if (!go.empty())
-  {
-    log_debug("redirect to article \"" << e << '"');
-    return reply.redirect("/A/" + e);
-  }
+    return articlesearch(request, reply, qparam);
 
   if (!ft.empty())
-  {
-    log_debug("search expression \"" << e << '"');
-    searchExpression = e;
-    zeno::Search search(indexFile, articleFile);
-    result = search.search(e);
+    return fulltext(request, reply, qparam);
 
-    log_debug(result.size() << " articles found");
+  if (!articles.empty()) {
+</%cpp>
+<& skin qparam nextComp="searcharticles" type=(typeSpecial) >
+<%cpp>
+  }
+  else if (!result.empty())
+  {
+</%cpp>
+<& skin qparam nextComp="searchresults" type=(typeSpecial) >
+<%cpp>
+}
+
+</%cpp>
+<%def articlesearch>
+<%args>
+e;  // Begriff
+</%args>
+<%cpp>
+
+  result.clear();
+
+  log_debug("search article \"" << e << '"');
+
+  articles.clear();
+  for (zeno::File::const_iterator it = articleFile.begin(); it != articleFile.end(); ++it)
+  {
+    std::string title = it->getTitle().toUtf8();
+    if (title.find(e) != std::string::npos)
+      articles.push_back(*it);
   }
 
-  title = zeno::QUnicodeString("Suche nach: " + searchExpression);
+  title = zeno::QUnicodeString("Artikelsuche nach: " + e);
+
+</%cpp>
+<& skin qparam nextComp="searcharticles" type=(typeSpecial) >
+</%def>
+%
+<%def fulltext>
+<%args>
+e;  // Begriff
+</%args>
+<%cpp>
+
+  articles.clear();
+
+  log_debug("search expression \"" << e << '"');
+  zeno::Search search(indexFile, articleFile);
+  result = search.search(e);
+
+  log_debug(result.size() << " articles found");
+
+  title = zeno::QUnicodeString("Suche nach: " + e);
 
 </%cpp>
 <& skin qparam nextComp="searchresults" type=(typeSpecial) >
+</%def>

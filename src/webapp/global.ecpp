@@ -3,11 +3,11 @@
 #include <vector>
 #include <zeno/file.h>
 #include <zeno/article.h>
+#include <zeno/articlesearch.h>
 #include <zeno/search.h>
 #include <zeno/qunicode.h>
 
 typedef std::map<std::string, zeno::File> ZenoFilesType;
-typedef std::vector<zeno::Article> ArticlesType;
 
 static const int typeSpecial = -1;
 static const int typeArticle = 0;
@@ -36,6 +36,6 @@ zeno::Article article;
 std::string searchExpression;
 zeno::Search::Results result;
 zeno::QUnicodeString title;
-ArticlesType articles;
+zeno::ArticleSearch::Results articles;
 
 </%session>

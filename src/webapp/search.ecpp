@@ -52,12 +52,8 @@ e;  // Begriff
   log_debug("search article \"" << e << '"');
 
   articles.clear();
-  for (zeno::File::const_iterator it = articleFile.begin(); it != articleFile.end(); ++it)
-  {
-    std::string title = it->getTitle().toUtf8();
-    if (title.find(e) != std::string::npos)
-      articles.push_back(*it);
-  }
+  zeno::ArticleSearch search(articleFile);
+  articles = search.search(e);
 
   title = zeno::QUnicodeString("Artikelsuche nach: " + e);
 

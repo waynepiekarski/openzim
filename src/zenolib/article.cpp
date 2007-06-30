@@ -118,7 +118,7 @@ namespace zeno
   QUnicodeString Article::getTitle() const
   {
     std::string url = dirent.getTitle();
-    std::string::size_type n = url.find_last_of('/');
+    std::string::size_type n = url.find_first_of('/');
     return QUnicodeString(n == std::string::npos ? url : url.substr(n + 1));
   }
 }

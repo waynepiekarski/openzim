@@ -1,6 +1,7 @@
 <%include>global.ecpp</%include>
 <%cpp>
 
+  log_debug("send article \"" << article.getTitle() << '"');
   reply.setContentType(article.getMimeType());
   reply.out() << article.getData();
 

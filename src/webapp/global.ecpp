@@ -16,18 +16,19 @@ static const int typeHistory = 1;
 </%pre>
 <%config>
 
-ZenoPath = "./";
-ZenoFile = ZenoPath + "wikipedia.zeno";
-ZenoIndex = ZenoPath + "wikipedia.index.zeno";
-ZenoImages = ZenoPath + "wikipedia.images.zeno";
+ZenoPath = ".";
+ZenoFile = "wikipedia.zeno";
+ZenoIndex = "wikipedia.index.zeno";
+ZenoImages = "wikipedia.images.zeno";
+bool RedirectNumeric = false;
 
 </%config>
 <%application scope="global">
 
 ZenoFilesType zenoFiles;
-zeno::File articleFile(ZenoFile);
-zeno::File indexFile(ZenoIndex);
-zeno::File imagesFile(ZenoImages);
+zeno::File articleFile(ZenoPath.empty() ? ZenoFile : ZenoPath + '/' + ZenoFile);
+zeno::File indexFile(ZenoPath.empty() ? ZenoFile : ZenoPath + '/' + ZenoIndex);
+zeno::File imagesFile(ZenoPath.empty() ? ZenoFile : ZenoPath + '/' + ZenoImages);
 
 </%application>
 <%session scope="global">

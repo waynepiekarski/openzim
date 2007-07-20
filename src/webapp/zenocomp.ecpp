@@ -1,8 +1,13 @@
 <%config>
 bool DisableCache = false;
-Charset = "iso-8859-1";
 </%config>
 <%include>global.ecpp</%include>
+<%pre>
+#include <cxxtools/iconverter.h>
+</%pre>
+<%application>
+static bool lastFoundUtf8(true);
+</%application>
 <%cpp>
 
   if (request.getArgs().size() == 0)
@@ -13,6 +18,7 @@ Charset = "iso-8859-1";
     host = "localhost";
 
   zeno::File file;
+  title.clear();
 
   if (request.getArgs().size() > 0)
   {
@@ -38,31 +44,59 @@ Charset = "iso-8859-1";
     }
   }
 
-  zeno::QUnicodeString pathInfo = zeno::QUnicodeString::fromUtf8(request.getPathInfo());
-  if (DisableCache || article.getUrl() != pathInfo)
+  static cxxtools::IConverter iso8859_utf8("UTF-8", "ISO-8859-1");
+
+  zeno::QUnicodeString pathInfo;
+  pathInfo = zeno::QUnicodeString::fromUtf8(
+    lastFoundUtf8 ? request.getPathInfo()
+                  : iso8859_utf8.convert(request.getPathInfo()));
+
+  zeno::QUnicodeString pathInfoAlt;
+  pathInfoAlt = zeno::QUnicodeString::fromUtf8(
+    lastFoundUtf8 ? iso8859_utf8.convert(request.getPathInfo())
+                  : request.getPathInfo());
+
+  if (DisableCache || (article.getUrl() != pathInfo && article.getUrl() != pathInfoAlt))
   {
-    log_debug("search article \"" << pathInfo << "\" in file \"" << file.getFilename() << '"');
+    log_debug("search article \"" << pathInfo << "\" in file \"" << file.getFilename() << "\" encoding " << (lastFoundUtf8 ? "utf-8" : "iso-8859-1"));
     article = file.getArticle(pathInfo);
   }
   else
-    log_debug("article " << pathInfo);
+    log_debug("use cached article " << (lastFoundUtf8 ? pathInfo : pathInfoAlt));
 
   if (!article)
   {
-    log_warn("article " << pathInfo << " not found");
-    return DECLINED;
-  }
-  else
-  {
-    log_debug("article " << pathInfo << " fetched - mime-type "
-      << article.getLibraryMimeType());
-
-    if (article.getLibraryMimeType() != zeno::Dirent::zenoMimeTextHtml)
+    // article not found with last encoding - try other one
+    if (pathInfoAlt != pathInfo)
     {
-      log_debug("send non-html data");
-      callComp("article", request, reply, qparam);
+      // different encoding has a other result - try this one
+      log_debug("search article \"" << pathInfoAlt << "\" in file \"" << file.getFilename() << "\" encoding " << (lastFoundUtf8 ? "iso-8859-1" : "utf-8"));
+      article = file.getArticle(pathInfoAlt);
+    }
+
+    if (article)
+    {
+      lastFoundUtf8 = !lastFoundUtf8;
+      log_debug("switch to " << (lastFoundUtf8 ? "utf-8" : "iso-8859-1"));
+    }
+    else
+    {
+      log_warn("article " << pathInfo << " not found");
+</%cpp>
+<& skin qparam nextComp="notfound" type=(typeSpecial) >
+<%cpp>
       return HTTP_OK;
     }
+  }
+
+  log_debug("article " << pathInfo << " fetched - mime-type "
+    << article.getLibraryMimeType());
+
+  if (article.getLibraryMimeType() != zeno::Dirent::zenoMimeTextHtml)
+  {
+    log_debug("send non-html data");
+    callComp("article", request, reply, qparam);
+    return HTTP_OK;
   }
 
   title = article.getTitle();

@@ -65,6 +65,7 @@ namespace zeno
       static QUnicodeString fromUtf8(const std::string& v);
 
       const std::string& getValue() const { return value; }
+      void clear()        { value.clear(); }
 
       int compare(const QUnicodeString& v) const;
 

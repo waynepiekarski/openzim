@@ -3,25 +3,44 @@
 
 #include <time.h>
 #include <stdlib.h>
+#include <cxxtools/iconverter.h>
+#include <tnt/httperror.h>
 
 unsigned int seed = static_cast<unsigned int>(time(0));
 
 </%pre>
 <%cpp>
 
-do
-{
-  zeno::size_type idx = static_cast<zeno::size_type>(static_cast<double>(articleFile.getCountArticles()) * rand_r(&seed) / RAND_MAX);
+  do
+  {
+    zeno::size_type idx = static_cast<zeno::size_type>(static_cast<double>(articleFile.getCountArticles()) * rand_r(&seed) / RAND_MAX);
 
-  article = articleFile.getArticle(idx);
-  log_debug("consider article " << article.getIndex() << ": " << article.getTitle());
+    article = articleFile.getArticle(idx);
+    log_debug("consider article " << article.getIndex() << ": " << article.getTitle());
 
-} while (!(article.isMainArticle()
-            && article.getLibraryMimeType() == zeno::Dirent::zenoMimeTextHtml
-            && article.getNamespace() == 'A'));
+  } while (!(article.isMainArticle()
+              && article.getLibraryMimeType() == zeno::Dirent::zenoMimeTextHtml
+              && article.getNamespace() == 'A'));
 
-log_info("choose article " << article.getIndex() << ": " << article.getTitle());
+  log_info("choose article " << article.getIndex() << ": " << article.getTitle());
 
-return reply.redirect('/' + article.getUrl().toUtf8());
-  
+  if (!RedirectNumeric)
+    reply.redirect('/' + article.getUrl().toUtf8());
+
+  std::ostringstream url;
+  url << "/!/" << article.getIndex();
+  reply.redirect(url.str());
+
+  if (article.getLibraryMimeType() != zeno::Dirent::zenoMimeTextHtml)
+  {
+    log_debug("send non-html data");
+    callComp("article", request, reply, qparam);
+    return HTTP_OK;
+  }
+
+  title = article.getTitle();
+
+  int type = request.getPathInfo()[0] == '-' ? typeSpecial : typeArticle;
+
 </%cpp>
+<& skin qparam nextComp="article" type=(type) >

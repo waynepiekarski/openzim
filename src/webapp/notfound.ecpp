@@ -1,0 +1,2 @@
+<p><strong>Die gew&uuml;nschte Seite wurde nicht gefunden:</strong></p>
+<ul><li><$ request.getPathInfo() $></li></ul>

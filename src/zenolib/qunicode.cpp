@@ -220,6 +220,35 @@ namespace zeno
 
   int QUnicodeString::compare(const QUnicodeString& v) const
   {
+    int coll = compareCollate(v);
+    if (coll != 0)
+      return coll;
+
+    std::istringstream is1(value);
+    std::istringstream is2(v.value);
+
+    while (is1 && is2)
+    {
+      QUnicodeChar uc1;
+      is1 >> uc1;
+
+      QUnicodeChar uc2;
+      is2 >> uc2;
+
+      if (!is1 || !is2)
+        break;
+
+      if (uc1.getValue() < uc2.getValue())
+        return -1;
+      else if (uc2.getValue() < uc1.getValue())
+        return 1;
+    }
+
+    return is1 ? 1 : is2 ? -1 : 0;
+  }
+
+  int QUnicodeString::compareCollate(const QUnicodeString& v) const
+  {
     std::istringstream is1(value);
     std::istringstream is2(v.value);
 
@@ -237,33 +266,6 @@ namespace zeno
       if (uc1.getCollateValue() < uc2.getCollateValue())
         return -1;
       else if (uc2.getCollateValue() < uc1.getCollateValue())
-        return 1;
-    }
-
-    if (is1)
-      return 1;
-    else if (is2)
-      return -1;
-
-    is1.clear();
-    is1.seekg(0);
-    is2.clear();
-    is2.seekg(0);
-
-    while (is1 && is2)
-    {
-      QUnicodeChar uc1;
-      is1 >> uc1;
-
-      QUnicodeChar uc2;
-      is2 >> uc2;
-
-      if (!is1 || !is2)
-        break;
-
-      if (uc1.getValue() < uc2.getValue())
-        return -1;
-      else if (uc2.getValue() < uc1.getValue())
         return 1;
     }
 

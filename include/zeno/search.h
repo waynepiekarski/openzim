@@ -30,7 +30,14 @@ namespace zeno
   {
       Article article;
       mutable double priority;
-      typedef std::map<std::string, unsigned> WordListType;
+      struct WordAttr
+      {
+        unsigned count;
+        unsigned addweight;
+        WordAttr() : count(0), addweight(1) { }
+      };
+
+      typedef std::map<std::string, WordAttr> WordListType;
       typedef std::map<uint32_t, std::string> PosListType;
       WordListType wordList;
       PosListType posList;
@@ -43,7 +50,7 @@ namespace zeno
           { }
       const Article& getArticle() const  { return article; }
       double getPriority() const;
-      void foundWord(const std::string& word, uint32_t pos)   { ++wordList[word]; posList[pos] = word; }
+      void foundWord(const std::string& word, uint32_t pos, unsigned addweight);
       unsigned getCountWords() const  { return wordList.size(); }
       unsigned getCountPositions() const  { return posList.size(); }
   };

@@ -1,12 +1,7 @@
 <%include>global.ecpp</%include>
-<%pre>
-#include <cxxtools/iconverter.h>
-#include <tnt/httperror.h>
-</%pre>
 <%cpp>
 
   zeno::size_type idx = tnt::stringTo<zeno::size_type>(request.getPathInfo());
-  //static cxxtools::IConverter utf8_iso8859("ISO-8859-1", "UTF-8");
 
   article = articleFile.getArticle(idx);
   log_info("choose article " << article.getIndex() << ": " << article.getTitle() << " url:" << article.getUrl());

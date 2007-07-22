@@ -68,6 +68,7 @@ namespace zeno
       void clear()        { value.clear(); }
 
       int compare(const QUnicodeString& v) const;
+      int compareCollate(const QUnicodeString& v) const;
 
       bool operator< (const QUnicodeString& v) const
         { return compare(v) < 0; }

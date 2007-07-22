@@ -58,7 +58,10 @@ namespace zeno
 
       // weight occurencies of words
       for (WordListType::const_iterator itw = wordList.begin(); itw != wordList.end(); ++itw)
-        priority *= 1.0 + log(itw->second * zeno::Search::getWeightOcc()) + zeno::Search::getWeightOccOff();
+        priority *= 1.0 + log(itw->second.count * zeno::Search::getWeightOcc()
+                                + 10 * itw->second.addweight)
+                        + zeno::Search::getWeightOccOff()
+                        + itw->second.addweight;
 
       log_debug("priority1: " << priority);
 
@@ -96,6 +99,13 @@ namespace zeno
     return priority;
   }
 
+  void SearchResult::foundWord(const std::string& word, uint32_t pos, unsigned addweight)
+  {
+    ++wordList[word].count;
+    wordList[word].addweight += addweight;
+    posList[pos] = word;
+  }
+
   double Search::weightOcc = 10.0;
   double Search::weightOccOff = 1.0;
   double Search::weightDist = 10;
@@ -110,6 +120,13 @@ namespace zeno
     IndexType index;
     while (ssearch >> token)
     {
+      unsigned addweight = 0;
+      while (token.size() > 0 && token.at(0) == '+')
+      {
+        ++addweight;
+        token.erase(0, 1);
+      }
+
       for (std::string::iterator it = token.begin(); it != token.end(); ++it)
         *it = std::tolower(*it);
 
@@ -127,7 +144,7 @@ namespace zeno
           IndexType::value_type(articleIdx,
             SearchResult(articlefile.getArticle(articleIdx)))).first;
 
-        it->second.foundWord(token, position);
+        it->second.foundWord(token, position, addweight);
       }
     }
 

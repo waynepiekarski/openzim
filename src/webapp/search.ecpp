@@ -65,13 +65,17 @@ e;  // Begriff
 <%args>
 e;  // Begriff
 </%args>
+<%pre>
+#include <cxxtools/iconverter.h>
+</%pre>
 <%cpp>
 
   articles.clear();
 
   log_debug("search expression \"" << e << '"');
+  static cxxtools::IConverter iso8859_utf8("UTF-8", "ISO-8859-1");
   zeno::Search search(indexFile, articleFile);
-  result = search.search(e);
+  result = search.search(iso8859_utf8(e));
 
   log_debug(result.size() << " articles found");
 

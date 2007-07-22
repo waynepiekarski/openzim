@@ -10,6 +10,7 @@ ft; // Volltext
 <%config>
 double weightOcc = zeno::Search::getWeightOcc();
 double weightOccOff = zeno::Search::getWeightOccOff();
+double weightPlus = zeno::Search::getWeightPlus();
 double weightDist = zeno::Search::getWeightDist();
 double weightPos = zeno::Search::getWeightPos();
 double weightDistinctWords = zeno::Search::getWeightDistinctWords();
@@ -18,6 +19,7 @@ double weightDistinctWords = zeno::Search::getWeightDistinctWords();
 
   zeno::Search::setWeightOcc(weightOcc);
   zeno::Search::setWeightOccOff(weightOccOff);
+  zeno::Search::setWeightPlus(weightPlus);
   zeno::Search::setWeightDist(weightDist);
   zeno::Search::setWeightPos(weightPos);
   zeno::Search::setWeightDistinctWords(weightDistinctWords);
@@ -28,13 +30,15 @@ double weightDistinctWords = zeno::Search::getWeightDistinctWords();
   if (!ft.empty())
     return fulltext(request, reply, qparam);
 
-  if (!articles.empty()) {
+  if (!articles.empty())
+  {
 </%cpp>
 <& skin qparam nextComp="searcharticles" type=(typeSpecial) >
 <%cpp>
   }
   else if (!result.empty())
   {
+    title = zeno::QUnicodeString("Suche nach: " + result.getExpression());
 </%cpp>
 <& skin qparam nextComp="searchresults" type=(typeSpecial) >
 <%cpp>
@@ -52,7 +56,7 @@ e;  // Begriff
   log_debug("search article \"" << e << '"');
 
   articles.clear();
-  zeno::ArticleSearch search(articleFile);
+  zeno::ArticleSearch search(articlesFile);
   articles = search.search(e);
 
   title = zeno::QUnicodeString("Artikelsuche nach: " + e);
@@ -74,12 +78,12 @@ e;  // Begriff
 
   log_debug("search expression \"" << e << '"');
   static cxxtools::IConverter iso8859_utf8("UTF-8", "ISO-8859-1");
-  zeno::Search search(indexFile, articleFile);
+  zeno::Search search(indexFile, articlesFile);
   result = search.search(iso8859_utf8(e));
 
   log_debug(result.size() << " articles found");
 
-  title = zeno::QUnicodeString("Suche nach: " + e);
+  title = zeno::QUnicodeString("Suche nach: " + result.getExpression());
 
 </%cpp>
 <& skin qparam nextComp="searchresults" type=(typeSpecial) >

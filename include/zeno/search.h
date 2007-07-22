@@ -58,11 +58,21 @@ namespace zeno
   class Search
   {
     public:
-      typedef std::vector<SearchResult> Results;
+      class Results : public std::vector<SearchResult>
+      {
+          std::string expr;
+
+        public:
+          void setExpression(const std::string& e)
+            { expr = e; }
+          const std::string& getExpression() const
+            { return expr; }
+      };
 
     private:
       static double weightOcc;
       static double weightOccOff;
+      static double weightPlus;
       static double weightDist;
       static double weightPos;
       static double weightDistinctWords;
@@ -81,12 +91,14 @@ namespace zeno
 
       static double getWeightOcc()                 { return weightOcc; }
       static double getWeightOccOff()              { return weightOccOff; }
+      static double getWeightPlus()                { return weightPlus; }
       static double getWeightDist()                { return weightDist; }
       static double getWeightPos()                 { return weightPos; }
       static double getWeightDistinctWords()       { return weightDistinctWords; }
 
       static void setWeightOcc(double v)           { weightOcc = v; }
       static void setWeightOccOff(double v)        { weightOccOff = v; }
+      static void setWeightPlus(double v)          { weightPlus = v; }
       static void setWeightDist(double v)          { weightDist = v; }
       static void setWeightPos(double v)           { weightPos = v; }
       static void setWeightDistinctWords(double v) { weightDistinctWords = v; }

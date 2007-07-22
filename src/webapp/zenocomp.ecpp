@@ -3,9 +3,11 @@ bool DisableCache = false;
 </%config>
 <%include>global.ecpp</%include>
 <%pre>
+#include "backgroundreader.h"
 #include <cxxtools/iconverter.h>
 </%pre>
 <%application>
+zeno::Backgroundreader reader(articlesFile, imagesFile);
 static bool lastFoundUtf8(true);
 </%application>
 <%cpp>
@@ -24,7 +26,7 @@ static bool lastFoundUtf8(true);
   {
     std::string zenoFileName = request.getArg(0);
     if (zenoFileName == ZenoFile)
-      file = articleFile;
+      file = articlesFile;
     else if (zenoFileName == ZenoIndex)
       file = indexFile;
     else if (zenoFileName == ZenoImages)
@@ -59,7 +61,7 @@ static bool lastFoundUtf8(true);
   if (DisableCache || (article.getUrl() != pathInfo && article.getUrl() != pathInfoAlt))
   {
     log_debug("search article \"" << pathInfo << "\" in file \"" << file.getFilename() << "\" encoding " << (lastFoundUtf8 ? "utf-8" : "iso-8859-1"));
-    article = file.getArticle(pathInfo);
+    article = reader.getArticle(file, pathInfo);
   }
   else
     log_debug("use cached article " << (lastFoundUtf8 ? pathInfo : pathInfoAlt));

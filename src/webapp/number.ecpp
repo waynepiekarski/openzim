@@ -3,7 +3,7 @@
 
   zeno::size_type idx = tnt::stringTo<zeno::size_type>(request.getPathInfo());
 
-  article = articleFile.getArticle(idx);
+  article = articlesFile.getArticle(idx);
   log_info("choose article " << article.getIndex() << ": " << article.getTitle() << " url:" << article.getUrl());
 
   if (!RedirectNumeric)

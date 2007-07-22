@@ -47,6 +47,7 @@ namespace zeno
     if (!wordList.empty() && priority == 0.0)
     {
       log_debug("weightOcc=" << Search::getWeightOcc()
+            << " weightPlus=" << Search::getWeightPlus()
             << " weightOccOff=" << Search::getWeightOccOff()
             << " weightDist=" << Search::getWeightDist()
             << " weightPos=" << Search::getWeightPos()
@@ -59,9 +60,9 @@ namespace zeno
       // weight occurencies of words
       for (WordListType::const_iterator itw = wordList.begin(); itw != wordList.end(); ++itw)
         priority *= 1.0 + log(itw->second.count * zeno::Search::getWeightOcc()
-                                + 10 * itw->second.addweight)
+                                + Search::getWeightPlus() * itw->second.addweight)
                         + zeno::Search::getWeightOccOff()
-                        + itw->second.addweight;
+                        + Search::getWeightPlus() * itw->second.addweight;
 
       log_debug("priority1: " << priority);
 
@@ -108,6 +109,7 @@ namespace zeno
 
   double Search::weightOcc = 10.0;
   double Search::weightOccOff = 1.0;
+  double Search::weightPlus = 10.0;
   double Search::weightDist = 10;
   double Search::weightPos = 2;
   double Search::weightDistinctWords = 50;
@@ -150,6 +152,7 @@ namespace zeno
 
     log_debug("copy/filter " << index.size() << " articles");
     Results searchResult;
+    searchResult.setExpression(expr);
     for (IndexType::const_iterator it = index.begin(); it != index.end(); ++it)
     {
       if (it->second.getCountPositions() > 1)

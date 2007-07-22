@@ -10,7 +10,8 @@ tntnet_LTLIBRARIES = zeno.la
 
 zeno_la_SOURCES = zenocomp.ecpp skin.ecpp \
 	search.ecpp searcharticles.ecpp searchresults.ecpp article.ecpp \
-	tntnet_png.png random.ecpp notfound.ecpp number.ecpp
+	tntnet_png.png random.ecpp notfound.ecpp number.ecpp \
+	backgroundreader.cpp backgroundreader.h
 
 zeno_la_LDFLAGS = -module -version-info @sonumber@ -ltntnet
 zeno_la_LIBADD=$(top_builddir)/src/zenolib/libzeno.la

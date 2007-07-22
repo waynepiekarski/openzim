@@ -6,6 +6,7 @@
 #include <zeno/articlesearch.h>
 #include <zeno/search.h>
 #include <zeno/qunicode.h>
+#include <cxxtools/hirestime.h>
 
 typedef std::map<std::string, zeno::File> ZenoFilesType;
 
@@ -26,7 +27,7 @@ bool RedirectNumeric = false;
 <%application scope="global">
 
 ZenoFilesType zenoFiles;
-zeno::File articleFile(ZenoPath.empty() ? ZenoFile : ZenoPath + '/' + ZenoFile);
+zeno::File articlesFile(ZenoPath.empty() ? ZenoFile : ZenoPath + '/' + ZenoFile);
 zeno::File indexFile(ZenoPath.empty() ? ZenoFile : ZenoPath + '/' + ZenoIndex);
 zeno::File imagesFile(ZenoPath.empty() ? ZenoFile : ZenoPath + '/' + ZenoImages);
 
@@ -36,7 +37,10 @@ zeno::File imagesFile(ZenoPath.empty() ? ZenoFile : ZenoPath + '/' + ZenoImages)
 zeno::Article article;
 std::string searchExpression;
 zeno::Search::Results result;
-zeno::QUnicodeString title;
 zeno::ArticleSearch::Results articles;
 
 </%session>
+<%request scope="global">
+cxxtools::HiresTime t0(cxxtools::HiresTime::gettimeofday());
+zeno::QUnicodeString title;
+</%request>

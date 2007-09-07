@@ -57,12 +57,22 @@ namespace zeno
 
       log_debug("getPriority, " << wordList.size() << " words");
 
-      // weight occurencies of words
+      // weight occurencies of words in article and title
       for (WordListType::const_iterator itw = wordList.begin(); itw != wordList.end(); ++itw)
+      {
         priority *= 1.0 + log(itw->second.count * zeno::Search::getWeightOcc()
                                 + Search::getWeightPlus() * itw->second.addweight)
                         + zeno::Search::getWeightOccOff()
                         + Search::getWeightPlus() * itw->second.addweight;
+
+        std::string title = article.getTitle().toUtf8();
+        for (std::string::iterator it = title.begin(); it != title.end(); ++it)
+          *it = std::tolower(*it);
+
+        //std::string::size_type p = title.find(itw->first);
+        //if (p != std::string::npos)
+          //priority *= Search::getWeightTitle() / (p + 1) / title.size();
+      }
 
       log_debug("priority1: " << priority);
 
@@ -107,6 +117,7 @@ namespace zeno
     posList[pos] = word;
   }
 
+  double Search::weightTitle = 10.0;
   double Search::weightOcc = 10.0;
   double Search::weightOccOff = 1.0;
   double Search::weightPlus = 10.0;
@@ -118,8 +129,11 @@ namespace zeno
   {
     std::istringstream ssearch(expr);
     std::string token;
+
+    // map from article-idx to article + relevance-informations
     typedef std::map<uint32_t, SearchResult> IndexType;
     IndexType index;
+
     while (ssearch >> token)
     {
       unsigned addweight = 0;

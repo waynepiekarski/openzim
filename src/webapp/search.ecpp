@@ -8,6 +8,7 @@ ft; // Volltext
 #include <zeno/fileiterator.h>
 </%pre>
 <%config>
+double weightTitle = zeno::Search::getWeightTitle();
 double weightOcc = zeno::Search::getWeightOcc();
 double weightOccOff = zeno::Search::getWeightOccOff();
 double weightPlus = zeno::Search::getWeightPlus();
@@ -17,6 +18,7 @@ double weightDistinctWords = zeno::Search::getWeightDistinctWords();
 </%config>
 <%cpp>
 
+  zeno::Search::setWeightTitle(weightTitle);
   zeno::Search::setWeightOcc(weightOcc);
   zeno::Search::setWeightOccOff(weightOccOff);
   zeno::Search::setWeightPlus(weightPlus);

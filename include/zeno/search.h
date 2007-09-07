@@ -70,6 +70,7 @@ namespace zeno
       };
 
     private:
+      static double weightTitle;
       static double weightOcc;
       static double weightOccOff;
       static double weightPlus;
@@ -89,6 +90,7 @@ namespace zeno
 
       Results search(const std::string& expr);
 
+      static double getWeightTitle()               { return weightTitle; }
       static double getWeightOcc()                 { return weightOcc; }
       static double getWeightOccOff()              { return weightOccOff; }
       static double getWeightPlus()                { return weightPlus; }
@@ -96,6 +98,7 @@ namespace zeno
       static double getWeightPos()                 { return weightPos; }
       static double getWeightDistinctWords()       { return weightDistinctWords; }
 
+      static void setWeightTitle(double v)         { weightTitle = v; }
       static void setWeightOcc(double v)           { weightOcc = v; }
       static void setWeightOccOff(double v)        { weightOccOff = v; }
       static void setWeightPlus(double v)          { weightPlus = v; }

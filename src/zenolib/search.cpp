@@ -220,31 +220,4 @@ namespace zeno
     log_debug(results.size() << " articles in result");
   }
 
-  void Search::filter(Results& results, const std::string& begin, const std::string& end)
-  {
-    log_debug("filter results for praefix \"" << begin << '"');
-    QUnicodeString qbegin(begin);
-    QUnicodeString qend(end);
-
-    for (Results::iterator pos = results.begin(); pos != results.end(); ++pos)
-    {
-      if (pos->getArticle().getUrl().compareCollate(0, begin.size(), qbegin) >= 0)
-      {
-        results.erase(results.begin(), pos);
-        break;
-      }
-    }
-
-    for (Results::iterator pos = results.begin(); pos != results.end(); ++pos)
-    {
-      if (pos->getArticle().getUrl().compareCollate(0, end.size(), qend) >= 0)
-      {
-        results.erase(pos, results.end());
-        break;
-      }
-    }
-
-    log_debug(results.size() << " articles in result");
-  }
-
 }

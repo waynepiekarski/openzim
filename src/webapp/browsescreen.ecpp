@@ -8,7 +8,7 @@ var content = "<$a$>";
 function getresult()
 {
   var v = document.getElementById("a").value;
-  ajaxGet("~/browseresults?a=" + encodeURI(v),
+  ajaxGet("/~/browseresults?a=" + encodeURI(v),
     function(request)
     {
       document.getElementById("browseresults")

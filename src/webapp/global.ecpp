@@ -38,7 +38,7 @@ zeno::Article article;
 std::string searchExpression;
 zeno::Search::Results result;
 zeno::Search::Results bresult;
-std::string browse_a;
+std::string browse_a = "\1";
 zeno::ArticleSearch::Results articles;
 
 </%session>

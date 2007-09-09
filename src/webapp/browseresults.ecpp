@@ -21,16 +21,9 @@ unsigned n = 20; // items per page
     else
       ++end[end.size() - 1];
 
-    if (!browse_a.empty() && a.compare(0, browse_a.size(), browse_a) == 0)
-    {
-      zeno::Search::filter(bresult, "A/" + iso8859_utf8(begin), "A/" + iso8859_utf8(end));
-    }
-    else
-    {
-      bresult.clear();
-      zeno::Search search(indexFile, articlesFile);
-      search.find(bresult, "A/" + iso8859_utf8(begin), "A/" + iso8859_utf8(end));
-    }
+    bresult.clear();
+    zeno::Search search(indexFile, articlesFile);
+    search.find(bresult, "A/" + iso8859_utf8(begin), "A/" + iso8859_utf8(end));
     browse_a = a;
   }
 

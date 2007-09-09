@@ -28,46 +28,6 @@ unsigned n = 20; // items per page
   }
 
 </%cpp>
-<div id="z_az">
-<#
-<table>
- <tr>
-  <td>Bl&auml;ttern:</td>
-  <td>
-<%cpp>
-
-  if (a.empty())
-    reply.out() << "<span class=\"z_azact\">A..Z</span> ";
-  else
-    reply.out() << "<a href=\"~/browse?a=\">A..Z</a> ";
-
-  for (std::string::size_type n = 0; n < a.size(); ++n)
-  {
-    std::string pp = a.substr(0, n);
-    std::string t(a, 0, n);
-    reply.out() << "<span class=\"z_azact\">" << t << "</span> ";
-    for (char ch = 'A'; ch <= 'Z'; ++ch)
-    {
-      //if (t + ch == a)
-        //reply.out() << "<span class=\"z_azact\">" << t << ch << "</span> ";
-      //else
-        reply.out() << "<a href=\"~/browse?a=" << t << ch << "\">" << ch << "</a> ";
-    }
-    reply.out() << "<br>\n";
-  }
-
-  reply.out() << "<span class=\"z_azact\">" << a << "</span> ";
-  for (char ch = 'A'; ch <= 'Z'; ++ch)
-    reply.out() << "<a href=\"~/browse?a=" << a << ch << "\">"
-                << ch << "</a> ";
-  reply.out() << "\n";
-
-</%cpp>
-  </td>
- </tr>
-</table>
-#>
-</div>
 <&pager qparam link=("/~/browse?a=" + a + '&') rs=(bresult.size())>
 <hr>
 <ul>

@@ -25,10 +25,16 @@ function getresultdelay()
 }
 
 </script>
+<div id="z_az">
 <form action="~/browse">
-<input type="text" id="a" name="a" value="<$a$>" onKeyup="getresultdelay()">
-<input type="submit" value="absenden">
+Artikelsuche: <input type="text" id="a" name="a" value="<$a$>" onKeyup="getresultdelay()">
+<input type="submit" id="ua" value="absenden">
+<script type="text/javascript">
+document.getElementById("ua").style.display = "none";
+document.getElementById("a").focus();
+</script>
 </form>
+</div>
 <div id="browseresults">
 <& browseresults qparam >
 </div>

@@ -153,8 +153,28 @@ namespace zeno
           break;
         }
 
+        case '<':
+          ret << "&lt;";
+          break;
+
+        case '>':
+          ret << "&gt;";
+          break;
+
+        case '&':
+          ret << "&et;";
+          break;
+
+        case '"':
+          ret << "&quot;";
+          break;
+
+        case '\'':
+          ret << "&#39;";
+          break;
+
         default:
-          ret <<value[n];
+          ret << value[n];
       }
     }
     return ret.str();

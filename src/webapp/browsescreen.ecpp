@@ -1,0 +1,34 @@
+<%args>
+a;
+</%args>
+<%include>global.ecpp</%include>
+<script type="text/javascript">
+
+var content = "<$a$>";
+function getresult()
+{
+  var v = document.getElementById("a").value;
+  ajaxGet("~/browseresults?a=" + encodeURI(v),
+    function(request)
+    {
+      document.getElementById("browseresults")
+              .innerHTML = request.responseText;
+    } );
+}
+
+var timer;
+function getresultdelay()
+{
+  if (timer)
+    window.clearTimeout(timer);
+  timer = window.setTimeout("getresult()", 500);
+}
+
+</script>
+<form action="~/browse">
+<input type="text" id="a" name="a" value="<$a$>" onKeyup="getresultdelay()">
+<input type="submit" value="absenden">
+</form>
+<div id="browseresults">
+<& browseresults qparam >
+</div>

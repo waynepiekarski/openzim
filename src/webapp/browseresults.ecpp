@@ -1,0 +1,84 @@
+<%args>
+a;
+unsigned p = 0;  // current page
+unsigned n = 20; // items per page
+</%args>
+<%include>global.ecpp</%include>
+<%pre>
+#include <zeno/search.h>
+#include <cxxtools/iconverter.h>
+</%pre>
+<%cpp>
+
+  static cxxtools::IConverter iso8859_utf8("UTF-8", "ISO-8859-1");
+
+  if (browse_a != a)
+  {
+    std::string begin = a;
+    std::string end = a;
+    if (end.empty())
+      end = "A";
+    else
+      ++end[end.size() - 1];
+
+    if (!browse_a.empty() && a.compare(0, browse_a.size(), browse_a) == 0)
+    {
+      zeno::Search::filter(bresult, "A/" + iso8859_utf8(begin), "A/" + iso8859_utf8(end));
+    }
+    else
+    {
+      bresult.clear();
+      zeno::Search search(indexFile, articlesFile);
+      search.find(bresult, "A/" + iso8859_utf8(begin), "A/" + iso8859_utf8(end));
+    }
+    browse_a = a;
+  }
+
+</%cpp>
+<div id="z_az">
+<#
+<table>
+ <tr>
+  <td>Bl&auml;ttern:</td>
+  <td>
+<%cpp>
+
+  if (a.empty())
+    reply.out() << "<span class=\"z_azact\">A..Z</span> ";
+  else
+    reply.out() << "<a href=\"~/browse?a=\">A..Z</a> ";
+
+  for (std::string::size_type n = 0; n < a.size(); ++n)
+  {
+    std::string pp = a.substr(0, n);
+    std::string t(a, 0, n);
+    reply.out() << "<span class=\"z_azact\">" << t << "</span> ";
+    for (char ch = 'A'; ch <= 'Z'; ++ch)
+    {
+      //if (t + ch == a)
+        //reply.out() << "<span class=\"z_azact\">" << t << ch << "</span> ";
+      //else
+        reply.out() << "<a href=\"~/browse?a=" << t << ch << "\">" << ch << "</a> ";
+    }
+    reply.out() << "<br>\n";
+  }
+
+  reply.out() << "<span class=\"z_azact\">" << a << "</span> ";
+  for (char ch = 'A'; ch <= 'Z'; ++ch)
+    reply.out() << "<a href=\"~/browse?a=" << a << ch << "\">"
+                << ch << "</a> ";
+  reply.out() << "\n";
+
+</%cpp>
+  </td>
+ </tr>
+</table>
+#>
+</div>
+<&pager qparam link=("/~/browse?a=" + a + '&') rs=(bresult.size())>
+<hr>
+<ul>
+% for (unsigned i = s; i < bresult.size() && i < t; ++i) {
+    <li><a href="<$$ bresult[i].getArticle().getUrl().toXML() $>"><$$ bresult[i].getArticle().getTitle().toXML() $></a></li>
+% }
+</ul>

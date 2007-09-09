@@ -34,7 +34,8 @@ int main(int argc, char* argv[])
     }
 
     zeno::Search search(argv[1], argv[2]);
-    zeno::Search::Results result = search.search(argv[3]);
+    zeno::Search::Results result;
+    search.search(result, argv[3]);
 
     for (zeno::Search::Results::const_iterator it = result.begin(); it != result.end(); ++it)
     {

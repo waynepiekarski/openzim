@@ -67,8 +67,12 @@ namespace zeno
       const std::string& getValue() const { return value; }
       void clear()        { value.clear(); }
 
-      int compare(const QUnicodeString& v) const;
-      int compareCollate(const QUnicodeString& v) const;
+      int compare(unsigned pos, unsigned n, const QUnicodeString& v) const;
+      int compareCollate(unsigned pos, unsigned n, const QUnicodeString& v) const;
+      int compare(const QUnicodeString& v) const
+        { return compare(0, value.size(), v); }
+      int compareCollate(const QUnicodeString& v) const
+        { return compareCollate(0, value.size(), v); }
 
       bool operator< (const QUnicodeString& v) const
         { return compare(v) < 0; }

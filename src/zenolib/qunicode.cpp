@@ -218,13 +218,13 @@ namespace zeno
     return ret;
   }
 
-  int QUnicodeString::compare(const QUnicodeString& v) const
+  int QUnicodeString::compare(unsigned pos, unsigned n, const QUnicodeString& v) const
   {
-    int coll = compareCollate(v);
+    int coll = compareCollate(pos, n, v);
     if (coll != 0)
       return coll;
 
-    std::istringstream is1(value);
+    std::istringstream is1(value.substr(pos, n));
     std::istringstream is2(v.value);
 
     while (is1 && is2)
@@ -247,9 +247,9 @@ namespace zeno
     return is1 ? 1 : is2 ? -1 : 0;
   }
 
-  int QUnicodeString::compareCollate(const QUnicodeString& v) const
+  int QUnicodeString::compareCollate(unsigned pos, unsigned n, const QUnicodeString& v) const
   {
-    std::istringstream is1(value);
+    std::istringstream is1(value.substr(pos, n));
     std::istringstream is2(v.value);
 
     while (true)

@@ -46,6 +46,22 @@ namespace zeno
     if (!zenoFile.read(header, headerSize) || zenoFile.gcount() !=  headerSize)
       throw ZenoFileFormatError("format-error: header too short in zeno-file");
 
+    size_type rMagic = fromLittleEndian<size_type>(header + 0x0);
+    if (rMagic != 1439867043)
+    {
+      std::ostringstream msg;
+      msg << "invalid magic number " << rMagic << " found - 1439867043 expected";
+      throw ZenoFileFormatError(msg.str());
+    }
+
+    size_type rVersion = fromLittleEndian<size_type>(header + 0x4);
+    if (rVersion != 2)
+    {
+      std::ostringstream msg;
+      msg << "invalid zenofile version " << rVersion << " found - 2 expected";
+      throw ZenoFileFormatError(msg.str());
+    }
+
     size_type rCount = fromLittleEndian<size_type>(header + 0x8);
     offset_type rIndexPos = fromLittleEndian<offset_type>(header + 0x10);
     size_type rIndexLen = fromLittleEndian<size_type>(header + 0x18);

@@ -18,6 +18,7 @@
  */
 
 #include <zeno/search.h>
+#include <zeno/fileiterator.h>
 #include <sstream>
 #include <cxxtools/log.h>
 #include <map>
@@ -60,9 +61,9 @@ namespace zeno
       // weight occurencies of words in article and title
       for (WordListType::const_iterator itw = wordList.begin(); itw != wordList.end(); ++itw)
       {
-        priority *= 1.0 + log(itw->second.count * zeno::Search::getWeightOcc()
+        priority *= 1.0 + log(itw->second.count * Search::getWeightOcc()
                                 + Search::getWeightPlus() * itw->second.addweight)
-                        + zeno::Search::getWeightOccOff()
+                        + Search::getWeightOccOff()
                         + Search::getWeightPlus() * itw->second.addweight;
 
         std::string title = article.getTitle().toUtf8();
@@ -77,7 +78,7 @@ namespace zeno
       log_debug("priority1: " << priority);
 
       // weight distinct words
-      priority += zeno::Search::getWeightDistinctWords() * wordList.size();
+      priority += Search::getWeightDistinctWords() * wordList.size();
 
       log_debug("priority2: " << priority);
 
@@ -92,7 +93,7 @@ namespace zeno
           uint32_t dist = itp->first > pos ? (itp->first - pos)
                         : itp->first < pos ? (pos - itp->first)
                         : 1;
-          priority += zeno::Search::getWeightDist() / dist;
+          priority += Search::getWeightDist() / dist;
         }
         word = itp->second;
         pos = itp->first + word.size();
@@ -102,7 +103,7 @@ namespace zeno
 
       // weight position of words in the document
       for (itp = posList.begin(); itp != posList.end(); ++itp)
-        priority += zeno::Search::getWeightPos() * itp->first / article.getDataLen();
+        priority += Search::getWeightPos() * itp->first / article.getDataLen();
 
       log_debug("priority of article " << article.getIndex() << " \"" << article.getTitle() << "\", " << wordList.size() << " words: " << priority);
     }
@@ -125,7 +126,7 @@ namespace zeno
   double Search::weightPos = 2;
   double Search::weightDistinctWords = 50;
 
-  Search::Results Search::search(const std::string& expr)
+  void Search::search(Results& results, const std::string& expr)
   {
     std::istringstream ssearch(expr);
     std::string token;
@@ -148,7 +149,7 @@ namespace zeno
 
       log_debug("search for token \"" << token << '"');
 
-      zeno::Article indexarticle = indexfile.getArticle(QUnicodeString::fromUtf8("X/" + token));
+      Article indexarticle = indexfile.getArticle(QUnicodeString::fromUtf8("X/" + token));
       std::string data = indexarticle.getData();
       log_debug(data.size() / 8 << " articles found; collect statistics");
       for (unsigned off = 0; off + 4 <= data.size(); off += 8)
@@ -165,26 +166,85 @@ namespace zeno
     }
 
     log_debug("copy/filter " << index.size() << " articles");
-    Results searchResult;
-    searchResult.setExpression(expr);
+    results.setExpression(expr);
     for (IndexType::const_iterator it = index.begin(); it != index.end(); ++it)
     {
       if (it->second.getCountPositions() > 1)
-        searchResult.push_back(it->second);
+        results.push_back(it->second);
       else
         log_debug("discard article " << it->first);
     }
 
-    if (searchResult.empty())
+    if (results.empty())
     {
       for (IndexType::const_iterator it = index.begin(); it != index.end(); ++it)
-        searchResult.push_back(it->second);
+        results.push_back(it->second);
     }
 
-    log_debug("sort " << searchResult.size() << " articles");
-    std::sort(searchResult.begin(), searchResult.end(), PriorityGt());
-
-    log_debug("return articles");
-    return searchResult;
+    log_debug("sort " << results.size() << " articles");
+    std::sort(results.begin(), results.end(), PriorityGt());
   }
+
+  void Search::find(Results& results, const std::string& praefix, unsigned limit)
+  {
+    log_debug("find results for praefix \"" << praefix << '"');
+    QUnicodeString qpraefix(praefix);
+    for (File::const_iterator pos = articlefile.find(praefix);
+         pos != articlefile.end() && results.size() < limit; ++pos)
+    {
+      if (pos->getUrl().compareCollate(0, praefix.size(), qpraefix) != 0)
+      {
+        log_debug("article \"" << pos->getUrl() << "\" does not match");
+        break;
+      }
+      results.push_back(SearchResult(*pos));
+    }
+    log_debug(results.size() << " articles in result");
+  }
+
+  void Search::find(Results& results, const std::string& begin, const std::string& end, unsigned limit)
+  {
+    log_debug("find results for praefix \"" << begin << '"');
+    QUnicodeString qbegin(begin);
+    QUnicodeString qend(end);
+    for (File::const_iterator pos = articlefile.find(begin);
+         pos != articlefile.end() && results.size() < limit; ++pos)
+    {
+      if (pos->getUrl().compareCollate(0, end.size(), qend) > 0)
+      {
+        log_debug("article \"" << pos->getUrl() << "\" does not match");
+        break;
+      }
+      results.push_back(SearchResult(*pos));
+    }
+    log_debug(results.size() << " articles in result");
+  }
+
+  void Search::filter(Results& results, const std::string& begin, const std::string& end)
+  {
+    log_debug("filter results for praefix \"" << begin << '"');
+    QUnicodeString qbegin(begin);
+    QUnicodeString qend(end);
+
+    for (Results::iterator pos = results.begin(); pos != results.end(); ++pos)
+    {
+      if (pos->getArticle().getUrl().compareCollate(0, begin.size(), qbegin) >= 0)
+      {
+        results.erase(results.begin(), pos);
+        break;
+      }
+    }
+
+    for (Results::iterator pos = results.begin(); pos != results.end(); ++pos)
+    {
+      if (pos->getArticle().getUrl().compareCollate(0, end.size(), qend) >= 0)
+      {
+        results.erase(pos, results.end());
+        break;
+      }
+    }
+
+    log_debug(results.size() << " articles in result");
+  }
+
 }

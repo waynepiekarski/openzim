@@ -88,7 +88,10 @@ namespace zeno
           articlefile(articlefile_)
           { }
 
-      Results search(const std::string& expr);
+      void search(Results& results, const std::string& expr);
+      void find(Results& results, const std::string& praefix, unsigned limit = 10000);
+      void find(Results& results, const std::string& begin, const std::string& end, unsigned limit = 10000);
+      static void filter(Results& results, const std::string& begin, const std::string& end);
 
       static double getWeightTitle()               { return weightTitle; }
       static double getWeightOcc()                 { return weightOcc; }

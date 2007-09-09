@@ -37,6 +37,7 @@ e;
 			var wgContentLanguage = "de";
 		</script>
 		<script type="text/javascript" src="-/wikibits.js"><!-- wikibits js --></script>
+		<script type="text/javascript" src="$/ajax.js"><!-- ajax js --></script>
 		<style type="text/css">/*<![CDATA[*/
 @import "-/common.css";
 @import "-/monobookde.css";
@@ -103,8 +104,8 @@ e;
 			   <ul>
 				 <li id="n-mainpage"><a href="">Hauptseite</a></li>
 				 <li id="n-topics"><a href="P/Wikipedia_nach_Themen">Themenportale</a></li>
-				 <li id="n-alphindex"><a href="~/browse?n=A&amp;s=0&amp;c=100&amp;a=A">Von A bis Z</a></li>
-				 <li id="n-images"><a href="~/browse?n=I&amp;s=0&amp;c=20">Abbildungen</a></li>
+				 <li id="n-alphindex"><a href="~/browse?a=">Von A bis Z</a></li>
+				 <li id="n-images"><a href="~/browse?n=I">Abbildungen</a></li>
 				 <li id="n-randompage"><a href="~/random">Zuf&auml;lliger Artikel</a></li>
 % if (!articles.empty() || !result.empty()) {
 				 <li id="n-search"><a href="~/search">zum Suchergebnis</a></li>
@@ -119,13 +120,12 @@ e;
 				<div>
 				  <input type="hidden" name="l" value="Wikipedia.index" />
 				  <input type="text" id="searchInput" name="e" accesskey="f" value="<$e$>" />
-				  <input type="submit" name="go" class="searchButton" id="searchGoButton"	value="Artikel" />&nbsp;
-				  <input type="submit" name="ft" class="searchButton" value="Volltext" />
+				  <input type="submit" name="ft" class="searchButton" value="Suchen" />
 				</div>
 			  </form>
 			</div>
 		  </div>
-		  <div class="portlet"><h5>Powered by...</h5><a href="http://www.tntnet.org/"><img src="/~/tntnet.png" alt="powered by tntnet" title="powered by tntnet"/></a></div>
+		  <div class="portlet"><h5>Powered by...</h5><a href="http://www.tntnet.org/"><img src="/$/tntnet.png" alt="powered by tntnet" title="powered by tntnet"/></a></div>
           <div class="portlet"><$ cxxtools::HiresTime::gettimeofday() - t0 $>s</div>
       </div>
       <div class="visualClear"></div>

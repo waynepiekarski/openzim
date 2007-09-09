@@ -37,10 +37,14 @@ zeno::File imagesFile(ZenoPath.empty() ? ZenoFile : ZenoPath + '/' + ZenoImages)
 zeno::Article article;
 std::string searchExpression;
 zeno::Search::Results result;
+zeno::Search::Results bresult;
+std::string browse_a;
 zeno::ArticleSearch::Results articles;
 
 </%session>
 <%request scope="global">
 cxxtools::HiresTime t0(cxxtools::HiresTime::gettimeofday());
 zeno::QUnicodeString title;
+unsigned s;
+unsigned t;
 </%request>

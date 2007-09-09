@@ -5,7 +5,6 @@ ft; // Volltext
 </%args>
 <%pre>
 #include <zeno/search.h>
-#include <zeno/fileiterator.h>
 </%pre>
 <%config>
 double weightTitle = zeno::Search::getWeightTitle();
@@ -81,7 +80,8 @@ e;  // Begriff
   log_debug("search expression \"" << e << '"');
   static cxxtools::IConverter iso8859_utf8("UTF-8", "ISO-8859-1");
   zeno::Search search(indexFile, articlesFile);
-  result = search.search(iso8859_utf8(e));
+  result.clear();
+  search.search(result, iso8859_utf8(e));
 
   log_debug(result.size() << " articles found");
 

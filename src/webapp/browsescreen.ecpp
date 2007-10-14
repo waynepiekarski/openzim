@@ -1,5 +1,6 @@
 <%args>
 a;
+char ns = 'A';
 </%args>
 <%include>global.ecpp</%include>
 <script type="text/javascript">
@@ -8,7 +9,7 @@ var content = "<$a$>";
 function getresult()
 {
   var v = document.getElementById("a").value;
-  ajaxGet("/~/browseresults?a=" + encodeURI(v),
+  ajaxGet("/~/browseresults?ns=<$ns$>&a=" + encodeURI(v),
     function(request)
     {
       document.getElementById("browseresults")

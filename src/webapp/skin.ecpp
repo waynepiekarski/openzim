@@ -105,7 +105,7 @@ e;
 				 <li id="n-mainpage"><a href="">Hauptseite</a></li>
 				 <li id="n-topics"><a href="P/Wikipedia_nach_Themen">Themenportale</a></li>
 				 <li id="n-alphindex"><a href="~/browse?a=">Von A bis Z</a></li>
-				 <li id="n-images"><a href="~/browse?n=I">Abbildungen</a></li>
+				 <li id="n-images"><a href="~/browse?ns=I">Abbildungen</a></li>
 				 <li id="n-randompage"><a href="~/random">Zuf&auml;lliger Artikel</a></li>
 % if (!articles.empty() || !result.empty()) {
 				 <li id="n-search"><a href="~/search">zum Suchergebnis</a></li>

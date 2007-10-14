@@ -37,13 +37,13 @@ double weightDistinctWords = zeno::Search::getWeightDistinctWords();
 <& skin qparam nextComp="searcharticles" type=(typeSpecial) >
 <%cpp>
   }
-  else if (!result.empty())
+  else
   {
     title = zeno::QUnicodeString("Suche nach: " + result.getExpression());
 </%cpp>
 <& skin qparam nextComp="searchresults" type=(typeSpecial) >
 <%cpp>
-}
+  }
 
 </%cpp>
 <%def articlesearch>

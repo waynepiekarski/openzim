@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 Tommi Maekitalo
+ * Copyright (C) 2007 Tommi Maekitalo
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -17,34 +17,35 @@
  *
  */
 
-#include <zeno/dirent.h>
-#include <cxxtools/log.h>
-#include <algorithm>
+#include <iostream>
+#include <zeno/zintstream.h>
+#include <cxxtools/loginit.h>
 
-log_define("zeno.dirent")
-
-namespace zeno
+int main(int argc, char* argv[])
 {
-  //////////////////////////////////////////////////////////////////////
-  // Dirent
-  //
-  Dirent::Dirent()
+  try
   {
-    std::fill(header, header + 26, '\0');
-  }
+    log_init();
 
-  void Dirent::setExtra(const std::string& extra)
+    unsigned col = 0;
+
+    zeno::ZIntStream z(std::cin);
+    unsigned n;
+    while (z.get(n))
+    {
+      std::cout << n;
+      if (col++ >= 10)
+      {
+        std::cout << std::endl;
+        col = 0;
+      }
+      else
+        std::cout << ' ';
+    }
+  }
+  catch (const std::exception& e)
   {
-    std::string::size_type p = extra.find('\0');
-    if (p == std::string::npos)
-    {
-      title = extra;
-      parameter.clear();
-    }
-    else
-    {
-      title.assign(extra, 0, p);
-      parameter.assign(extra, p + 1, extra.size() - p - 1);
-    }
+    std::cerr << e.what() << std::endl;
   }
 }
+

@@ -31,12 +31,12 @@ namespace zeno
       imagesFile(imagesFile_),
       stopRunning(false)
   {
-    create();
+    //create();
   }
   Backgroundreader::~Backgroundreader()
   {
     stopRunning = true;
-    join();
+    //join();
   }
 
   void Backgroundreader::readUrls(UrlsType& urls, zeno::File file)
@@ -50,14 +50,15 @@ namespace zeno
     {
       lock.unlock();
 
-      QUnicodeString url = *urls.begin();
-      Article article = file.getArticle(url);
+      char ns = urls.begin()->first;
+      QUnicodeString url = urls.begin()->second;
+      Article article = file.getArticle(ns, url);
       article.getData();
-      urls.erase(url);
+      urls.erase(std::make_pair(ns, url));
 
       lock.lock();
 
-      cachedArticles[article.getUrl()] = article;
+      cachedArticles[std::make_pair(ns, url)] = article;
     }
   }
 
@@ -81,11 +82,11 @@ namespace zeno
       {
         QUnicodeString url(std::string(data, pos + 29, pos2 - pos - 29));
         log_debug("url \"" << url << "\" found");
-        CachedArticlesType::const_iterator it = prevCachedArticles.find(url);
+        CachedArticlesType::const_iterator it = prevCachedArticles.find(std::make_pair('I', url));
         if (it == prevCachedArticles.end())
         {
           log_debug("will read image \"" << url << '"');
-          urls.insert(QUnicodeString(url));
+          urls.insert(std::make_pair('I', QUnicodeString(url)));
         }
         else
         {
@@ -109,7 +110,6 @@ namespace zeno
     // look for links and check, if the article has been cached before
 
     log_debug("new article \"" << currentArticle.getUrl() << "\" requested - read links");
-    urls.clear();
 
     std::string::size_type pos = 0;
     std::string data = currentArticle.getData();
@@ -120,11 +120,11 @@ namespace zeno
       {
         QUnicodeString url(std::string(data, pos + 6, pos2 - pos - 6));
         log_debug("url \"" << url << "\" found");
-        CachedArticlesType::const_iterator it = prevCachedArticles.find(url);
+        CachedArticlesType::const_iterator it = prevCachedArticles.find(std::make_pair('A', url));
         if (it == prevCachedArticles.end())
         {
           log_debug("will read article \"" << url << '"');
-          urls.insert(QUnicodeString(url));
+          urls.insert(std::make_pair('A', QUnicodeString(url)));
         }
         else
         {
@@ -174,11 +174,11 @@ namespace zeno
     }
   }
 
-  zeno::Article Backgroundreader::getArticle(zeno::File &file, const QUnicodeString& path)
+  zeno::Article Backgroundreader::getArticle(zeno::File &file, char ns, const QUnicodeString& path)
   {
     cxxtools::MutexLock lock(mutex);
 
-    CachedArticlesType::const_iterator it = cachedArticles.find(path);
+    CachedArticlesType::const_iterator it = cachedArticles.find(std::make_pair(ns, path));
 
     zeno::Article article;
 
@@ -190,7 +190,7 @@ namespace zeno
     else
     {
       log_debug("no cached article \"" << path << "\" found");
-      article = file.getArticle(path);
+      article = file.getArticle(ns, path);
     }
 
     if (article && article.getLibraryMimeType() == zeno::Dirent::zenoMimeTextHtml)

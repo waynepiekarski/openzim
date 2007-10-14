@@ -17,10 +17,10 @@ unsigned int seed = static_cast<unsigned int>(time(0));
 
     article = articlesFile.getArticle(idx);
     log_debug("consider article " << article.getIndex() << ": " << article.getTitle());
+    log_debug("mime-type: " << article.getLibraryMimeType() << " namespace: " << article.getNamespace());
 
-  } while (!(article.isMainArticle()
-              && article.getLibraryMimeType() == zeno::Dirent::zenoMimeTextHtml
-              && article.getNamespace() == 'A'));
+  } while (article.getLibraryMimeType() != zeno::Dirent::zenoMimeTextHtml
+        || article.getNamespace() != 'A');
 
   log_info("choose article " << article.getIndex() << ": " << article.getTitle());
 

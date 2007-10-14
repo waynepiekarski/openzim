@@ -18,8 +18,11 @@
  */
 
 #include <iostream>
+#include <sstream>
 #include <zeno/file.h>
 #include <zeno/fileiterator.h>
+#include <zeno/zintstream.h>
+#include <zeno/indexarticle.h>
 #include <cxxtools/arg.h>
 #include <cxxtools/loginit.h>
 #include <stdexcept>
@@ -39,12 +42,13 @@ class ZenoDumper
     
     void printInfo();
     void locateArticle(zeno::size_type idx);
-    void findArticle(const char* url);
+    void findArticle(char ns, const char* url);
     void dumpArticle(bool raw = false);
-    void listArticles(bool info);
-    static void listArticle(const zeno::Article& article, bool listsubs);
-    void listArticle(bool listsubs)
-      { listArticle(*pos, listsubs); }
+    static void printIndexcontent(zeno::IndexArticle article);
+    void listArticles(bool info, bool extra, bool indexcontent);
+    static void listArticle(const zeno::Article& article, bool extra, bool indexcontent);
+    void listArticle(bool extra, bool indexcontent)
+      { listArticle(*pos, extra, indexcontent); }
 };
 
 void ZenoDumper::printInfo()
@@ -61,11 +65,11 @@ void ZenoDumper::locateArticle(zeno::size_type idx)
   pos = zeno::File::const_iterator(&file, idx);
 }
 
-void ZenoDumper::findArticle(const char* url)
+void ZenoDumper::findArticle(char ns, const char* url)
 {
-  log_debug("findArticle(" << url << ')');
-  pos = file.find(url);
-  log_debug("findArticle(" << url << ") => idx=" << pos.getIndex());
+  log_debug("findArticle(" << ns << ", " << url << ')');
+  pos = file.find(ns, url);
+  log_debug("findArticle(" << ns << ", " << url << ") => idx=" << pos.getIndex());
 }
 
 void ZenoDumper::dumpArticle(bool raw)
@@ -73,20 +77,33 @@ void ZenoDumper::dumpArticle(bool raw)
   std::cout << (raw ? pos->getRawData() : pos->getData()) << std::flush;
 }
 
-void ZenoDumper::listArticles(bool info)
+void ZenoDumper::printIndexcontent(zeno::IndexArticle article)
+{
+  for (unsigned c = 0; c <= 3; ++c)
+  {
+    std::cout << "category " << c << "\n";
+    zeno::IndexArticle::EntriesType e = article.getCategory(c);
+    for (zeno::IndexArticle::EntriesType::const_iterator it = e.begin();
+         it != e.end(); ++it)
+      std::cout << "\tindex " << it->index << "\tpos " << it->pos << '\n';
+  }
+}
+
+void ZenoDumper::listArticles(bool info, bool extra, bool indexcontent)
 {
   for (zeno::File::const_iterator it = pos; it != file.end(); ++it)
   {
     if (info)
-      listArticle(*it);
+      listArticle(*it, extra, indexcontent);
     else
       std::cout << it->getUrl() << '\n';
   }
 }
 
-void ZenoDumper::listArticle(const zeno::Article& article, bool listsubs)
+void ZenoDumper::listArticle(const zeno::Article& article, bool extra, bool indexcontent)
 {
-  std::cout << "url: " << article.getUrl() << "\n"
+  std::cout <<
+      "title: " << article.getTitle() << "\n"
     "\tidx:             " << article.getIndex() << "\n"
     "\toff:             " << article.getDataOffset() << "\n"
     "\tlen:             " << article.getDataLen() << "\n"
@@ -95,14 +112,38 @@ void ZenoDumper::listArticle(const zeno::Article& article, bool listsubs)
     std::cout <<
     "\tuncompressedlen: " << article.getData().size() << "\n";
   std::cout <<
-    "\tnamespace:       " << static_cast<unsigned>(article.getNamespace()) << "\n"
+    "\tnamespace:       " << article.getNamespace() << "\n"
     "\tmime-type:       " << article.getLibraryMimeType() << "\n"
-    "\tsubtype:         " << article.getSubtype() << "\n"
-    "\tsubtype-parent:  " << article.getSubtypeParent() << "\n"
-    "\tsub-articles:    " << article.getCountSubarticles() << std::endl;
-  if (article.isMainArticle() && listsubs)
-    for (zeno::Article::const_iterator it = article.begin(); it != article.end(); ++it)
-      listArticle(*it, false);
+    "\tredirect-flag:   " << article.getRedirectFlag() << std::endl;
+  if (extra)
+  {
+    std::string parameter = article.getParameter();
+    std::cout <<
+    "\textra:           ";
+    static char hexdigit[] = "0123456789abcdef";
+    for (std::string::const_iterator it = parameter.begin(); it != parameter.end(); ++it)
+    {
+      unsigned val = static_cast<unsigned>(static_cast<unsigned char>(*it));
+      std::cout << hexdigit[val >> 4] << hexdigit[val & 0xf] << ' ';
+    }
+    std::cout << ':';
+
+    if (parameter.size() > 1)
+    {
+      std::istringstream s(parameter);
+      s.get(); // skip length byte
+      zeno::ZIntStream in(s);
+
+      unsigned val;
+      while (in.get(val))
+        std::cout << '\t' << val;
+
+      std::cout << std::endl;
+    }
+
+    if (indexcontent)
+      printIndexcontent(article);
+  }
 }
 
 int main(int argc, char* argv[])
@@ -117,8 +158,10 @@ int main(int argc, char* argv[])
     cxxtools::Arg<bool> rawdump(argc, argv, 'r');
     cxxtools::Arg<const char*> find(argc, argv, 'f');
     cxxtools::Arg<bool> list(argc, argv, 'l');
-    cxxtools::Arg<bool> subarticles(argc, argv, 's');
     cxxtools::Arg<zeno::size_type> indexOffset(argc, argv, 'o');
+    cxxtools::Arg<bool> extra(argc, argv, 'x');
+    cxxtools::Arg<bool> indexcontent(argc, argv, 'X');
+    cxxtools::Arg<char> ns(argc, argv, 'n', 'A');  // namespace
 
     if (argc <= 1)
     {
@@ -130,9 +173,10 @@ int main(int argc, char* argv[])
                    "  -d        print data of articles\n"
                    "  -r        print raw data (possibly compressed data)\n"
                    "  -f url    find article\n"
-                   "  -l        list articles or subarticles\n"
+                   "  -l        list articles\n"
                    "  -o idx    locate article\n"
-                   "  -s        list subarticles\n"
+                   "  -x        print extra parameters\n"
+                   "  -X        print index contents\n"
                    "\n"
                    "examples:\n"
                    "  " << argv[0] << " -F wikipedia.zeno\n"
@@ -157,15 +201,15 @@ int main(int argc, char* argv[])
     if (indexOffset.isSet())
       app.locateArticle(indexOffset);
     else if (find.isSet())
-      app.findArticle(find);
+      app.findArticle(ns, find);
 
     // print requested info
     if (data || rawdump)
       app.dumpArticle(rawdump);
-    else if (info)
-      app.listArticle(list);
     else if (list)
-      app.listArticles(info);
+      app.listArticles(info, extra, indexcontent);
+    else if (info)
+      app.listArticle(extra, indexcontent);
   }
   catch (const std::exception& e)
   {

@@ -66,86 +66,29 @@ namespace zeno
       File&       getFile()                   { return file; }
       size_type   getIndex() const            { return idx; }
       const std::string&
-                  getExtra() const            { return dirent.getExtra(); }
+                  getParameter() const        { return dirent.getParameter(); }
       offset_type getDataOffset() const       { return dirent.getOffset(); }
       size_type   getDataLen() const          { return dirent.getSize(); }
       CompressionType getCompression() const  { return dirent.getCompression(); }
       bool        isCompressionZip() const    { return dirent.isCompressionZip(); }
-      char        getNamespace() const        { return dirent.getTitle()[0]; }
-      QUnicodeString getUrl() const           { return QUnicodeString(dirent.getTitle()); }
-      QUnicodeString getTitle() const;
+      QUnicodeString getUrl() const           { return QUnicodeString(std::string(1, getNamespace()) + '/' + dirent.getTitle()); }
+      QUnicodeString getTitle() const         { return QUnicodeString(dirent.getTitle()); }
       MimeType    getLibraryMimeType() const  { return dirent.getMimeType(); }
       const std::string&
                   getMimeType() const;
-      int         getSubtype() const          { return dirent.getSubtype(); }
-      size_type   getSubtypeParent() const    { return dirent.getSubtypeParent(); }
-      bool        isMainArticle() const       { return getSubtype() == 0; }
-      unsigned    getCountSubarticles() const;
+      bool        getRedirectFlag() const     { return dirent.getRedirectFlag(); }
+      char        getNamespace() const        { return dirent.getNamespace(); }
 
       operator bool()   { return getDataOffset() != 0; }
-      bool operator< (const Article& a) const   { return getUrl() < a.getUrl(); }
+      bool operator< (const Article& a) const
+        { return getNamespace() < a.getNamespace()
+              || getNamespace() == a.getNamespace()
+               && getUrl() < a.getUrl(); }
 
       const std::string& getRawData() const;
       const std::string& getData() const;
-
-      class const_iterator;
-
-      const_iterator begin() const;
-      const_iterator end() const;
   };
 
-  class Article::const_iterator : public std::iterator<std::bidirectional_iterator_tag, Article>
-  {
-      size_type idx;
-      Article* mainArticle;
-      mutable Article currentArticle;
-
-    public:
-      explicit const_iterator(Article* article = 0, size_type idx_ = 0)
-        : mainArticle(article),
-          idx(idx_)
-      {
-        if (mainArticle)
-          currentArticle = mainArticle->getFile().getArticle(idx);
-      }
-
-      bool operator== (const const_iterator& it) const
-        { return idx == it.idx; }
-      bool operator!= (const const_iterator& it) const
-        { return idx != it.idx; }
-
-      const_iterator& operator++()
-      {
-        currentArticle = mainArticle->getFile().getArticle(++idx);
-        return *this;
-      }
-
-      const_iterator operator++(int)
-      {
-        const_iterator it = *this;
-        currentArticle = mainArticle->getFile().getArticle(++idx);
-        return it;
-      }
-
-      const_iterator& operator--()
-      {
-        currentArticle = mainArticle->getFile().getArticle(--idx);
-        return *this;
-      }
-
-      const_iterator operator--(int)
-      {
-        const_iterator it = *this;
-        currentArticle = mainArticle->getFile().getArticle(--idx);
-        return it;
-      }
-
-      Article operator*() const    { return currentArticle; }
-      pointer operator->() const   { return &currentArticle; }
-  };
-
-  inline Article::const_iterator Article::begin() const
-  { return const_iterator(const_cast<Article*>(this), idx + 1); }
 }
 
 #endif // ZENO_ARTICLE_H

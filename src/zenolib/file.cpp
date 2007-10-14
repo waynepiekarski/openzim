@@ -40,16 +40,16 @@ namespace zeno
     return impl->readData(off, count);
   }
 
-  Article File::getArticle(const std::string& url)
+  Article File::getArticle(char ns, const std::string& url)
   {
-    log_debug("getArticle(\"" << url << "\")");
-    return impl->getArticle(url);
+  log_debug("getArticle('" << ns << "', \"" << url << "\")");
+    return impl->getArticle(ns, url);
   }
 
-  Article File::getArticle(const QUnicodeString& url)
+  Article File::getArticle(char ns, const QUnicodeString& url)
   {
-    log_debug("getArticle(\"" << url << "\")");
-    return impl->getArticle(url);
+    log_debug("getArticle('" << ns << "', \"" << url << "\")");
+    return impl->getArticle(ns, url);
   }
 
   Article File::getArticle(size_type idx)
@@ -80,25 +80,14 @@ namespace zeno
     return const_iterator();
   }
 
-  File::const_iterator File::find(const std::string& url)
+  File::const_iterator File::find(char ns, const std::string& url)
   {
-    return const_iterator(this, impl->findArticle(QUnicodeString(url)).second);
+    return const_iterator(this, impl->findArticle(ns, QUnicodeString(url)).second);
   }
 
-  File::const_iterator::const_iterator(File* file_)
-    : file(file_),
-      idx(0)
+  File::const_iterator File::find(char ns, const QUnicodeString& url)
   {
-    if (file)
-    {
-      while (idx < file->getCountArticles())
-      {
-        article = file->getArticle(idx);
-        if (article.isMainArticle())
-          break;
-        ++idx;
-      }
-    }
+    return const_iterator(this, impl->findArticle(ns, url).second);
   }
 
   File::const_iterator::const_iterator(File* file_, size_type idx_)
@@ -108,34 +97,4 @@ namespace zeno
     article = file->getArticle(idx);
   }
 
-  File::const_iterator& File::const_iterator::operator++()
-  {
-    do
-    {
-      ++idx;
-      if (idx >= file->getCountArticles())
-        break;
-      article = file->getArticle(idx);
-    } while (!article.isMainArticle());
-
-    return *this;
-  }
-
-  File::const_iterator& File::const_iterator::operator--()
-  {
-    do
-    {
-      --idx;
-      if (idx <= 0)
-        break;
-      article = file->getArticle(idx);
-    } while (!article.isMainArticle());
-
-    return *this;
-  }
-
-  void File::cacheData(offset_type off, size_type count)
-  {
-    impl->cacheData(off, count);
-  }
 }

@@ -22,6 +22,7 @@ static bool lastFoundUtf8(true);
   zeno::File file;
   title.clear();
 
+  char ns = request.getArgDef(1, "A").at(0);
   if (request.getArgs().size() > 0)
   {
     std::string zenoFileName = request.getArg(0);
@@ -61,7 +62,7 @@ static bool lastFoundUtf8(true);
   if (DisableCache || (article.getUrl() != pathInfo && article.getUrl() != pathInfoAlt))
   {
     log_debug("search article \"" << pathInfo << "\" in file \"" << file.getFilename() << "\" encoding " << (lastFoundUtf8 ? "utf-8" : "iso-8859-1"));
-    article = reader.getArticle(file, pathInfo);
+    article = reader.getArticle(file, ns, pathInfo);
   }
   else
     log_debug("use cached article " << (lastFoundUtf8 ? pathInfo : pathInfoAlt));
@@ -73,7 +74,7 @@ static bool lastFoundUtf8(true);
     {
       // different encoding has a other result - try this one
       log_debug("search article \"" << pathInfoAlt << "\" in file \"" << file.getFilename() << "\" encoding " << (lastFoundUtf8 ? "iso-8859-1" : "utf-8"));
-      article = file.getArticle(pathInfoAlt);
+      article = file.getArticle(ns, pathInfoAlt);
     }
 
     if (article)

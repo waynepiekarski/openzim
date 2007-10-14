@@ -53,31 +53,31 @@ namespace zeno
     private:
 
       char header[26];
-      std::string extra;
+      std::string title;
+      std::string parameter;
 
     public:
       Dirent();
       explicit Dirent(char header_[26], std::string extra_ = std::string())
-        : extra(extra_)
-        { std::copy(header_, header_ + 26, header); }
+        {
+          std::copy(header_, header_ + 26, header);
+          setExtra(extra_);
+        }
 
       offset_type getOffset() const        { return fromLittleEndian<offset_type>(header); }
       size_type   getSize() const          { return fromLittleEndian<size_type>(header + 8); }
       CompressionType getCompression() const { return static_cast<CompressionType>(header[12]); }
       bool        isCompressionZip() const { return getCompression() == zenocompZip; }
       MimeType    getMimeType() const      { return static_cast<MimeType>(header[13]); }
-      uint8_t     getSubtype() const       { return static_cast<uint8_t>(header[14]); }
-      size_type   getSubtypeParent() const { return fromLittleEndian<size_type>(header + 16); }
+      bool        getRedirectFlag() const  { return static_cast<bool>(header[14]); }
+      char        getNamespace() const     { return static_cast<char>(header[15]); }
       uint16_t    getExtraLen() const      { return fromLittleEndian<uint16_t>(header + 24); }
 
-      const std::string& getExtra() const  { return extra; }
-      void setExtra(const std::string& extra_)  { extra = extra_; }
-      std::string getTitle() const
-      {
-        std::string::size_type p = extra.find('\0');
-        return p == std::string::npos ? extra : std::string(extra, 0, p);
-      }
+      void setExtra(const std::string& extra_);
+      const std::string& getTitle() const      { return title; }
+      const std::string& getParameter() const   { return parameter; }
   };
+
 }
 
 #endif // ZENO_DIRENT_H

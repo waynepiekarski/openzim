@@ -4,9 +4,12 @@ lib_LTLIBRARIES = libzeno.la
 libzeno_la_SOURCES = \
 	article.cpp \
 	articlesearch.cpp \
-	dirent.cpp file.cpp \
-	fileimpl.cpp qunicode.cpp \
-	inflatestream.cpp \
-	search.cpp
+	dirent.cpp \
+	file.cpp \
+	fileimpl.cpp \
+	indexarticle.cpp \
+	qunicode.cpp \
+	search.cpp \
+	zintstream.cpp
+
 libzeno_la_LDFLAGS=-lcxxtools -ltntnet
-include_HEADERS = inflatestream.h

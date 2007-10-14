@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 Tommi Maekitalo
+ * Copyright (C) 2007 Tommi Maekitalo
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -17,34 +17,38 @@
  *
  */
 
-#include <zeno/dirent.h>
+#include <zeno/zintstream.h>
 #include <cxxtools/log.h>
-#include <algorithm>
 
-log_define("zeno.dirent")
+log_define("cxxtools.zintstream")
 
 namespace zeno
 {
-  //////////////////////////////////////////////////////////////////////
-  // Dirent
-  //
-  Dirent::Dirent()
+  bool ZIntStream::get(unsigned &value)
   {
-    std::fill(header, header + 26, '\0');
+    int ch = source->sbumpc();
+    if (ch == std::streambuf::traits_type::eof())
+      return false;
+
+    unsigned ret = static_cast<unsigned>(static_cast<unsigned char>(std::streambuf::traits_type::to_char_type(ch)));
+    unsigned numb = ret & 0x3;
+    ret >>= 2;
+    unsigned s = 6;
+    while (numb && (ch = source->sbumpc()) != std::streambuf::traits_type::eof())
+    {
+      ret += static_cast<unsigned>(
+               static_cast<unsigned char>(
+                 std::streambuf::traits_type::to_char_type(ch))) + 1 << s;
+      s += 8;
+      --numb;
+    }
+
+    if (numb)
+      log_error("incomplete bytestream");
+    else
+      value = ret;
+
+    return numb == 0;
   }
 
-  void Dirent::setExtra(const std::string& extra)
-  {
-    std::string::size_type p = extra.find('\0');
-    if (p == std::string::npos)
-    {
-      title = extra;
-      parameter.clear();
-    }
-    else
-    {
-      title.assign(extra, 0, p);
-      parameter.assign(extra, p + 1, extra.size() - p - 1);
-    }
-  }
 }

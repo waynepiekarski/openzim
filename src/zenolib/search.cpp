@@ -125,6 +125,7 @@ namespace zeno
   double Search::weightDist = 10;
   double Search::weightPos = 2;
   double Search::weightDistinctWords = 50;
+  unsigned Search::searchLimit = 10000;
 
   void Search::search(Results& results, const std::string& expr)
   {
@@ -149,7 +150,7 @@ namespace zeno
 
       log_debug("search for token \"" << token << '"');
 
-      Article indexarticle = indexfile.getArticle(QUnicodeString::fromUtf8("X/" + token));
+      Article indexarticle = indexfile.getArticle('X', QUnicodeString::fromUtf8(token));
       std::string data = indexarticle.getData();
       log_debug(data.size() / 8 << " articles found; collect statistics");
       for (unsigned off = 0; off + 4 <= data.size(); off += 8)
@@ -185,14 +186,14 @@ namespace zeno
     std::sort(results.begin(), results.end(), PriorityGt());
   }
 
-  void Search::find(Results& results, const std::string& praefix, unsigned limit)
+  void Search::find(Results& results, char ns, const QUnicodeString& praefix, unsigned limit)
   {
-    log_debug("find results for praefix \"" << praefix << '"');
+    log_debug("find results in namespace " << ns << " for praefix \"" << praefix << '"');
     QUnicodeString qpraefix(praefix);
-    for (File::const_iterator pos = articlefile.find(praefix);
+    for (File::const_iterator pos = articlefile.find(ns, praefix);
          pos != articlefile.end() && results.size() < limit; ++pos)
     {
-      if (pos->getUrl().compareCollate(0, praefix.size(), qpraefix) != 0)
+      if (pos->getUrl().compareCollate(0, praefix.size() - 1, qpraefix) != 0)
       {
         log_debug("article \"" << pos->getUrl() << "\" does not match");
         break;
@@ -202,15 +203,15 @@ namespace zeno
     log_debug(results.size() << " articles in result");
   }
 
-  void Search::find(Results& results, const std::string& begin, const std::string& end, unsigned limit)
+  void Search::find(Results& results, char ns, const QUnicodeString& begin,
+    const QUnicodeString& end, unsigned limit)
   {
-    log_debug("find results for praefix \"" << begin << '"');
-    QUnicodeString qbegin(begin);
-    QUnicodeString qend(end);
-    for (File::const_iterator pos = articlefile.find(begin);
+    log_debug("find results in namespace " << ns << " for praefix \"" << begin << '"');
+    for (File::const_iterator pos = articlefile.find(ns, begin);
          pos != articlefile.end() && results.size() < limit; ++pos)
     {
-      if (pos->getUrl().compareCollate(0, end.size(), qend) > 0)
+      log_debug("check " << pos->getNamespace() << '/' << pos->getTitle());
+      if (pos->getNamespace() != ns || pos->getTitle().compareCollate(0, end.size(), end) > 0)
       {
         log_debug("article \"" << pos->getUrl() << "\" does not match");
         break;

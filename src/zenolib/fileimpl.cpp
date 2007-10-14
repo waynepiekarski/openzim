@@ -55,10 +55,10 @@ namespace zeno
     }
 
     size_type rVersion = fromLittleEndian<size_type>(header + 0x4);
-    if (rVersion != 2)
+    if (rVersion != 3)
     {
       std::ostringstream msg;
-      msg << "invalid zenofile version " << rVersion << " found - 2 expected";
+      msg << "invalid zenofile version " << rVersion << " found - 3 expected";
       throw ZenoFileFormatError(msg.str());
     }
 
@@ -81,10 +81,10 @@ namespace zeno
     log_debug("read " << indexOffsets.size() << " index-entries ready");
   }
 
-  Article FileImpl::getArticle(const QUnicodeString& url)
+  Article FileImpl::getArticle(char ns, const QUnicodeString& url)
   {
     log_debug("get article \"" << url << '"');
-    std::pair<bool, size_type> s = findArticle(url);
+    std::pair<bool, size_type> s = findArticle(ns, url);
     if (!s.first)
     {
       log_warn("article \"" << url << "\" not found");
@@ -98,68 +98,85 @@ namespace zeno
     return Article(s.second, d, File(this));
   }
 
-  Article FileImpl::getArticle(const std::string& url)
+  Article FileImpl::getArticle(char ns, const std::string& url)
   {
-    return getArticle(QUnicodeString(url));
+    return getArticle(ns, QUnicodeString(url));
   }
 
-  std::pair<bool, size_type> FileImpl::findArticle(const QUnicodeString& url)
+  size_type FileImpl::getLowerNamespace(char ns)
   {
-    log_debug("find article \"" << url << '"');
+    size_type l = 0;
+    size_type u = indexOffsets.size();
+    while (u - l > 1)
+    {
+      size_type p = l + (u - l) / 2;
+      Dirent d = readDirentNolock(indexOffsets[p]);
+      if (d.getNamespace() < ns)
+        l = p;
+      else
+        u = p;
+    }
+    Dirent d = readDirentNolock(indexOffsets[l]);
+    return d.getNamespace() < ns ? u : l;
+  }
+
+  size_type FileImpl::getUpperNamespace(char ns)
+  {
+    size_type l = 0;
+    size_type u = indexOffsets.size();
+    while (u - l > 1)
+    {
+      size_type p = l + (u - l) / 2;
+      Dirent d = readDirentNolock(indexOffsets[p]);
+      if (d.getNamespace() <= ns)
+        l = p;
+      else
+        u = p;
+    }
+    Dirent d = readDirentNolock(indexOffsets[l]);
+    return d.getNamespace() <= ns ? u : l;
+  }
+
+  std::pair<bool, size_type> FileImpl::findArticle(char ns, const QUnicodeString& title)
+  {
+    log_debug("find article " << ns << " \"" << title << '"');
 
     cxxtools::MutexLock lock(mutex);
 
     IndexOffsetsType::size_type l = 0;
-    IndexOffsetsType::size_type u = indexOffsets.size();
-    IndexOffsetsType::size_type uu = u;
+    IndexOffsetsType::size_type u = getCountArticles();
 
     unsigned itcount = 0;
     while (u - l > 1)
     {
       ++itcount;
       IndexOffsetsType::size_type p = l + (u - l) / 2;
+      Dirent d = readDirentNolock(indexOffsets[p]);
 
-      IndexOffsetsType::size_type pp = p;
-      std::string title;
-      while (p < u)
-      {
-        log_debug("l=" << l << " u=" << u << " p=" << p << " pp=" << pp);
-        Dirent d = readDirentNolock(indexOffsets[p]);
-        title = d.getTitle();
-        if (!title.empty() || p == u)
-          break;
-        ++p;
-      }
-
-      if (p == u)
-      {
-        log_debug("u => " << pp << '*');
-        u = pp;
-      }
+      int c = ns < d.getNamespace() ? -1
+            : ns > d.getNamespace() ? 1
+            : title.compare(QUnicodeString(d.getTitle()));
+      if (c < 0)
+        u = p;
+      else if (c > 0)
+        l = p;
       else
       {
-        int c = url.compare(QUnicodeString(title));
-        log_debug("compare \"" << url << "\" with \"" << title << "\" => " << c);
-        if (c < 0)
-        {
-          log_debug("u => " << p);
-          u = uu = p;
-        }
-        else if (c > 0)
-        {
-          log_debug("l => " << p);
-          l = p;
-        }
-        else
-        {
-          log_debug("article found after " << itcount << " iterations");
-          return std::pair<bool, size_type>(true, p);
-        }
+        log_debug("article found after " << itcount << " iterations");
+        return std::pair<bool, size_type>(true, p);
       }
     }
 
+    Dirent d = readDirentNolock(indexOffsets[l]);
+    int c = title.compare(QUnicodeString(d.getTitle()));
+    if (c == 0)
+    {
+      log_debug("article found after " << itcount << " iterations");
+      return std::pair<bool, size_type>(true, l);
+    }
+
     log_debug("article not found");
-    return std::pair<bool, size_type>(false, uu);
+    return std::pair<bool, size_type>(false, u);
   }
 
   Article FileImpl::getArticle(size_type idx)
@@ -214,16 +231,13 @@ namespace zeno
   {
     char header[26];
     if (!zenoFile.read(header, 26) || zenoFile.gcount() != 26)
-      throw ZenoFileFormatError("format-error: can't read index-header");
+      throw ZenoFileFormatError("format-error: can't read index-header (1)");
 
     Dirent dirent(header);
 
     std::string extra;
     if (dirent.getExtraLen() > 0)
-      extra = readDataNolock(dirent.getExtraLen() - 1);
-
-    if (zenoFile.get() != 0)
-      throw ZenoFileFormatError("format-error: can't read index-header");
+      extra = readDataNolock(dirent.getExtraLen());
 
     dirent.setExtra(extra);
     log_debug("title=" << dirent.getTitle());

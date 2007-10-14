@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 Tommi Maekitalo
+ * Copyright (C) 2007 Tommi Maekitalo
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -17,34 +17,29 @@
  *
  */
 
-#include <zeno/dirent.h>
-#include <cxxtools/log.h>
-#include <algorithm>
+#ifndef ZENO_ZINTSTREAM_H
+#define ZENO_ZINTSTREAM_H
 
-log_define("zeno.dirent")
+#include <string>
+#include <iostream>
 
 namespace zeno
 {
-  //////////////////////////////////////////////////////////////////////
-  // Dirent
-  //
-  Dirent::Dirent()
+  class ZIntStream
   {
-    std::fill(header, header + 26, '\0');
-  }
+      std::streambuf* source;
 
-  void Dirent::setExtra(const std::string& extra)
-  {
-    std::string::size_type p = extra.find('\0');
-    if (p == std::string::npos)
-    {
-      title = extra;
-      parameter.clear();
-    }
-    else
-    {
-      title.assign(extra, 0, p);
-      parameter.assign(extra, p + 1, extra.size() - p - 1);
-    }
-  }
+    public:
+      explicit ZIntStream(std::streambuf* source_)
+        : source(source_)
+       { }
+      explicit ZIntStream(std::istream& source_)
+        : source(source_.rdbuf())
+        { }
+
+      bool get(unsigned &value);
+      bool good() const      { return source->sgetc() != std::streambuf::traits_type::eof(); }
+      operator bool() const  { return source->sgetc() != std::streambuf::traits_type::eof(); }
+  };
 }
+#endif  //  ZENO_ZINTSTREAM_H

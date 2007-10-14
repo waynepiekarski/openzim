@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 Tommi Maekitalo
+ * Copyright (C) 2007 Tommi Maekitalo
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -17,34 +17,41 @@
  *
  */
 
-#include <zeno/dirent.h>
-#include <cxxtools/log.h>
-#include <algorithm>
+#ifndef ZENO_INDEXARTICLE_H
+#define ZENO_INDEXARTICLE_H
 
-log_define("zeno.dirent")
+#include <zeno/article.h>
+#include <vector>
 
 namespace zeno
 {
-  //////////////////////////////////////////////////////////////////////
-  // Dirent
-  //
-  Dirent::Dirent()
+  class IndexArticle : public Article
   {
-    std::fill(header, header + 26, '\0');
-  }
+    public:
+      struct Entry
+      {
+        unsigned index;
+        unsigned pos;
+      };
 
-  void Dirent::setExtra(const std::string& extra)
-  {
-    std::string::size_type p = extra.find('\0');
-    if (p == std::string::npos)
-    {
-      title = extra;
-      parameter.clear();
-    }
-    else
-    {
-      title.assign(extra, 0, p);
-      parameter.assign(extra, p + 1, extra.size() - p - 1);
-    }
-  }
+      typedef std::vector<Entry> EntriesType;
+
+    private:
+      EntriesType entries[4];
+      bool categoriesRead;
+      void readEntries();
+
+    public:
+      IndexArticle(const Article& article)
+        : Article(article),
+          categoriesRead(false)
+        { }
+
+      unsigned getCategoryCount(unsigned cat)
+        { readEntries(); return entries[cat].size(); }
+      const EntriesType& getCategory(unsigned cat)
+        { readEntries(); return entries[cat]; }
+  };
 }
+
+#endif // ZENO_INDEXARTICLE_H

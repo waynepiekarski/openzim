@@ -95,35 +95,4 @@ namespace zeno
     return uncompressedData;
   }
 
-  unsigned Article::getCountSubarticles() const
-  {
-    if (countArticles == 0)
-    {
-      size_type i = idx + 1;
-      countArticles = 1;
-      while (!const_cast<File&>(file).getArticle(i).isMainArticle())
-      {
-        ++i;
-        ++countArticles;
-      }
-    }
-    return countArticles - 1;
-  }
-
-  Article::const_iterator Article::end() const
-  {
-    return const_iterator(const_cast<Article*>(this), idx + 1 + const_cast<Article*>(this)->getCountSubarticles());
-  }
-
-  QUnicodeString Article::getTitle() const
-  {
-    std::string url = dirent.getTitle();
-
-    std::string::size_type pos;
-    while ((pos = url.find('_')) != std::string::npos)
-      url[pos] = ' ';
-
-    pos = url.find_first_of('/');
-    return QUnicodeString(pos == std::string::npos ? url : url.substr(pos + 1));
-  }
 }

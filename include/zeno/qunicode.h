@@ -73,6 +73,8 @@ namespace zeno
         { return compare(0, value.size(), v); }
       int compareCollate(const QUnicodeString& v) const
         { return compareCollate(0, value.size(), v); }
+      unsigned size() const
+        { return value.size(); }
 
       bool operator< (const QUnicodeString& v) const
         { return compare(v) < 0; }

@@ -33,14 +33,14 @@ namespace zeno
       zeno::Article currentArticle;
       bool stopRunning;
 
-      typedef std::map<QUnicodeString, zeno::Article> CachedArticlesType;
+      typedef std::map<std::pair<char, QUnicodeString>, zeno::Article> CachedArticlesType;
       CachedArticlesType cachedArticles;
       CachedArticlesType prevCachedArticles;
 
       cxxtools::Mutex mutex;
       cxxtools::Condition newArticle;
 
-      typedef std::set<QUnicodeString> UrlsType;
+      typedef std::set<std::pair<char, QUnicodeString> > UrlsType;
       void readUrls(UrlsType& urls, zeno::File file);
       void readImages();
       void readLinks();
@@ -51,6 +51,6 @@ namespace zeno
 
       void run();
 
-      zeno::Article getArticle(zeno::File &file, const QUnicodeString& path);
+      zeno::Article getArticle(zeno::File &file, char ch, const QUnicodeString& path);
   };
 };

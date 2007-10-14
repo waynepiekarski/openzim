@@ -77,6 +77,7 @@ namespace zeno
       static double weightDist;
       static double weightPos;
       static double weightDistinctWords;
+      static unsigned searchLimit;
 
       File indexfile;
       File articlefile;
@@ -89,8 +90,8 @@ namespace zeno
           { }
 
       void search(Results& results, const std::string& expr);
-      void find(Results& results, const std::string& praefix, unsigned limit = 10000);
-      void find(Results& results, const std::string& begin, const std::string& end, unsigned limit = 10000);
+      void find(Results& results, char ns, const QUnicodeString& praefix, unsigned limit = searchLimit);
+      void find(Results& results, char ns, const QUnicodeString& begin, const QUnicodeString& end, unsigned limit = searchLimit);
 
       static double getWeightTitle()               { return weightTitle; }
       static double getWeightOcc()                 { return weightOcc; }
@@ -99,6 +100,7 @@ namespace zeno
       static double getWeightDist()                { return weightDist; }
       static double getWeightPos()                 { return weightPos; }
       static double getWeightDistinctWords()       { return weightDistinctWords; }
+      static unsigned getSearchLimit()       { return searchLimit; }
 
       static void setWeightTitle(double v)         { weightTitle = v; }
       static void setWeightOcc(double v)           { weightOcc = v; }
@@ -107,6 +109,7 @@ namespace zeno
       static void setWeightDist(double v)          { weightDist = v; }
       static void setWeightPos(double v)           { weightPos = v; }
       static void setWeightDistinctWords(double v) { weightDistinctWords = v; }
+      static void setSearchLimit(unsigned v)       { searchLimit = v; }
   };
 }
 

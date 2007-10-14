@@ -29,7 +29,7 @@ namespace zeno
 {
   void IndexArticle::readEntries()
   {
-    if (categoriesRead)
+    if (!*this || categoriesRead)
       return;
 
     log_debug("read entries for article " << getUrl());

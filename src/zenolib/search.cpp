@@ -19,6 +19,7 @@
 
 #include <zeno/search.h>
 #include <zeno/fileiterator.h>
+#include <zeno/indexarticle.h>
 #include <sstream>
 #include <cxxtools/log.h>
 #include <map>
@@ -150,19 +151,22 @@ namespace zeno
 
       log_debug("search for token \"" << token << '"');
 
-      Article indexarticle = indexfile.getArticle('X', QUnicodeString::fromUtf8(token));
-      std::string data = indexarticle.getData();
-      log_debug(data.size() / 8 << " articles found; collect statistics");
-      for (unsigned off = 0; off + 4 <= data.size(); off += 8)
+      IndexArticle indexarticle = indexfile.getArticle('X', QUnicodeString::fromUtf8(token));
+
+      for (unsigned cat = 0; cat <= 3; ++cat)
       {
-        uint32_t articleIdx = fromLittleEndian(reinterpret_cast<const uint32_t*>(data.data() + off));
-        uint32_t position = fromLittleEndian(reinterpret_cast<const uint32_t*>(data.data() + off + 4));
+        const IndexArticle::EntriesType ent = indexarticle.getCategory(cat);
+        for (IndexArticle::EntriesType::const_iterator it = ent.begin(); it != ent.end(); ++it)
+        {
+          uint32_t articleIdx = it->index;
+          uint32_t position = it->pos;
 
-        IndexType::iterator it = index.insert(
-          IndexType::value_type(articleIdx,
-            SearchResult(articlefile.getArticle(articleIdx)))).first;
+          IndexType::iterator it = index.insert(
+            IndexType::value_type(articleIdx,
+              SearchResult(articlefile.getArticle(articleIdx)))).first;
 
-        it->second.foundWord(token, position, addweight);
+          it->second.foundWord(token, position, addweight + 3 - cat);
+        }
       }
     }
 
@@ -172,8 +176,8 @@ namespace zeno
     {
       if (it->second.getCountPositions() > 1)
         results.push_back(it->second);
-      else
-        log_debug("discard article " << it->first);
+      //else
+        //log_debug("discard article " << it->first);
     }
 
     if (results.empty())

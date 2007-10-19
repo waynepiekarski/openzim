@@ -76,13 +76,13 @@ e;
 %   } else {
                <li id="ca-nstab-main">
 %   }
-               <a href="/<$ article.getUrl() $>">Artikel</a></li>
+               <a href="/A/<$ article.getTitle() $>">Artikel</a></li>
 %   if (type == typeHistory) {
                <li id="ca-history" class="selected">
 %   } else {
                <li id="ca-history">
 %   }
-               <a href="/$<$ article.getUrl() $>">Versionen/Autoren</a></li>
+               <a href="/Q/<$ article.getTitle() $>">Versionen/Autoren</a></li>
 % }
 			 </ul>
 		  </div>

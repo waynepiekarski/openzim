@@ -13,7 +13,9 @@ unsigned n = 20; // items per page
 
   static cxxtools::IConverter iso8859_utf8("UTF-8", "ISO-8859-1");
 
-  if (browse_a != a)
+  log_debug("browseresults ns=" << ns << " prefix=\"" << a << '"');
+
+  if (browse_a != a || ns_a != ns)
   {
     std::string begin = a;
     std::string end = a;
@@ -25,12 +27,14 @@ unsigned n = 20; // items per page
     bresult.clear();
     zeno::Search search(indexFile, articlesFile);
     //search.find(bresult, zeno::QUnicodeString::fromUtf8("A/" + iso8859_utf8(begin)), zeno::QUnicodeString::fromUtf8("A/" + iso8859_utf8(end)));
+    log_debug("find \"" << begin << "\" to \"" << end << '"');
     search.find(bresult, ns, zeno::QUnicodeString::fromUtf8(begin), zeno::QUnicodeString::fromUtf8(end));
     browse_a = a;
+    ns_a = ns;
   }
 
 </%cpp>
-<&pager qparam link=("/~/browse?a=" + a + '&') rs=(bresult.size())>
+<&pager qparam link=("/~/browse?a=" + a + "&ns=" + ns + '&') rs=(bresult.size())>
 <hr>
 <ul>
 % for (unsigned i = s; i < bresult.size() && i < t; ++i) {

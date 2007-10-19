@@ -104,7 +104,9 @@ static bool lastFoundUtf8(true);
 
   title = article.getTitle();
 
-  int type = request.getPathInfo()[0] == '-' ? typeSpecial : typeArticle;
+  int type = request.getPathInfo()[0] == '-' ? typeSpecial
+           : article.getNamespace() == 'Q'   ? typeHistory
+           : typeArticle;
 
 </%cpp>
 <& skin qparam nextComp="article" type=(type) >

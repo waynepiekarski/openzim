@@ -24,7 +24,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include <zeno/refcounted.h>
+#include <cxxtools/refcounted.h>
 #include <zeno/zeno.h>
 #include <zeno/qunicode.h>
 
@@ -33,7 +33,7 @@ namespace zeno
   class Dirent;
   class Article;
 
-  class FileImpl : public RefCounted
+  class FileImpl : public cxxtools::RefCounted
   {
       std::ifstream zenoFile;
       std::string filename;

@@ -10,12 +10,12 @@ SUFFIXES=.ecpp .gif .jpg .css .js .ico
 
 AM_CPPFLAGS=-I$(top_builddir)/include
 
-bin_PROGRAMS = TntReader
+bin_PROGRAMS = TntReader.bin
 
 S = commonPrint_css.css main_css.css wikibits_js.js monobookde_css.css \
     user_css.css zenowp_css.css Wiki_png.png common_css.css headbg_jpg.jpg
 
-TntReader_SOURCES = zenocomp.ecpp skin.ecpp \
+TntReader_bin_SOURCES = zenocomp.ecpp skin.ecpp \
 	search.ecpp searcharticles.ecpp searchresults.ecpp article.ecpp \
 	tntnet_png.png random.ecpp notfound.ecpp number.ecpp \
 	backgroundreader.cpp backgroundreader.h pager.ecpp \
@@ -23,5 +23,7 @@ TntReader_SOURCES = zenocomp.ecpp skin.ecpp \
 	ajax_js.js redirect.ecpp main.cpp \
 	$(S)
 
-TntReader_LDFLAGS = -ltntnet
-TntReader_LDADD = $(top_builddir)/src/zenolib/libzeno.la
+TntReader_bin_LDFLAGS = -ltntnet
+TntReader_bin_LDADD = $(top_builddir)/src/zenolib/libzeno.la
+
+EXTRA_DIST = global.ecpp

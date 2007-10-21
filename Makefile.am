@@ -10,7 +10,7 @@ SKIN_FILES =  \
 	skin/tntnet.jpg \
 	skin/Wiki.png
 
-EXTRA_DIST = tntnet.conf tntnet.properties \
+EXTRA_DIST = tntnet.conf tntnet.properties TntReader \
 	$(SKIN_FILES)
 
 skin.zip: $(SKIN_FILES)

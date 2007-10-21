@@ -23,7 +23,7 @@
 #include <string>
 #include <iterator>
 #include <zeno/zeno.h>
-#include <zeno/smartptr.h>
+#include <cxxtools/smartptr.h>
 #include <zeno/fileimpl.h>
 
 namespace zeno
@@ -33,7 +33,7 @@ namespace zeno
 
   class File
   {
-      zeno::SmartPtr<FileImpl> impl;
+      cxxtools::SmartPtr<FileImpl> impl;
 
     public:
       File()

@@ -20,6 +20,7 @@
 #include <iostream>
 #include <sstream>
 #include <zeno/file.h>
+#include <zeno/files.h>
 #include <zeno/fileiterator.h>
 #include <zeno/zintstream.h>
 #include <zeno/indexarticle.h>
@@ -40,7 +41,10 @@ class ZenoDumper
         pos(file.begin())
       { }
     
+    static void listZenoFiles(const std::string& directory);
+    static void listZenoFiles(const std::string& directory, char ns);
     void printInfo();
+    void printNsInfo(char ch);
     void locateArticle(zeno::size_type idx);
     void findArticle(char ns, const char* url);
     void dumpArticle(bool raw = false);
@@ -51,17 +55,38 @@ class ZenoDumper
       { listArticle(*pos, extra, indexcontent); }
 };
 
+void ZenoDumper::listZenoFiles(const std::string& directory)
+{
+  zeno::Files zenofiles(directory);
+  zeno::Files::FilesType files = zenofiles.getFiles();
+  for (zeno::Files::FilesType::iterator it = files.begin(); it != files.end(); ++it)
+    std::cout << it->getFilename() << " ns " << it->getNamespaces() << std::endl;
+}
+
+void ZenoDumper::listZenoFiles(const std::string& directory, char ns)
+{
+  zeno::Files zenofiles(directory);
+  zeno::Files::FilesType files = zenofiles.getFiles(ns);
+  for (zeno::Files::FilesType::iterator it = files.begin(); it != files.end(); ++it)
+    std::cout << it->getFilename() << " offset " << it->getNamespaceBeginOffset(ns) << " - " << it->getNamespaceEndOffset(ns) << std::endl;
+}
+
 void ZenoDumper::printInfo()
 {
-  std::cout << "count-articles: " << file.getCountArticles() << std::endl;
+  std::cout << "count-articles: " << file.getCountArticles() << "\n"
+            << "namespaces: " << file.getNamespaces() << std::endl;
+}
+
+void ZenoDumper::printNsInfo(char ch)
+{
+  std::cout << "namespace " << ch << "\n"
+               "lower bound idx: " << file.getNamespaceBeginOffset(ch) << "\n"
+               "upper bound idx: " << file.getNamespaceEndOffset(ch) << std::endl;
 }
 
 void ZenoDumper::locateArticle(zeno::size_type idx)
 {
   log_debug("locateArticle(" << idx << ')');
-
-  if (idx > file.getCountArticles())
-    throw std::range_error("index too large");
   pos = zeno::File::const_iterator(&file, idx);
 }
 
@@ -153,6 +178,8 @@ int main(int argc, char* argv[])
     log_init();
 
     cxxtools::Arg<bool> fileinfo(argc, argv, 'F');
+    cxxtools::Arg<bool> listzenofiles(argc, argv, 'L');
+    cxxtools::Arg<char> nsinfo(argc, argv, 'N');
     cxxtools::Arg<bool> info(argc, argv, 'i');
     cxxtools::Arg<bool> data(argc, argv, 'd');
     cxxtools::Arg<bool> rawdump(argc, argv, 'r');
@@ -169,6 +196,8 @@ int main(int argc, char* argv[])
                    "\n"
                    "options:\n"
                    "  -F        print fileinfo\n"
+                   "  -L        list zenofiles in directory\n"
+                   "  -N ns     print info about namespace\n"
                    "  -i        print info about articles\n"
                    "  -d        print data of articles\n"
                    "  -r        print raw data (possibly compressed data)\n"
@@ -177,6 +206,7 @@ int main(int argc, char* argv[])
                    "  -o idx    locate article\n"
                    "  -x        print extra parameters\n"
                    "  -X        print index contents\n"
+                   "  -n ns     specify namespace (default 'A')\n"
                    "\n"
                    "examples:\n"
                    "  " << argv[0] << " -F wikipedia.zeno\n"
@@ -190,12 +220,25 @@ int main(int argc, char* argv[])
       return -1;
     }
 
+    if (listzenofiles)
+    {
+      if (ns.isSet())
+        ZenoDumper::listZenoFiles(argv[1], ns);
+      else
+        ZenoDumper::listZenoFiles(argv[1]);
+      return 0;
+    }
+
     // initalize app
     ZenoDumper app(argv[1]);
 
     // global info
     if (fileinfo)
       app.printInfo();
+
+    // namespace info
+    if (nsinfo.isSet())
+      app.printNsInfo(nsinfo);
 
     // locate article
     if (indexOffset.isSet())

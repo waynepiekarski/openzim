@@ -51,6 +51,11 @@ namespace zeno
       Dirent getDirent(size_type idx);
       size_type getCountArticles() const;
 
+      size_type getNamespaceBeginOffset(char ch);
+      size_type getNamespaceEndOffset(char ch);
+      std::string getNamespaces();
+      bool hasNamespace(char ch);
+
       class const_iterator;
 
       const_iterator begin();

@@ -6,6 +6,7 @@ nobase_include_HEADERS = \
 	zeno/file.h \
 	zeno/fileimpl.h \
 	zeno/fileiterator.h \
+	zeno/files.h \
 	zeno/indexarticle.h \
 	zeno/qunicode.h \
 	zeno/search.h \

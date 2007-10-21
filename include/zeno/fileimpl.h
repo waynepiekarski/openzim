@@ -47,8 +47,6 @@ namespace zeno
       std::string readDataNolock(offset_type off, size_type count);
       Dirent readDirentNolock();
       Dirent readDirentNolock(offset_type off);
-      size_type getLowerNamespace(char ns);
-      size_type getUpperNamespace(char ns);
 
       std::string zcache;
       offset_type zcacheOffset;
@@ -65,6 +63,10 @@ namespace zeno
       std::pair<bool, size_type> findArticle(char ns, const QUnicodeString& url);
       Dirent getDirent(size_type idx);
       size_type getCountArticles() const  { return indexOffsets.size(); }
+
+      size_type getNamespaceBeginOffset(char ch);
+      size_type getNamespaceEndOffset(char ch);
+      std::string getNamespaces();
 
       std::string readData(offset_type off, size_type count);
       void cacheData(offset_type off, size_type count);

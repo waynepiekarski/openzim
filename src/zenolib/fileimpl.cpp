@@ -103,40 +103,6 @@ namespace zeno
     return getArticle(ns, QUnicodeString(url));
   }
 
-  size_type FileImpl::getLowerNamespace(char ns)
-  {
-    size_type l = 0;
-    size_type u = indexOffsets.size();
-    while (u - l > 1)
-    {
-      size_type p = l + (u - l) / 2;
-      Dirent d = readDirentNolock(indexOffsets[p]);
-      if (d.getNamespace() < ns)
-        l = p;
-      else
-        u = p;
-    }
-    Dirent d = readDirentNolock(indexOffsets[l]);
-    return d.getNamespace() < ns ? u : l;
-  }
-
-  size_type FileImpl::getUpperNamespace(char ns)
-  {
-    size_type l = 0;
-    size_type u = indexOffsets.size();
-    while (u - l > 1)
-    {
-      size_type p = l + (u - l) / 2;
-      Dirent d = readDirentNolock(indexOffsets[p]);
-      if (d.getNamespace() <= ns)
-        l = p;
-      else
-        u = p;
-    }
-    Dirent d = readDirentNolock(indexOffsets[l]);
-    return d.getNamespace() <= ns ? u : l;
-  }
-
   std::pair<bool, size_type> FileImpl::findArticle(char ns, const QUnicodeString& title)
   {
     log_debug("find article " << ns << " \"" << title << '"');
@@ -182,6 +148,10 @@ namespace zeno
   Article FileImpl::getArticle(size_type idx)
   {
     log_debug("getArticle(" << idx << ')');
+
+    if (idx >= getCountArticles())
+      throw ZenoFileFormatError("article index out of range");
+
     cxxtools::MutexLock lock(mutex);
     Dirent d = readDirentNolock(indexOffsets[idx]);
     return Article(idx, d, File(this));
@@ -189,8 +159,65 @@ namespace zeno
 
   Dirent FileImpl::getDirent(size_type idx)
   {
+    if (idx >= getCountArticles())
+      throw ZenoFileFormatError("article index out of range");
+
     cxxtools::MutexLock lock(mutex);
     return readDirentNolock(indexOffsets[idx]);
+  }
+
+  size_type FileImpl::getNamespaceBeginOffset(char ch)
+  {
+    size_type lower = 0;
+    size_type upper = getCountArticles();
+    Dirent d = getDirent(0);
+    while (upper - lower > 1)
+    {
+      size_type m = lower + (upper - lower) / 2;
+      Dirent d = getDirent(m);
+      if (d.getNamespace() >= ch)
+        upper = m;
+      else
+        lower = m;
+    }
+    return d.getNamespace() < ch ? upper : lower;
+  }
+
+  size_type FileImpl::getNamespaceEndOffset(char ch)
+  {
+    log_debug("getNamespaceEndOffset(" << ch << ')');
+
+    size_type lower = 0;
+    size_type upper = getCountArticles();
+    log_debug("namespace " << ch << " lower=" << lower << " upper=" << upper);
+    while (upper - lower > 1)
+    {
+      size_type m = lower + (upper - lower) / 2;
+      Dirent d = getDirent(m);
+      if (d.getNamespace() > ch)
+        upper = m;
+      else
+        lower = m;
+      log_debug("namespace " << d.getNamespace() << " m=" << m << " lower=" << lower << " upper=" << upper);
+    }
+    return upper;
+  }
+
+  std::string FileImpl::getNamespaces()
+  {
+    std::string namespaces;
+
+    Dirent d = getDirent(0);
+    namespaces = d.getNamespace();
+
+    size_type idx;
+    while ((idx = getNamespaceEndOffset(d.getNamespace())) < getCountArticles())
+    {
+      d = getDirent(idx);
+      namespaces += d.getNamespace();
+    }
+
+    return namespaces;
   }
 
   std::string FileImpl::readData(offset_type off, size_type count)

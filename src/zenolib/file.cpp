@@ -70,6 +70,30 @@ namespace zeno
     return impl->getCountArticles();
   }
 
+  std::string File::getNamespaces()
+  {
+    log_debug("getNamespaces()");
+    return impl->getNamespaces();
+  }
+
+  bool File::hasNamespace(char ch)
+  {
+    size_type off = getNamespaceBeginOffset(ch);
+    return off < getCountArticles() && getDirent(off).getNamespace() == ch;
+  }
+
+  size_type File::getNamespaceBeginOffset(char ch)
+  {
+    log_debug("getNamespaceBeginOffset(" << ch << ')');
+    return impl->getNamespaceBeginOffset(ch);
+  }
+
+  size_type File::getNamespaceEndOffset(char ch)
+  {
+    log_debug("getNamespaceEndOffset(" << ch << ')');
+    return impl->getNamespaceEndOffset(ch);
+  }
+
   File::const_iterator File::begin()
   {
     return const_iterator(this);

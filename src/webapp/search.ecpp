@@ -25,9 +25,6 @@ double weightDistinctWords = zeno::Search::getWeightDistinctWords();
   zeno::Search::setWeightPos(weightPos);
   zeno::Search::setWeightDistinctWords(weightDistinctWords);
 
-  if (!go.empty())
-    return articlesearch(request, reply, qparam);
-
   if (!ft.empty())
     return fulltext(request, reply, qparam);
 
@@ -46,25 +43,6 @@ double weightDistinctWords = zeno::Search::getWeightDistinctWords();
   }
 
 </%cpp>
-<%def articlesearch>
-<%args>
-e;  // Begriff
-</%args>
-<%cpp>
-
-  result.clear();
-
-  log_debug("search article \"" << e << '"');
-
-  articles.clear();
-  zeno::ArticleSearch search(articlesFile);
-  articles = search.search(e);
-
-  title = zeno::QUnicodeString("Artikelsuche nach: " + e);
-
-</%cpp>
-<& skin qparam nextComp="searcharticles" type=(typeSpecial) >
-</%def>
 %
 <%def fulltext>
 <%args>
@@ -79,7 +57,7 @@ e;  // Begriff
 
   log_debug("search expression \"" << e << '"');
   static cxxtools::IConverter iso8859_utf8("UTF-8", "ISO-8859-1");
-  zeno::Search search(indexFile, articlesFile);
+  zeno::Search search(files);
   result.clear();
   search.search(result, iso8859_utf8(e));
 

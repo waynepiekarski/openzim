@@ -7,7 +7,7 @@ bool DisableCache = false;
 #include <cxxtools/iconverter.h>
 </%pre>
 <%application>
-zeno::Backgroundreader reader(articlesFile, imagesFile);
+zeno::Backgroundreader reader(files);
 static bool lastFoundUtf8(true);
 </%application>
 <%cpp>
@@ -19,33 +19,9 @@ static bool lastFoundUtf8(true);
   if (host.empty())
     host = "localhost";
 
-  zeno::File file;
   title.clear();
 
   char ns = request.getArgDef(1, "A").at(0);
-  if (request.getArgs().size() > 0)
-  {
-    std::string zenoFileName = request.getArg(0);
-    if (zenoFileName == ZenoFile)
-      file = articlesFile;
-    else if (zenoFileName == ZenoIndex)
-      file = indexFile;
-    else if (zenoFileName == ZenoImages)
-      file = imagesFile;
-    else
-    {
-      ZenoFilesType::const_iterator it = zenoFiles.find(zenoFileName);
-      if (it == zenoFiles.end())
-      {
-        file = zeno::File(zenoFileName);
-        zenoFiles[zenoFileName] = file;
-      }
-      else
-      {
-        file = it->second;
-      }
-    }
-  }
 
   static cxxtools::IConverter iso8859_utf8("UTF-8", "ISO-8859-1");
 
@@ -61,8 +37,8 @@ static bool lastFoundUtf8(true);
 
   if (DisableCache || (article.getUrl() != pathInfo && article.getUrl() != pathInfoAlt))
   {
-    log_debug("search article \"" << pathInfo << "\" in file \"" << file.getFilename() << "\" encoding " << (lastFoundUtf8 ? "utf-8" : "iso-8859-1"));
-    article = reader.getArticle(file, ns, pathInfo);
+    log_debug("search article \"" << pathInfo << "\"  encoding " << (lastFoundUtf8 ? "utf-8" : "iso-8859-1"));
+    article = reader.getArticle(ns, pathInfo);
   }
   else
     log_debug("use cached article " << (lastFoundUtf8 ? pathInfo : pathInfoAlt));
@@ -73,8 +49,8 @@ static bool lastFoundUtf8(true);
     if (pathInfoAlt != pathInfo)
     {
       // different encoding has a other result - try this one
-      log_debug("search article \"" << pathInfoAlt << "\" in file \"" << file.getFilename() << "\" encoding " << (lastFoundUtf8 ? "iso-8859-1" : "utf-8"));
-      article = file.getArticle(ns, pathInfoAlt);
+      log_debug("search article \"" << pathInfoAlt << "\" encoding " << (lastFoundUtf8 ? "iso-8859-1" : "utf-8"));
+      article = files.getArticle(ns, pathInfoAlt);
     }
 
     if (article)

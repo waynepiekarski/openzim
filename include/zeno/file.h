@@ -63,6 +63,7 @@ namespace zeno
       const_iterator find(char ns, const std::string& url);
       const_iterator find(char ns, const QUnicodeString& url);
 
+      operator bool() const  { return impl.getPointer() != 0; }
   };
 
 }

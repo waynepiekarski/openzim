@@ -42,6 +42,7 @@ int main(int argc, char* argv[])
       else
         std::cout << ' ';
     }
+    std::cout << std::endl;
   }
   catch (const std::exception& e)
   {

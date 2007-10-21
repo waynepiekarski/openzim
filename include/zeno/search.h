@@ -26,6 +26,8 @@
 
 namespace zeno
 {
+  class Files;
+
   class SearchResult
   {
       Article article;
@@ -83,11 +85,7 @@ namespace zeno
       File articlefile;
 
     public:
-      template <typename IndexfileInitT, typename ArticlefileInitT>
-      Search(IndexfileInitT indexfile_, ArticlefileInitT articlefile_)
-        : indexfile(indexfile_),
-          articlefile(articlefile_)
-          { }
+      explicit Search(Files& files);
 
       void search(Results& results, const std::string& expr);
       void find(Results& results, char ns, const QUnicodeString& praefix, unsigned limit = searchLimit);

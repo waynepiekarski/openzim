@@ -20,15 +20,14 @@
 #include <map>
 #include <set>
 #include <cxxtools/thread.h>
-#include <zeno/file.h>
+#include <zeno/files.h>
 #include <zeno/article.h>
 
 namespace zeno
 {
   class Backgroundreader : public cxxtools::AttachedThread
   {
-      zeno::File articlesFile;
-      zeno::File imagesFile;
+      zeno::Files files;
       zeno::Article lastArticle;
       zeno::Article currentArticle;
       bool stopRunning;
@@ -45,12 +44,14 @@ namespace zeno
       void readImages();
       void readLinks();
 
+      zeno::File getFile(char ns);
+
     public:
-      Backgroundreader(zeno::File articlesFile_, zeno::File imagesFile_);
+      explicit Backgroundreader(zeno::Files files);
       ~Backgroundreader();
 
       void run();
 
-      zeno::Article getArticle(zeno::File &file, char ch, const QUnicodeString& path);
+      zeno::Article getArticle(char ch, const QUnicodeString& path);
   };
 };

@@ -37,7 +37,7 @@ e;
 			var wgContentLanguage = "de";
 		</script>
 		<script type="text/javascript" src="-/wikibits.js"><!-- wikibits js --></script>
-		<script type="text/javascript" src="$/ajax.js"><!-- ajax js --></script>
+		<script type="text/javascript" src="-/ajax.js"><!-- ajax js --></script>
 		<style type="text/css">/*<![CDATA[*/
 @import "-/common.css";
 @import "-/monobookde.css";
@@ -90,7 +90,7 @@ e;
 		  		<h5>Ausgabe</h5>
 		  		<div class="pBody">
 		  			<ul>
-		  				<li>DVD-ROM-Ausgabe vom 20. September 2006</li>
+		  				<li>DVD-ROM-Ausgabe 2007</li>
 		  			</ul>
 		  		</div>
 		  	</div>
@@ -103,7 +103,7 @@ e;
 			 <div class="pBody">
 			   <ul>
 				 <li id="n-mainpage"><a href="">Hauptseite</a></li>
-				 <li id="n-topics"><a href="P/Wikipedia_nach_Themen">Themenportale</a></li>
+<#				 <li id="n-topics"><a href="P/Wikipedia_nach_Themen">Themenportale</a></li>#>
 				 <li id="n-alphindex"><a href="~/browse?a=">Von A bis Z</a></li>
 				 <li id="n-images"><a href="~/browse?ns=I">Abbildungen</a></li>
 				 <li id="n-randompage"><a href="~/random">Zuf&auml;lliger Artikel</a></li>

@@ -20,6 +20,7 @@
 #include <zeno/search.h>
 #include <zeno/fileiterator.h>
 #include <zeno/indexarticle.h>
+#include <zeno/files.h>
 #include <sstream>
 #include <cxxtools/log.h>
 #include <map>
@@ -127,6 +128,17 @@ namespace zeno
   double Search::weightPos = 2;
   double Search::weightDistinctWords = 50;
   unsigned Search::searchLimit = 10000;
+
+  Search::Search(Files& files)
+  {
+    for (Files::iterator it = files.begin(); it != files.end(); ++it)
+    {
+      if (it->hasNamespace('X'))
+        indexfile = *it;
+      else if (it->hasNamespace('A'))
+        articlefile = *it;
+    }
+  }
 
   void Search::search(Results& results, const std::string& expr)
   {

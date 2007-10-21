@@ -258,7 +258,7 @@ namespace zeno
   {
     char header[26];
     if (!zenoFile.read(header, 26) || zenoFile.gcount() != 26)
-      throw ZenoFileFormatError("format-error: can't read index-header (1)");
+      throw ZenoFileFormatError("format-error: can't read index-header in \"" + filename + '"');
 
     Dirent dirent(header);
 

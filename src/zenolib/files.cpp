@@ -18,11 +18,12 @@
  */
 
 #include <zeno/files.h>
+#include <zeno/article.h>
 #include <zeno/error.h>
 #include <cxxtools/dir.h>
 #include <cxxtools/log.h>
 
-log_define("zeno.files");
+log_define("zeno.file.files");
 
 namespace zeno
 {
@@ -46,16 +47,42 @@ namespace zeno
         }
       }
     }
+
+    log_debug(files.size() << " zenofiles active");
   }
 
-  Files::FilesType Files::getFiles(char ns)
+  Files Files::getFiles(char ns)
   {
-    FilesType ret;
-    for (FilesType::iterator it = files.begin(); it != files.end(); ++it)
-    {
-      if (it->getNamespaceBeginOffset(ns) < it->getNamespaceEndOffset(ns))
-        ret.push_back(*it);
-    }
+    Files ret;
+    for (iterator it = begin(); it != end(); ++it)
+      if (it->hasNamespace(ns))
+        ret.addFile(*it);
     return ret;
   }
+
+  File Files::getFirstFile(char ns)
+  {
+    Files ret;
+    for (iterator it = begin(); it != end(); ++it)
+      if (it->hasNamespace(ns))
+        return *it;
+    return File();
+  }
+
+  Article Files::getArticle(char ns, const QUnicodeString& url)
+  {
+    log_debug("getArticle('" << ns << "', \"" << url << "\")");
+    for (iterator it = begin(); it != end(); ++it)
+    {
+      Article article = it->getArticle(ns, url);
+      if (article)
+      {
+        log_debug("article found");
+        return article;
+      }
+    }
+    log_debug("article not found");
+    return Article();
+  }
+
 }

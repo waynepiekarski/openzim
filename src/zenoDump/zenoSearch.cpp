@@ -21,21 +21,23 @@
 #include <cxxtools/loginit.h>
 #include <cxxtools/log.h>
 #include <zeno/search.h>
+#include <zeno/files.h>
 
 int main(int argc, char* argv[])
 {
   try
   {
     log_init();
-    if (argc != 4)
+    if (argc != 3)
     {
-      std::cerr << "usage: " << argv[0] << " indexfile zenofile searchstring" << std::endl;
+      std::cerr << "usage: " << argv[0] << " zeno-directory searchstring" << std::endl;
       return 1;
     }
 
-    zeno::Search search(argv[1], argv[2]);
+    zeno::Files files(argv[1]);
+    zeno::Search search(files);
     zeno::Search::Results result;
-    search.search(result, argv[3]);
+    search.search(result, argv[2]);
 
     for (zeno::Search::Results::const_iterator it = result.begin(); it != result.end(); ++it)
     {

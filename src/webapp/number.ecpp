@@ -3,6 +3,10 @@
 
   zeno::size_type idx = tnt::stringTo<zeno::size_type>(request.getPathInfo());
 
+  zeno::File articlesFile = files.getFirstFile('A');
+  if (!articlesFile)
+    throw std::runtime_error("articlefile not found");
+
   article = articlesFile.getArticle(idx);
   log_info("choose article " << article.getIndex() << ": " << article.getTitle() << " url:" << article.getUrl());
 

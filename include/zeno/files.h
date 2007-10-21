@@ -17,6 +17,9 @@
  *
  */
 
+#ifndef ZENO_FILES_H
+#define ZENO_FILES_H
+
 #include <zeno/file.h>
 #include <vector>
 
@@ -24,22 +27,32 @@ namespace zeno
 {
   class Files
   {
-    public:
       typedef std::vector<File> FilesType;
-
-    private:
       FilesType files;
 
     public:
+      typedef FilesType::iterator iterator;
+      typedef FilesType::const_iterator const_iterator;
+
       Files() { }
       explicit Files(const std::string& dir)
         { addFiles(dir); }
 
-      void addFile(const std::string& fname)
-        { files.push_back(File(fname)); }
+      void addFile(const std::string& fname)  { files.push_back(File(fname)); }
+      void addFile(const File& file)          { files.push_back(file); }
       void addFiles(const std::string& dir);
 
-      const FilesType& getFiles() const   { return files; }
-      FilesType getFiles(char ns);
+      Files getFiles(char ns);
+      File getFirstFile(char ns);
+
+      Article getArticle(char ns, const QUnicodeString& url);
+
+      iterator begin()                 { return files.begin(); }
+      iterator end()                   { return files.end(); }
+      const_iterator begin() const     { return files.begin(); }
+      const_iterator end() const       { return files.end(); }
+      bool empty()                     { return files.empty(); }
   };
 }
+
+#endif // ZENO_FILES_H

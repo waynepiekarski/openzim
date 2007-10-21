@@ -27,6 +27,8 @@ log_define("zeno.indexarticle")
 
 namespace zeno
 {
+  bool IndexArticle::noOffset = false;
+
   void IndexArticle::readEntries()
   {
     if (!*this || categoriesRead)
@@ -72,8 +74,15 @@ namespace zeno
         std::istringstream data(getData().substr(offset, len));
         ZIntStream zdata(data);
 
-        while (zdata.get(entry.index))
+        unsigned index;
+        unsigned indexOffset = 0;
+        while (zdata.get(index))
         {
+          entry.index = indexOffset + index;
+
+          if (!noOffset)
+            indexOffset += index;
+
           if (getNamespace() == 'X')
           {
             unsigned p;
@@ -93,6 +102,7 @@ namespace zeno
         offset += len;
       }
     }
+    categoriesRead = true;
   }
 
 }

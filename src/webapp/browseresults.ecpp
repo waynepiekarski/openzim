@@ -25,8 +25,7 @@ unsigned n = 20; // items per page
       ++end[end.size() - 1];
 
     bresult.clear();
-    zeno::Search search(indexFile, articlesFile);
-    //search.find(bresult, zeno::QUnicodeString::fromUtf8("A/" + iso8859_utf8(begin)), zeno::QUnicodeString::fromUtf8("A/" + iso8859_utf8(end)));
+    zeno::Search search(files);
     log_debug("find \"" << begin << "\" to \"" << end << '"');
     search.find(bresult, ns, zeno::QUnicodeString::fromUtf8(begin), zeno::QUnicodeString::fromUtf8(end));
     browse_a = a;

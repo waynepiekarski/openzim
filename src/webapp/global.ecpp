@@ -1,14 +1,12 @@
 <%pre>
 #include <map>
 #include <vector>
-#include <zeno/file.h>
+#include <zeno/files.h>
 #include <zeno/article.h>
 #include <zeno/articlesearch.h>
 #include <zeno/search.h>
 #include <zeno/qunicode.h>
 #include <cxxtools/hirestime.h>
-
-typedef std::map<std::string, zeno::File> ZenoFilesType;
 
 static const int typeSpecial = -1;
 static const int typeArticle = 0;
@@ -18,18 +16,12 @@ static const int typeHistory = 1;
 <%config>
 
 ZenoPath = ".";
-ZenoFile = "wikipedia.zeno";
-ZenoIndex = "wikipedia.index.zeno";
-ZenoImages = "wikipedia.images.zeno";
 bool RedirectNumeric = false;
 
 </%config>
 <%application scope="global">
 
-ZenoFilesType zenoFiles;
-zeno::File articlesFile(ZenoPath.empty() ? ZenoFile : ZenoPath + '/' + ZenoFile);
-zeno::File indexFile(ZenoPath.empty() ? ZenoFile : ZenoPath + '/' + ZenoIndex);
-zeno::File imagesFile(ZenoPath.empty() ? ZenoFile : ZenoPath + '/' + ZenoImages);
+zeno::Files files(ZenoPath);
 
 </%application>
 <%session scope="global">

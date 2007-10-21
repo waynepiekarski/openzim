@@ -26,17 +26,25 @@ log_define("zeno.backgroundreader")
 
 namespace zeno
 {
-  Backgroundreader::Backgroundreader(zeno::File articlesFile_, zeno::File imagesFile_)
-    : articlesFile(articlesFile_),
-      imagesFile(imagesFile_),
+  Backgroundreader::Backgroundreader(zeno::Files files_)
+    : files(files_),
       stopRunning(false)
   {
     //create();
   }
+
   Backgroundreader::~Backgroundreader()
   {
     stopRunning = true;
     //join();
+  }
+
+  zeno::File Backgroundreader::getFile(char ns)
+  {
+    for (Files::iterator it = files.begin(); it != files.end(); ++it)
+      if (it->hasNamespace(ns))
+        return *it;
+    return zeno::File();
   }
 
   void Backgroundreader::readUrls(UrlsType& urls, zeno::File file)
@@ -98,7 +106,7 @@ namespace zeno
     }
 
     lock.unlock();
-    readUrls(urls, imagesFile);
+    readUrls(urls, getFile('I'));
   }
 
   void Backgroundreader::readLinks()
@@ -136,7 +144,7 @@ namespace zeno
     }
 
     lock.unlock();
-    readUrls(urls, articlesFile);
+    readUrls(urls, files.getFirstFile('A'));
   }
 
   void Backgroundreader::run()
@@ -174,7 +182,7 @@ namespace zeno
     }
   }
 
-  zeno::Article Backgroundreader::getArticle(zeno::File &file, char ns, const QUnicodeString& path)
+  zeno::Article Backgroundreader::getArticle(char ns, const QUnicodeString& path)
   {
     cxxtools::MutexLock lock(mutex);
 
@@ -190,7 +198,7 @@ namespace zeno
     else
     {
       log_debug("no cached article \"" << path << "\" found");
-      article = file.getArticle(ns, path);
+      article = files.getArticle(ns, path);
     }
 
     if (article && article.getLibraryMimeType() == zeno::Dirent::zenoMimeTextHtml)

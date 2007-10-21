@@ -11,6 +11,10 @@ unsigned int seed = static_cast<unsigned int>(time(0));
 </%pre>
 <%cpp>
 
+  zeno::File articlesFile = files.getFirstFile('A');
+  if (!articlesFile)
+    throw std::runtime_error("articlefile not found");
+
   do
   {
     zeno::size_type idx = static_cast<zeno::size_type>(static_cast<double>(articlesFile.getCountArticles()) * rand_r(&seed) / RAND_MAX);

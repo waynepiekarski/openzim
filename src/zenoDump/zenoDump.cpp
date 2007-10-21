@@ -58,16 +58,15 @@ class ZenoDumper
 void ZenoDumper::listZenoFiles(const std::string& directory)
 {
   zeno::Files zenofiles(directory);
-  zeno::Files::FilesType files = zenofiles.getFiles();
-  for (zeno::Files::FilesType::iterator it = files.begin(); it != files.end(); ++it)
+  for (zeno::Files::iterator it = zenofiles.begin(); it != zenofiles.end(); ++it)
     std::cout << it->getFilename() << " ns " << it->getNamespaces() << std::endl;
 }
 
 void ZenoDumper::listZenoFiles(const std::string& directory, char ns)
 {
   zeno::Files zenofiles(directory);
-  zeno::Files::FilesType files = zenofiles.getFiles(ns);
-  for (zeno::Files::FilesType::iterator it = files.begin(); it != files.end(); ++it)
+  zeno::Files files = zenofiles.getFiles(ns);
+  for (zeno::Files::iterator it = files.begin(); it != files.end(); ++it)
     std::cout << it->getFilename() << " offset " << it->getNamespaceBeginOffset(ns) << " - " << it->getNamespaceEndOffset(ns) << std::endl;
 }
 

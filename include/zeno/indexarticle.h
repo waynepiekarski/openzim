@@ -41,6 +41,8 @@ namespace zeno
       bool categoriesRead;
       void readEntries();
 
+      static bool noOffset;
+
     public:
       IndexArticle(const Article& article)
         : Article(article),
@@ -51,6 +53,9 @@ namespace zeno
         { readEntries(); return entries[cat].size(); }
       const EntriesType& getCategory(unsigned cat)
         { readEntries(); return entries[cat]; }
+
+      static void setNoOffset(bool sw = true)   { noOffset = sw; }
+      static bool getNoOffset()                 { return noOffset; }
   };
 }
 

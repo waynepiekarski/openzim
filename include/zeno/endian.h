@@ -85,7 +85,7 @@ T fromBigEndian(const T* ptr, bool fromBigEndian_ = isBigEndian())
   {
     T ret;
     std::reverse_copy(reinterpret_cast<const int8_t*>(ptr),
-                      reinterpret_cast<const int8_t*>(ptr + sizeof(T)),
+                      reinterpret_cast<const int8_t*>(ptr) + sizeof(T),
                       reinterpret_cast<int8_t*>(&ret));
     return ret;
   }

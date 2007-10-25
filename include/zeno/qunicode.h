@@ -85,9 +85,9 @@ namespace zeno
       bool operator!= (const QUnicodeString& v) const
         { return value != v.value; }
       bool operator<= (const QUnicodeString& v) const
-        { !(*this > v); }
+        { return !(*this > v); }
       bool operator>= (const QUnicodeString& v) const
-        { !(*this < v); }
+        { return !(*this < v); }
 
       std::string toXML() const;
       std::string toUtf8() const;

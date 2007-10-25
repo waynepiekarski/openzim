@@ -173,11 +173,11 @@ namespace zeno
           uint32_t articleIdx = it->index;
           uint32_t position = it->pos;
 
-          IndexType::iterator it = index.insert(
+          IndexType::iterator itIt = index.insert(
             IndexType::value_type(articleIdx,
               SearchResult(articlefile.getArticle(articleIdx)))).first;
 
-          it->second.foundWord(token, position, addweight + 3 - cat);
+          itIt->second.foundWord(token, position, addweight + 3 - cat);
         }
       }
     }

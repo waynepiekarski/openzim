@@ -8,7 +8,7 @@ bool DisableCache = false;
 </%pre>
 <%application>
 zeno::Backgroundreader reader(files);
-static bool lastFoundUtf8(true);
+bool lastFoundUtf8(true);
 </%application>
 <%cpp>
 

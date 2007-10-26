@@ -37,6 +37,7 @@ namespace zeno
   {
       std::ifstream zenoFile;
       std::string filename;
+      std::string namespaces;
 
       cxxtools::Mutex mutex;
 
@@ -48,19 +49,15 @@ namespace zeno
       Dirent readDirentNolock();
       Dirent readDirentNolock(offset_type off);
 
-      std::string zcache;
-      offset_type zcacheOffset;
-      size_type zcacheCount;
-
     public:
       FileImpl(const char* fname);
 
       const std::string& getFilename() const   { return filename; }
 
-      Article getArticle(char ns, const QUnicodeString& url);
-      Article getArticle(char ns, const std::string& url);
+      Article getArticle(char ns, const QUnicodeString& url, bool collate);
+      Article getArticle(char ns, const std::string& url, bool collate);
       Article getArticle(size_type idx);
-      std::pair<bool, size_type> findArticle(char ns, const QUnicodeString& url);
+      std::pair<bool, size_type> findArticle(char ns, const QUnicodeString& url, bool collate);
       Dirent getDirent(size_type idx);
       size_type getCountArticles() const  { return indexOffsets.size(); }
 
@@ -69,7 +66,6 @@ namespace zeno
       std::string getNamespaces();
 
       std::string readData(offset_type off, size_type count);
-      void cacheData(offset_type off, size_type count);
   };
 
 }

@@ -53,5 +53,6 @@ namespace zeno
       void run();
 
       zeno::Article getArticle(char ch, const QUnicodeString& path);
+      zeno::Article getArticle(const std::string& fname, char ch, const QUnicodeString& path);
   };
 };

@@ -63,7 +63,7 @@ e;  // Begriff
 
   log_debug(result.size() << " articles found");
 
-  title = zeno::QUnicodeString("Suche nach: " + result.getExpression());
+  title = zeno::QUnicodeString("Suche nach: " + e);
 
 </%cpp>
 <& skin qparam nextComp="searchresults" type=(typeSpecial) >

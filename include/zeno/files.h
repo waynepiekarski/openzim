@@ -21,13 +21,14 @@
 #define ZENO_FILES_H
 
 #include <zeno/file.h>
-#include <vector>
+#include <map>
+#include <tnt/stringlessignorecase.h>
 
 namespace zeno
 {
   class Files
   {
-      typedef std::vector<File> FilesType;
+      typedef std::map<std::string, File, tnt::StringLessIgnoreCase<std::string> > FilesType;
       FilesType files;
 
     public:
@@ -38,14 +39,16 @@ namespace zeno
       explicit Files(const std::string& dir)
         { addFiles(dir); }
 
-      void addFile(const std::string& fname)  { files.push_back(File(fname)); }
-      void addFile(const File& file)          { files.push_back(file); }
+      void addFile(const std::string& fname)  { files[fname] = File(fname); }
+      void addFile(const std::string& fname, const File& file )  { files[fname] = file; }
       void addFiles(const std::string& dir);
 
       Files getFiles(char ns);
       File getFirstFile(char ns);
 
       Article getArticle(char ns, const QUnicodeString& url);
+      Article getArticle(const std::string& file, char ns, const QUnicodeString& url);
+      Article getBestArticle(const Article& article);
 
       iterator begin()                 { return files.begin(); }
       iterator end()                   { return files.end(); }

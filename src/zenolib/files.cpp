@@ -39,12 +39,16 @@ namespace zeno
         log_debug("file \"" << fname << "\" found");
         try
         {
-          files.push_back(File(dir + '/' + fname));
+          addFile(fname, File(dir + '/' + fname));
         }
         catch (const ZenoFileFormatError& e)
         {
           log_error('"' << fname << "\" is no zeno file: " << e.what());
         }
+      }
+      else if (fname.size() > 0 && fname[0] != '.')
+      {
+        addFiles(dir + '/' + *it);
       }
     }
 
@@ -55,8 +59,8 @@ namespace zeno
   {
     Files ret;
     for (iterator it = begin(); it != end(); ++it)
-      if (it->hasNamespace(ns))
-        ret.addFile(*it);
+      if (it->second.hasNamespace(ns))
+        ret.addFile(it->first, it->second);
     return ret;
   }
 
@@ -64,25 +68,73 @@ namespace zeno
   {
     Files ret;
     for (iterator it = begin(); it != end(); ++it)
-      if (it->hasNamespace(ns))
-        return *it;
+      if (it->second.hasNamespace(ns))
+        return it->second;
     return File();
   }
 
   Article Files::getArticle(char ns, const QUnicodeString& url)
   {
     log_debug("getArticle('" << ns << "', \"" << url << "\")");
+    Article ret;
     for (iterator it = begin(); it != end(); ++it)
     {
-      Article article = it->getArticle(ns, url);
-      if (article)
+      log_debug("search in " << it->first);
+      Article article = it->second.getArticle(ns, url);
+      if (article
+        && ret.getData().size() < article.getData().size())
       {
-        log_debug("article found");
-        return article;
+        log_debug("article found in " << it->first);
+        ret = article;
       }
     }
+    if (!ret)
+      log_debug("article not found");
+    return ret;
+  }
+
+  Article Files::getArticle(const std::string& file, char ns, const QUnicodeString& url)
+  {
+    log_debug("getArticle(\"" << file << ", '" << ns << "', \"" << url << "\")");
+
+    iterator it = files.find(file);
+    if (it == end())
+    {
+      log_debug("file \"" << file << "\" not found");
+      return Article();
+    }
+
+    log_debug("file \"" << file << "\" found");
+    Article article = it->second.getArticle(ns, url);
+    if (article)
+    {
+      log_debug("article found");
+      return getBestArticle(article);
+    }
+
     log_debug("article not found");
     return Article();
   }
 
+  Article Files::getBestArticle(const Article& article)
+  {
+    log_debug("getBestArticle");
+
+    Article ret = article;
+    for (iterator it = begin(); it != end(); ++it)
+    {
+      log_debug("search in " << it->first);
+      Article a = it->second.getArticle(article.getNamespace(), article.getTitle());
+      if (a
+        && a.getLibraryMimeType() == article.getLibraryMimeType()
+        && ret.getData().size() < a.getData().size())
+      {
+        log_debug("article found in " << it->first);
+        ret = a;
+      }
+    }
+    if (!ret)
+      log_debug("article not found");
+    return ret;
+  }
 }

@@ -45,8 +45,8 @@ namespace zeno
 
       const std::string& getFilename() const   { return impl->getFilename(); }
 
-      Article getArticle(char ns, const std::string& url);
-      Article getArticle(char ns, const QUnicodeString& url);
+      Article getArticle(char ns, const std::string& url, bool collate = false);
+      Article getArticle(char ns, const QUnicodeString& url, bool collate = false);
       Article getArticle(size_type idx);
       Dirent getDirent(size_type idx);
       size_type getCountArticles() const;
@@ -60,8 +60,8 @@ namespace zeno
 
       const_iterator begin();
       const_iterator end();
-      const_iterator find(char ns, const std::string& url);
-      const_iterator find(char ns, const QUnicodeString& url);
+      const_iterator find(char ns, const std::string& url, bool collate = false);
+      const_iterator find(char ns, const QUnicodeString& url, bool collate = false);
 
       operator bool() const  { return impl.getPointer() != 0; }
   };

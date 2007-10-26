@@ -40,16 +40,16 @@ namespace zeno
     return impl->readData(off, count);
   }
 
-  Article File::getArticle(char ns, const std::string& url)
+  Article File::getArticle(char ns, const std::string& url, bool collate)
   {
-  log_debug("getArticle('" << ns << "', \"" << url << "\")");
-    return impl->getArticle(ns, url);
+    log_debug("getArticle('" << ns << "', \"" << url << "\", " << collate << ')');
+    return impl->getArticle(ns, url, collate);
   }
 
-  Article File::getArticle(char ns, const QUnicodeString& url)
+  Article File::getArticle(char ns, const QUnicodeString& url, bool collate)
   {
-    log_debug("getArticle('" << ns << "', \"" << url << "\")");
-    return impl->getArticle(ns, url);
+    log_debug("getArticle('" << ns << "', \"" << url << ", " << collate << '"');
+    return impl->getArticle(ns, url, collate);
   }
 
   Article File::getArticle(size_type idx)
@@ -104,14 +104,14 @@ namespace zeno
     return const_iterator();
   }
 
-  File::const_iterator File::find(char ns, const std::string& url)
+  File::const_iterator File::find(char ns, const std::string& url, bool collate)
   {
-    return const_iterator(this, impl->findArticle(ns, QUnicodeString(url)).second);
+    return const_iterator(this, impl->findArticle(ns, QUnicodeString(url), collate).second);
   }
 
-  File::const_iterator File::find(char ns, const QUnicodeString& url)
+  File::const_iterator File::find(char ns, const QUnicodeString& url, bool collate)
   {
-    return const_iterator(this, impl->findArticle(ns, url).second);
+    return const_iterator(this, impl->findArticle(ns, url, collate).second);
   }
 
   File::const_iterator::const_iterator(File* file_, size_type idx_)

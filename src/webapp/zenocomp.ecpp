@@ -21,6 +21,7 @@ bool lastFoundUtf8(true);
 
   title.clear();
 
+  std::string fname = request.getArg(0);
   char ns = request.getArgDef(1, "A").at(0);
 
   static cxxtools::IConverter iso8859_utf8("UTF-8", "ISO-8859-1");
@@ -37,8 +38,8 @@ bool lastFoundUtf8(true);
 
   if (DisableCache || (article.getUrl() != pathInfo && article.getUrl() != pathInfoAlt))
   {
-    log_debug("search article \"" << pathInfo << "\"  encoding " << (lastFoundUtf8 ? "utf-8" : "iso-8859-1"));
-    article = reader.getArticle(ns, pathInfo);
+    log_debug("search article \"" << pathInfo << "\" namespace " << ns << " encoding " << (lastFoundUtf8 ? "utf-8" : "iso-8859-1"));
+    article = reader.getArticle(fname, ns, pathInfo);
   }
   else
     log_debug("use cached article " << (lastFoundUtf8 ? pathInfo : pathInfoAlt));
@@ -50,7 +51,7 @@ bool lastFoundUtf8(true);
     {
       // different encoding has a other result - try this one
       log_debug("search article \"" << pathInfoAlt << "\" encoding " << (lastFoundUtf8 ? "iso-8859-1" : "utf-8"));
-      article = files.getArticle(ns, pathInfoAlt);
+      article = files.getArticle(fname, ns, pathInfoAlt);
     }
 
     if (article)

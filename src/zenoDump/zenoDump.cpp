@@ -46,7 +46,7 @@ class ZenoDumper
     void printInfo();
     void printNsInfo(char ch);
     void locateArticle(zeno::size_type idx);
-    void findArticle(char ns, const char* url);
+    void findArticle(char ns, const char* url, bool collate);
     void dumpArticle(bool raw = false);
     static void printIndexcontent(zeno::IndexArticle article);
     void listArticles(bool info, bool extra, bool indexcontent);
@@ -59,7 +59,7 @@ void ZenoDumper::listZenoFiles(const std::string& directory)
 {
   zeno::Files zenofiles(directory);
   for (zeno::Files::iterator it = zenofiles.begin(); it != zenofiles.end(); ++it)
-    std::cout << it->getFilename() << " ns " << it->getNamespaces() << std::endl;
+    std::cout << it->first << ": " << it->second.getFilename() << " ns " << it->second.getNamespaces() << std::endl;
 }
 
 void ZenoDumper::listZenoFiles(const std::string& directory, char ns)
@@ -67,7 +67,8 @@ void ZenoDumper::listZenoFiles(const std::string& directory, char ns)
   zeno::Files zenofiles(directory);
   zeno::Files files = zenofiles.getFiles(ns);
   for (zeno::Files::iterator it = files.begin(); it != files.end(); ++it)
-    std::cout << it->getFilename() << " offset " << it->getNamespaceBeginOffset(ns) << " - " << it->getNamespaceEndOffset(ns) << std::endl;
+    std::cout << it->first << ": " << it->second.getFilename()
+      << " offset " << it->second.getNamespaceBeginOffset(ns) << " - " << it->second.getNamespaceEndOffset(ns) << std::endl;
 }
 
 void ZenoDumper::printInfo()
@@ -89,11 +90,11 @@ void ZenoDumper::locateArticle(zeno::size_type idx)
   pos = zeno::File::const_iterator(&file, idx);
 }
 
-void ZenoDumper::findArticle(char ns, const char* url)
+void ZenoDumper::findArticle(char ns, const char* url, bool collate)
 {
-  log_debug("findArticle(" << ns << ", " << url << ')');
-  pos = file.find(ns, url);
-  log_debug("findArticle(" << ns << ", " << url << ") => idx=" << pos.getIndex());
+  log_debug("findArticle(" << ns << ", " << url << ", " << collate << ')');
+  pos = file.find(ns, url, collate);
+  log_debug("findArticle(" << ns << ", " << url << ", " << collate << ") => idx=" << pos.getIndex());
 }
 
 void ZenoDumper::dumpArticle(bool raw)
@@ -188,6 +189,7 @@ int main(int argc, char* argv[])
     cxxtools::Arg<bool> extra(argc, argv, 'x');
     cxxtools::Arg<bool> indexcontent(argc, argv, 'X');
     cxxtools::Arg<char> ns(argc, argv, 'n', 'A');  // namespace
+    cxxtools::Arg<bool> collate(argc, argv, 'c');
 
     if (argc <= 1)
     {
@@ -243,7 +245,7 @@ int main(int argc, char* argv[])
     if (indexOffset.isSet())
       app.locateArticle(indexOffset);
     else if (find.isSet())
-      app.findArticle(ns, find);
+      app.findArticle(ns, find, collate);
 
     // print requested info
     if (data || rawdump)

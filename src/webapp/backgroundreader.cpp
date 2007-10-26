@@ -42,8 +42,8 @@ namespace zeno
   zeno::File Backgroundreader::getFile(char ns)
   {
     for (Files::iterator it = files.begin(); it != files.end(); ++it)
-      if (it->hasNamespace(ns))
-        return *it;
+      if (it->second.hasNamespace(ns))
+        return it->second;
     return zeno::File();
   }
 
@@ -192,12 +192,12 @@ namespace zeno
 
     if (it != cachedArticles.end())
     {
-      log_debug("cached article \"" << path << "\" found");
+      log_debug("cached article \"" << path << "\" namespace " << ns << " found");
       article = it->second;
     }
     else
     {
-      log_debug("no cached article \"" << path << "\" found");
+      log_debug("no cached article \"" << path << "\" namespace " << ns << " found");
       article = files.getArticle(ns, path);
     }
 
@@ -213,4 +213,10 @@ namespace zeno
 
     return article;
   }
+
+  zeno::Article Backgroundreader::getArticle(const std::string& fname, char ns, const QUnicodeString& path)
+  {
+    return files.getArticle(fname, ns, path);
+  }
+
 }

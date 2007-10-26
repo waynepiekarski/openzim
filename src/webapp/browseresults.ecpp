@@ -17,17 +17,12 @@ unsigned n = 20; // items per page
 
   if (browse_a != a || ns_a != ns)
   {
-    std::string begin = a;
-    std::string end = a;
-    if (end.empty())
-      end = "A";
-    else
-      ++end[end.size() - 1];
+    std::string begin = iso8859_utf8(a);
 
     bresult.clear();
     zeno::Search search(files);
-    log_debug("find \"" << begin << "\" to \"" << end << '"');
-    search.find(bresult, ns, zeno::QUnicodeString::fromUtf8(begin), zeno::QUnicodeString::fromUtf8(end));
+    log_debug("find \"" << begin << '"');
+    search.find(bresult, ns, zeno::QUnicodeString::fromUtf8(begin));
     browse_a = a;
     ns_a = ns;
   }

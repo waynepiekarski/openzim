@@ -81,10 +81,10 @@ namespace zeno
     log_debug("read " << indexOffsets.size() << " index-entries ready");
   }
 
-  Article FileImpl::getArticle(char ns, const QUnicodeString& url)
+  Article FileImpl::getArticle(char ns, const QUnicodeString& url, bool collate)
   {
-    log_debug("get article \"" << url << '"');
-    std::pair<bool, size_type> s = findArticle(ns, url);
+    log_debug("get article " << ns << " \"" << url << '"');
+    std::pair<bool, size_type> s = findArticle(ns, url, collate);
     if (!s.first)
     {
       log_warn("article \"" << url << "\" not found");
@@ -98,14 +98,20 @@ namespace zeno
     return Article(s.second, d, File(this));
   }
 
-  Article FileImpl::getArticle(char ns, const std::string& url)
+  Article FileImpl::getArticle(char ns, const std::string& url, bool collate)
   {
-    return getArticle(ns, QUnicodeString(url));
+    return getArticle(ns, QUnicodeString(url), collate);
   }
 
-  std::pair<bool, size_type> FileImpl::findArticle(char ns, const QUnicodeString& title)
+  std::pair<bool, size_type> FileImpl::findArticle(char ns, const QUnicodeString& title, bool collate)
   {
-    log_debug("find article " << ns << " \"" << title << '"');
+    log_debug("find article " << ns << " \"" << title << "\", " << collate << ')');
+
+    if (getNamespaces().find(ns) == std::string::npos)
+    {
+      log_debug("namespace " << ns << " not found");
+      return std::pair<bool, size_type>(false, 0);
+    }
 
     cxxtools::MutexLock lock(mutex);
 
@@ -121,7 +127,8 @@ namespace zeno
 
       int c = ns < d.getNamespace() ? -1
             : ns > d.getNamespace() ? 1
-            : title.compare(QUnicodeString(d.getTitle()));
+            : (collate ? title.compareCollate(QUnicodeString(d.getTitle()))
+                       : title.compare(QUnicodeString(d.getTitle())));
       if (c < 0)
         u = p;
       else if (c > 0)
@@ -205,18 +212,19 @@ namespace zeno
 
   std::string FileImpl::getNamespaces()
   {
-    std::string namespaces;
-
-    Dirent d = getDirent(0);
-    namespaces = d.getNamespace();
-
-    size_type idx;
-    while ((idx = getNamespaceEndOffset(d.getNamespace())) < getCountArticles())
+    if (namespaces.empty())
     {
-      d = getDirent(idx);
-      namespaces += d.getNamespace();
-    }
+      Dirent d = getDirent(0);
+      namespaces = d.getNamespace();
 
+      size_type idx;
+      while ((idx = getNamespaceEndOffset(d.getNamespace())) < getCountArticles())
+      {
+        d = getDirent(idx);
+        namespaces += d.getNamespace();
+      }
+
+    }
     return namespaces;
   }
 
@@ -272,30 +280,4 @@ namespace zeno
     return dirent;
   }
 
-  void FileImpl::cacheData(offset_type off, size_type count)
-  {
-    log_debug("cacheData(" << off << ", " << count << ')');
-
-    cxxtools::MutexLock lock(mutex);
-    std::ostringstream data;
-    tnt::DeflateStream zstream(data);
-    zenoFile.seekg(off);
-
-    char buffer[256];
-    size_type c = count;
-    while (c > 0)
-    {
-      zenoFile.read(buffer, std::min(static_cast<size_type>(sizeof(buffer)), c));
-      if (!zenoFile)
-        throw ZenoFileFormatError("format-error: error reading data");
-      zstream.write(buffer, zenoFile.gcount());
-      c -= zenoFile.gcount();
-    }
-    zstream.end();
-    zcache = data.str();
-    zcacheOffset = off;
-    zcacheCount = count;
-
-    log_debug(zcacheCount << " bytes in cache, " << zcache.size() << " compressed");
-  }
 }

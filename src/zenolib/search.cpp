@@ -133,10 +133,10 @@ namespace zeno
   {
     for (Files::iterator it = files.begin(); it != files.end(); ++it)
     {
-      if (it->hasNamespace('X'))
-        indexfile = *it;
-      else if (it->hasNamespace('A'))
-        articlefile = *it;
+      if (it->second.hasNamespace('X'))
+        indexfile = it->second;
+      else if (it->second.hasNamespace('A'))
+        articlefile = it->second;
     }
   }
 
@@ -163,7 +163,7 @@ namespace zeno
 
       log_debug("search for token \"" << token << '"');
 
-      IndexArticle indexarticle = indexfile.getArticle('X', QUnicodeString::fromUtf8(token));
+      IndexArticle indexarticle = indexfile.getArticle('X', QUnicodeString::fromUtf8(token), true);
 
       for (unsigned cat = 0; cat <= 3; ++cat)
       {
@@ -206,12 +206,12 @@ namespace zeno
   {
     log_debug("find results in namespace " << ns << " for praefix \"" << praefix << '"');
     QUnicodeString qpraefix(praefix);
-    for (File::const_iterator pos = articlefile.find(ns, praefix);
+    for (File::const_iterator pos = articlefile.find(ns, praefix, true);
          pos != articlefile.end() && results.size() < limit; ++pos)
     {
-      if (pos->getUrl().compareCollate(0, praefix.size() - 1, qpraefix) != 0)
+      if (ns != pos->getNamespace() || pos->getTitle().compareCollate(0, praefix.size(), qpraefix) != 0)
       {
-        log_debug("article \"" << pos->getUrl() << "\" does not match");
+        log_debug("article " << pos->getNamespace() << ", \"" << pos->getTitle() << "\" does not match " << ns << ", \"" << praefix << '"');
         break;
       }
       results.push_back(SearchResult(*pos));
@@ -223,7 +223,7 @@ namespace zeno
     const QUnicodeString& end, unsigned limit)
   {
     log_debug("find results in namespace " << ns << " for praefix \"" << begin << '"');
-    for (File::const_iterator pos = articlefile.find(ns, begin);
+    for (File::const_iterator pos = articlefile.find(ns, begin, true);
          pos != articlefile.end() && results.size() < limit; ++pos)
     {
       log_debug("check " << pos->getNamespace() << '/' << pos->getTitle());

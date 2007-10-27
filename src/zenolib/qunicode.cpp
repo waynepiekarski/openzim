@@ -269,27 +269,55 @@ namespace zeno
 
   int QUnicodeString::compareCollate(unsigned pos, unsigned n, const QUnicodeString& v) const
   {
-    std::istringstream is1(value.substr(pos, n));
+    log_debug('"' << *this << "\".compareCollate(" << pos << ", " << n << ", \"" << v << "\")");
+
+    std::istringstream is1(value);
     std::istringstream is2(v.value);
 
-    while (true)
-    {
-      QUnicodeChar uc1;
-      is1 >> uc1;
+    unsigned p;
+    QUnicodeChar uc1, uc2;
 
-      QUnicodeChar uc2;
+    for (p = 0; p < pos + n; ++p)
+    {
+      is1 >> uc1;
       is2 >> uc2;
 
-      if (!is1 || !is2)
-        break;
+      if (p >= pos)
+      {
+        if (!is1)
+          return is2 ? -1 : 0;
+        else if (!is2)
+          return 1;
 
-      if (uc1.getCollateValue() < uc2.getCollateValue())
-        return -1;
-      else if (uc2.getCollateValue() < uc1.getCollateValue())
-        return 1;
+        if (uc1.getCollateValue() < uc2.getCollateValue())
+          return -1;
+        else if (uc2.getCollateValue() < uc1.getCollateValue())
+          return 1;
+      }
     }
 
-    return is1 ? 1 : is2 ? -1 : 0;
+    is2.get();
+    return is2 ? -1 : 0;
+  }
+
+  unsigned QUnicodeString::size() const
+  {
+    std::istringstream is(value);
+    QUnicodeChar uc;
+    unsigned ret = 0;
+    while (is >> uc)
+      ++ret;
+    return ret;
+  }
+
+  std::string QUnicodeString::getCollateString() const
+  {
+    std::istringstream is(value);
+    std::string ret;
+    QUnicodeChar uc;
+    while (is >> uc)
+      ret += static_cast<char>(uc.getCollateValue());
+    return ret;
   }
 
   std::ostream& operator<< (std::ostream& out, const QUnicodeString& str)

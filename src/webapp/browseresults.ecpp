@@ -11,18 +11,14 @@ unsigned n = 20; // items per page
 </%pre>
 <%cpp>
 
-  static cxxtools::IConverter iso8859_utf8("UTF-8", "ISO-8859-1");
-
   log_debug("browseresults ns=" << ns << " prefix=\"" << a << '"');
 
   if (browse_a != a || ns_a != ns)
   {
-    std::string begin = iso8859_utf8(a);
-
     bresult.clear();
     zeno::Search search(files);
-    log_debug("find \"" << begin << '"');
-    search.find(bresult, ns, zeno::QUnicodeString::fromUtf8(begin));
+    log_debug("find \"" << a << '"');
+    search.find(bresult, ns, zeno::QUnicodeString::fromUtf8(a));
     browse_a = a;
     ns_a = ns;
   }

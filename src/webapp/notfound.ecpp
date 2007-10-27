@@ -1,2 +1,8 @@
+<%pre>
+#include <cxxtools/iconverter.h>
+</%pre>
+<%cpp>
+  static cxxtools::IConverter iso8859_utf8("ISO-8859-1", "UTF-8");
+</%cpp>
 <p><strong>Die gew&uuml;nschte Seite wurde nicht gefunden:</strong></p>
-<ul><li><$ request.getPathInfo() $></li></ul>
+<ul><li><$ iso8859_utf8(request.getPathInfo()) $></li></ul>

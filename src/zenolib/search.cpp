@@ -205,11 +205,10 @@ namespace zeno
   void Search::find(Results& results, char ns, const QUnicodeString& praefix, unsigned limit)
   {
     log_debug("find results in namespace " << ns << " for praefix \"" << praefix << '"');
-    QUnicodeString qpraefix(praefix);
     for (File::const_iterator pos = articlefile.find(ns, praefix, true);
          pos != articlefile.end() && results.size() < limit; ++pos)
     {
-      if (ns != pos->getNamespace() || pos->getTitle().compareCollate(0, praefix.size(), qpraefix) != 0)
+      if (ns != pos->getNamespace() || pos->getTitle().compareCollate(0, praefix.size(), praefix) > 0)
       {
         log_debug("article " << pos->getNamespace() << ", \"" << pos->getTitle() << "\" does not match " << ns << ", \"" << praefix << '"');
         break;

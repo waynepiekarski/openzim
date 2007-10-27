@@ -105,7 +105,7 @@ namespace zeno
 
   std::pair<bool, size_type> FileImpl::findArticle(char ns, const QUnicodeString& title, bool collate)
   {
-    log_debug("find article " << ns << " \"" << title << "\", " << collate << ')');
+    log_debug("find article " << ns << " \"" << title << "\", " << collate);
 
     if (getNamespaces().find(ns) == std::string::npos)
     {

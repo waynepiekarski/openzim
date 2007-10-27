@@ -76,7 +76,7 @@ int main(int argc, char* argv[])
     app.listen(listenIp, port);
 
     app.mapUrl("^/$",                          "redirect");
-    app.mapUrl("tntnet.png",                   "tntnet_png");
+    app.mapUrl("^/!/([0-9]+)$",                "$1", "number");
     app.mapUrl("^/-/([^.]+)\\.(.*)$",          "$1_$2");
     app.mapUrl("^/~/([^.]+)$",                 "$1");
     app.mapUrl("^/~/([^.]+)\\.([^.]*)$",       "$1_$2");
@@ -90,8 +90,6 @@ int main(int argc, char* argv[])
        .setPathInfo("$3")
        .pushArg("$1.zeno")
        .pushArg("$2");
-
-    app.mapUrl("^/!/([0-9]+)$",          "$1", "number");
 
     tnt::Tntconfig config;
     config.setConfigValue("ZenoPath", directory);

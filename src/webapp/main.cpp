@@ -96,7 +96,7 @@ int main(int argc, char* argv[])
     tnt::Comploader::configure(config);
 
     std::cout << "Wikipedia ist jetzt unter http://localhost:" << port << "/ verfügbar\n"
-                 "Die Einstellunge können unter $HOME/.TntReader geändert werden" << std::endl;
+                 "Die Einstellungen können unter $HOME/.TntReader geändert werden" << std::endl;
     app.run();
   }
   catch (const std::exception& e)

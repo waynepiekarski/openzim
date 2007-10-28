@@ -28,6 +28,6 @@ unsigned n = 20; // items per page
 <hr>
 <ul>
 % for (unsigned i = s; i < bresult.size() && i < t; ++i) {
-    <li><a href="<$$ bresult[i].getArticle().getUrl().toXML() $>"><$$ bresult[i].getArticle().getTitle().toXML() $></a></li>
+    <li><a href="/<$$ bresult[i].getArticle().getUrl().toXML() $>"><$$ bresult[i].getArticle().getTitle().toXML() $></a></li>
 % }
 </ul>

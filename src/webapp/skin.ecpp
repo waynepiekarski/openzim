@@ -3,6 +3,7 @@
 nextComp;
 int type = typeArticle;
 e;
+ns = "A";
 </%args>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="de" lang="de" dir="ltr">
@@ -22,7 +23,7 @@ e;
 		<script type=" text/javascript">
 			var skin = "monobook";
 			var stylepath = "";
-			var wgArticlePath = "A/$1";
+			var wgArticlePath = "/<$article.getUrl()$>";
 			var wgScriptPath = "";
 			var wgServer = "http://<$request.getHeader(tnt::httpheader::host)$>";
 			var wgCanonicalNamespace = "";
@@ -75,13 +76,15 @@ e;
 %   } else {
                <li id="ca-nstab-main">
 %   }
-               <a href="/A/<$ article.getTitle() $>">Artikel</a></li>
 %   if (type == typeHistory) {
+               <a href="/<$ns$>/<$ article.getTitle() $>">Artikel</a></li>
                <li id="ca-history" class="selected">
+               <a href="/<$ article.getUrl() $>">Versionen/Autoren</a></li>
 %   } else {
+               <a href="/<$ article.getUrl() $>">Artikel</a></li>
                <li id="ca-history">
+               <a href="/Q/<$ article.getTitle() $>?ns=<$article.getNamespace()$>">Versionen/Autoren</a></li>
 %   }
-               <a href="/Q/<$ article.getTitle() $>">Versionen/Autoren</a></li>
 % }
 			 </ul>
 		  </div>
@@ -103,11 +106,11 @@ e;
 			   <ul>
 				 <li id="n-mainpage"><a href="">Hauptseite</a></li>
 				 <li id="n-topics"><a href="/Wikipedia/B/Portal:Wikipedia+nach+Themen">Themenportale</a></li>
-				 <li id="n-alphindex"><a href="~/browse?a=">Von A bis Z</a></li>
-				 <li id="n-images"><a href="~/browse?ns=I">Abbildungen</a></li>
-				 <li id="n-randompage"><a href="~/random">Zuf&auml;lliger Artikel</a></li>
+				 <li id="n-alphindex"><a href="/~/browse?a=">Von A bis Z</a></li>
+				 <li id="n-images"><a href="/~/browse?ns=I">Abbildungen</a></li>
+				 <li id="n-randompage"><a href="/~/random">Zuf&auml;lliger Artikel</a></li>
 % if (!articles.empty() || !result.empty()) {
-				 <li id="n-search"><a href="~/search">zum Suchergebnis</a></li>
+				 <li id="n-search"><a href="/~/search">zum Suchergebnis</a></li>
 % }
 			   </ul>
 			 </div>
@@ -115,7 +118,7 @@ e;
 		  <div id="p-search" class="portlet">
 			<h5><label for="searchInput">Suche</label></h5>
 			<div id="searchBody" class="pBody">
-			  <form method="get" action="~/search" id="searchform">
+			  <form method="get" action="/~/search" id="searchform">
 				<div>
 				  <input type="hidden" name="l" value="Wikipedia.index" />
 				  <input type="text" id="searchInput" name="e" accesskey="f" value="<$e$>" />

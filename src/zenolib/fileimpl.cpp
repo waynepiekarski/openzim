@@ -141,14 +141,15 @@ namespace zeno
     }
 
     Dirent d = readDirentNolock(indexOffsets[l]);
-    int c = title.compare(QUnicodeString(d.getTitle()));
+    int c = collate ? title.compareCollate(QUnicodeString(d.getTitle()))
+                    : title.compare(QUnicodeString(d.getTitle()));
     if (c == 0)
     {
       log_debug("article found after " << itcount << " iterations");
       return std::pair<bool, size_type>(true, l);
     }
 
-    log_debug("article not found");
+    log_debug("article not found (\"" << d.getTitle() << "\" does not match");
     return std::pair<bool, size_type>(false, u);
   }
 
@@ -257,7 +258,7 @@ namespace zeno
 
   Dirent FileImpl::readDirentNolock(offset_type off)
   {
-    log_debug("read directory entry at offset " << off);
+    //log_debug("read directory entry at offset " << off);
     zenoFile.seekg(off);
     return readDirentNolock();
   }
@@ -275,7 +276,7 @@ namespace zeno
       extra = readDataNolock(dirent.getExtraLen());
 
     dirent.setExtra(extra);
-    log_debug("title=" << dirent.getTitle());
+    //log_debug("title=" << dirent.getTitle());
 
     return dirent;
   }

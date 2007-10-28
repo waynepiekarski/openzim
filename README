@@ -1,13 +1,6 @@
-TntZenoReader is currently in a very early stage. No index-file - no images.
+TntReader
+=========
 
-To compile:
-  tar xzf tntzenoreader-0.1.tar.gz
-  cd tntzenoreader-0.1
-  ./configure
-  make
-
-To run:
-  copy or symlink wikipedia.zeno to tntzenoreader-0.1
-  start tntnet in this directory
-  navigate your browser to e.g. http://your-host:8000/A/Auto
-
+TntReader ist ein Server, mit dem sich die Daten von der deutschen
+Wikipedia-DVD 2007 lesen lassen. Der Server stellt die Daten aus
+den zeno-Dateien als Webseiten zur Verfügung.

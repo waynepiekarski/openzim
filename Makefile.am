@@ -4,4 +4,5 @@ SUBDIRS = \
 	src/webapp \
 	include
 
-EXTRA_DIST = tntnet.conf tntnet.properties TntReader
+dist_bin_SCRIPTS = TntReaderConfig
+EXTRA_DIST = tntnet.conf tntnet.properties

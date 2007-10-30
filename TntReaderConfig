@@ -73,6 +73,6 @@ directory=$directory
             ;;
 
         x|X)
-            return
+            exit
     esac
   done

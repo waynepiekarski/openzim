@@ -27,7 +27,7 @@ log_define("zeno.file.files");
 
 namespace zeno
 {
-  void Files::addFiles(const std::string& dir)
+  void Files::addFiles(const std::string& dir, unsigned maxdepth)
   {
     log_debug("search for zeno-files in directory " << dir);
     cxxtools::Dir d(dir.c_str());
@@ -46,9 +46,9 @@ namespace zeno
           log_error('"' << fname << "\" is no zeno file: " << e.what());
         }
       }
-      else if (fname.size() > 0 && fname[0] != '.')
+      else if (fname.size() > 0 && fname[0] != '.' && maxdepth > 1)
       {
-        addFiles(dir + '/' + *it);
+        addFiles(dir + '/' + *it, maxdepth - 1);
       }
     }
 

@@ -41,7 +41,7 @@ namespace zeno
 
       void addFile(const std::string& fname)  { files[fname] = File(fname); }
       void addFile(const std::string& fname, const File& file )  { files[fname] = file; }
-      void addFiles(const std::string& dir);
+      void addFiles(const std::string& dir, unsigned maxdepth = 2);
 
       Files getFiles(char ns);
       File getFirstFile(char ns);

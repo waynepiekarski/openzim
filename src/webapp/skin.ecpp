@@ -69,7 +69,7 @@ ns = "A";
 			 <h5>Diese Seite</h5>
 			 <ul>
 % if (type == typeSpecial) {
-			   <li id="ca-nstab-special" class="selected"><a href="">Spezialseite</a></li>
+			   <li id="ca-nstab-special" class="selected"><a href="/">Spezialseite</a></li>
 % } else {
 %   if (type == typeArticle) {
                <li id="ca-nstab-main" class="selected">
@@ -97,20 +97,20 @@ ns = "A";
 		  		</div>
 		  	</div>
 		  <div class="portlet" id="p-logo">
-			 <a style="background-image: url(/-/Wiki.png);" href="" title="Hauptseite"></a>
+			 <a style="background-image: url(/-/Wiki.png);" href="/" title="Hauptseite"></a>
 		  </div>
 		  <script type="text/javascript"> if (window.isMSIE55) fixalpha(); </script>
 		  <div class="portlet" id="p-navigation">
 			 <h5>Navigation</h5>
 			 <div class="pBody">
 			   <ul>
-				 <li id="n-mainpage"><a href="">Hauptseite</a></li>
-				 <li id="n-topics"><a href="/Wikipedia/B/Portal:Wikipedia+nach+Themen">Themenportale</a></li>
-				 <li id="n-alphindex"><a href="/~/browse?a=">Von A bis Z</a></li>
-				 <li id="n-images"><a href="/~/browse?ns=I">Abbildungen</a></li>
-				 <li id="n-randompage"><a href="/~/random">Zuf&auml;lliger Artikel</a></li>
+				 <li id="n-mainpage"><a href="/" title="Hauptseite anzeigen [z]" accesskey="z">Hauptseite</a></li>
+				 <li id="n-topics"><a href="/Wikipedia/B/Portal:Wikipedia+nach+Themen" title="Wikipedia nach Themen [t]" accesskey="t">Themenportale</a></li>
+				 <li id="n-alphindex"><a href="/~/browse?a=" title="Von A bis Z [a]" accesskey="a">Von A bis Z</a></li>
+				 <li id="n-images"><a href="/~/browse?ns=I" title="Abbildungen [i]" accesskey="i">Abbildungen</a></li>
+				 <li id="n-randompage"><a href="/~/random" title="Zuf&auml;lliger Artikel [x]" accesskey="x">Zuf&auml;lliger Artikel</a></li>
 % if (!articles.empty() || !result.empty()) {
-				 <li id="n-search"><a href="/~/search">zum Suchergebnis</a></li>
+				 <li id="n-search"><a href="/~/search" title="zum Suchergebnis [s]" accesskey="s">zum Suchergebnis</a></li>
 % }
 			   </ul>
 			 </div>
@@ -132,8 +132,8 @@ ns = "A";
       </div>
       <div class="visualClear"></div>
       <div id="footer">
-        <p>Der Inhalt der Seite steht unter der <a href="-/GFDL_(englisch).html">GNU-Lizenz f&uuml;r freie Dokumentation</a>.</p>
-        <p><a href="-/Impressum.html">Impressum</a> - <a href="http://www.directmedia.de">Directmedia</a></p>
+        <p>Der Inhalt der Seite steht unter der <a href="/-/GFDL_(englisch).html">GNU-Lizenz f&uuml;r freie Dokumentation</a>.</p>
+        <p><a href="/-/Impressum.html">Impressum</a> - <a href="http://www.directmedia.de">Directmedia</a></p>
       </div>
       <script type="text/javascript">if (window.runOnloadHook) runOnloadHook();</script>
     </div>

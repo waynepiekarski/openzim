@@ -62,12 +62,13 @@ int main(int argc, char* argv[])
     if (listenIp.empty())
     {
       std::string localonly = settings.getValue("TntReader", "localonly", "0");
-      listenIp = localonly == "1" ? "127.0.0.1" : "0.0.0.0";
+      listenIp = localonly.empty() ? "0.0.0.0" : "127.0.0.1";
     }
 
     unsigned short port = settings.getValueT<unsigned short>("TntReader", "port", 8080);
 
     std::string directory = settings.getValue("TntReader", "directory", ".");
+    std::string fixfile = settings.getValue("TntReader", "fixfile", "Wikipedia2.zeno");
 
     tnt::Tntnet app;
     tnt::Worker::setEnableCompression(false);
@@ -81,6 +82,16 @@ int main(int argc, char* argv[])
     app.mapUrl("^/~/([^.]+)$",                 "$1");
     app.mapUrl("^/~/([^.]+)\\.([^.]*)$",       "$1_$2");
 
+    app.mapUrl("^/(.)/(.+.svg)$", "zenocomp")
+       .setPathInfo("$2.png")
+       .pushArg("wikipedia.zeno")
+       .pushArg("$1");
+
+    app.mapUrl("^/(.+)/(.)/(.+.svg)$", "zenocomp")
+       .setPathInfo("$3.png")
+       .pushArg("$1.zeno")
+       .pushArg("$2");
+
     app.mapUrl("^/(.)/(.+)$", "zenocomp")
        .setPathInfo("$2")
        .pushArg("wikipedia.zeno")
@@ -91,8 +102,12 @@ int main(int argc, char* argv[])
        .pushArg("$1.zeno")
        .pushArg("$2");
 
+    app.mapUrl(".*", "skin")
+       .setPathInfo("notfound");
+
     tnt::Tntconfig config;
     config.setConfigValue("ZenoPath", directory);
+    config.setConfigValue("ZenoFixFile", fixfile);
     tnt::Comploader::configure(config);
 
     std::cout << "Wikipedia ist jetzt unter http://localhost:" << port << "/ verfügbar\n"

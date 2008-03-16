@@ -22,37 +22,89 @@
 #include <zeno/error.h>
 #include <cxxtools/dir.h>
 #include <cxxtools/log.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 log_define("zeno.file.files");
 
 namespace zeno
 {
+  namespace
+  {
+    void addFiles_(Files::FilesType& files, const std::string& dir, unsigned maxdepth)
+    {
+      if (dir.empty())
+        return;
+
+      cxxtools::Dir d(dir.c_str());
+      for (cxxtools::Dir::const_iterator it = d.begin(); it != d.end(); ++it)
+      {
+        std::string fname = *it;
+        if (fname.size() > 4 && fname.compare(fname.size() - 5, 5, ".zeno") == 0)
+        {
+          log_debug("file \"" << fname << "\" found");
+          try
+          {
+            files[fname] = File(dir + '/' + fname);
+          }
+          catch (const ZenoFileFormatError& e)
+          {
+            log_error('"' << fname << "\" is no zeno file: " << e.what());
+          }
+        }
+        else if (fname.size() > 0 && fname[0] != '.' && maxdepth > 1)
+        {
+          addFiles_(files, dir + '/' + *it, maxdepth - 1);
+        }
+      }
+    }
+  }
+
+  Files::Files(const std::string& dir, const std::string& fixdir)
+  {
+    if (!dir.empty())
+      addFiles(dir);
+
+    log_debug("fixdir=" << fixdir);
+    if (!fixdir.empty())
+    {
+      FilesType::iterator f = files.find(fixdir);
+      struct stat st;
+      if (f != files.end())
+      {
+        log_debug("fix file=" << fixdir);
+        addFixFile(fixdir, f->second);
+      }
+      else if (::stat(fixdir.c_str(), &st) == 0 && !S_ISDIR(st.st_mode))
+      {
+        std::string fname = fixdir;
+        std::string::size_type p = fname.find_last_of('/');
+        if (p != std::string::npos)
+          fname.erase(0, p + 1);
+        log_debug("fix file=" << fname << " (" << fixdir << ')');
+        fixFiles[fname] = File(fixdir);
+      }
+      else
+      {
+        log_debug("add fix files from directory " << fixdir);
+        addFixFiles(fixdir);
+      }
+    }
+  }
+
   void Files::addFiles(const std::string& dir, unsigned maxdepth)
   {
     log_debug("search for zeno-files in directory " << dir);
-    cxxtools::Dir d(dir.c_str());
-    for (cxxtools::Dir::const_iterator it = d.begin(); it != d.end(); ++it)
-    {
-      std::string fname = *it;
-      if (fname.size() > 4 && fname.compare(fname.size() - 5, 5, ".zeno") == 0)
-      {
-        log_debug("file \"" << fname << "\" found");
-        try
-        {
-          addFile(fname, File(dir + '/' + fname));
-        }
-        catch (const ZenoFileFormatError& e)
-        {
-          log_error('"' << fname << "\" is no zeno file: " << e.what());
-        }
-      }
-      else if (fname.size() > 0 && fname[0] != '.' && maxdepth > 1)
-      {
-        addFiles(dir + '/' + *it, maxdepth - 1);
-      }
-    }
-
+    addFiles_(files, dir, maxdepth);
     log_debug(files.size() << " zenofiles active");
+  }
+
+  void Files::addFixFiles(const std::string& dir, unsigned maxdepth)
+  {
+    log_debug("search for additional zeno-files in directory " << dir);
+    addFiles_(fixFiles, dir, maxdepth);
+    log_debug(files.size() << " zenofiles");
   }
 
   Files Files::getFiles(char ns)
@@ -73,29 +125,52 @@ namespace zeno
     return File();
   }
 
-  Article Files::getArticle(char ns, const QUnicodeString& url)
+  Article Files::getArticle(FilesType& files, char ns, const QUnicodeString& url)
   {
-    log_debug("getArticle('" << ns << "', \"" << url << "\")");
+    log_debug("getArticle(files, '" << ns << "', \"" << url << "\")");
     Article ret;
-    for (iterator it = begin(); it != end(); ++it)
+    for (iterator it = files.begin(); it != files.end(); ++it)
     {
       log_debug("search in " << it->first);
       Article article = it->second.getArticle(ns, url);
-      if (article
-        && ret.getData().size() < article.getData().size())
+      if (article)
       {
-        log_debug("article found in " << it->first);
-        ret = article;
+        if (ret.getData().size() < article.getData().size())
+        {
+          log_debug("article found in " << it->first);
+          ret = article;
+        }
+        else
+        {
+          log_debug("article size " << article.getData().size() << " smaller than previous " << ret.getData().size());
+        }
+      }
+      else
+      {
+        log_debug("no article");
       }
     }
+
+    return ret;
+  }
+
+  Article Files::getArticle(char ns, const QUnicodeString& url)
+  {
+    log_debug("getArticle('" << ns << "', \"" << url << "\")");
+    Article ret = getArticle(files, ns, url);
+
+    if (!ret)
+      ret = getFixArticle(ns, url);
+
     if (!ret)
       log_debug("article not found");
+
     return ret;
   }
 
   Article Files::getArticle(const std::string& file, char ns, const QUnicodeString& url)
   {
-    log_debug("getArticle(\"" << file << ", '" << ns << "', \"" << url << "\")");
+    log_debug("getArticle(\"" << file << "\", '" << ns << "', \"" << url << "\")");
 
     iterator it = files.find(file);
     if (it == end())
@@ -106,6 +181,10 @@ namespace zeno
 
     log_debug("file \"" << file << "\" found");
     Article article = it->second.getArticle(ns, url);
+
+    if (!article)
+      article = getFixArticle(ns, url);
+
     if (article)
     {
       log_debug("article found");
@@ -113,7 +192,7 @@ namespace zeno
     }
 
     log_debug("article not found");
-    return Article();
+    return article;
   }
 
   Article Files::getBestArticle(const Article& article)
@@ -133,8 +212,16 @@ namespace zeno
         ret = a;
       }
     }
+
     if (!ret)
       log_debug("article not found");
     return ret;
   }
+
+  Article Files::getFixArticle(char ns, const QUnicodeString& url)
+  {
+    log_debug("getFixArticle('" << ns << "', \"" << url << "\")");
+    return getArticle(fixFiles, ns, url);
+  }
+
 }

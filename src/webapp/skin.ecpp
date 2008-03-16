@@ -1,6 +1,6 @@
 <%include>global.ecpp</%include>
 <%args>
-nextComp;
+nextComp = request.getPathInfo();
 int type = typeArticle;
 e;
 ns = "A";

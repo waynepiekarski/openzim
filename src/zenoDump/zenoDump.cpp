@@ -143,8 +143,7 @@ void ZenoDumper::listArticle(const zeno::Article& article, bool extra, bool inde
   if (extra)
   {
     std::string parameter = article.getParameter();
-    std::cout <<
-    "\textra:           ";
+    std::cout << "\textra:           ";
     static char hexdigit[] = "0123456789abcdef";
     for (std::string::const_iterator it = parameter.begin(); it != parameter.end(); ++it)
     {
@@ -162,9 +161,9 @@ void ZenoDumper::listArticle(const zeno::Article& article, bool extra, bool inde
       unsigned val;
       while (in.get(val))
         std::cout << '\t' << val;
-
-      std::cout << std::endl;
     }
+
+    std::cout << std::endl;
 
     if (indexcontent)
       printIndexcontent(article);

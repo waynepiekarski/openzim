@@ -16,12 +16,13 @@ static const int typeHistory = 1;
 <%config>
 
 ZenoPath = ".";
+ZenoFixFile;
 bool RedirectNumeric = false;
 
 </%config>
 <%application scope="global">
 
-zeno::Files files(ZenoPath);
+zeno::Files files(ZenoPath, ZenoFixFile);
 
 </%application>
 <%session scope="global">

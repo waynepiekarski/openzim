@@ -135,9 +135,13 @@ namespace zeno
     {
       if (it->second.hasNamespace('X'))
         indexfile = it->second;
-      else if (it->second.hasNamespace('A'))
+      else if (files.getFixFiles().find(it->first) == files.getFixFiles().end()
+            && it->second.hasNamespace('A'))
         articlefile = it->second;
     }
+
+    if (!articlefile)
+      throw std::runtime_error("no article file found");
   }
 
   void Search::search(Results& results, const std::string& expr)

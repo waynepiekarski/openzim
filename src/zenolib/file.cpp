@@ -48,7 +48,7 @@ namespace zeno
 
   Article File::getArticle(char ns, const QUnicodeString& url, bool collate)
   {
-    log_debug("getArticle('" << ns << "', \"" << url << ", " << collate << '"');
+    log_debug("getArticle('" << ns << "', \"" << url << "\", " << collate << ')');
     return impl->getArticle(ns, url, collate);
   }
 

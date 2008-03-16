@@ -6,8 +6,9 @@ if [ ! -f $SETTINGS ]
 then
     echo "[TntReader]
 port=8080
-localonly=1
-directory=$R" >$SETTINGS
+localonly=x
+directory=.
+fixfile=Wikipedia2.zeno" >$SETTINGS
 
 fi
 
@@ -22,6 +23,7 @@ getval () {
 port=`getval port 8000`
 localonly=`getval localonly`
 directory=`getval directory .`
+fixfile=`getval fixfile Wikipedia2.zeno`
 
 while true
   do
@@ -31,9 +33,10 @@ while true
     TntReader
     =========
 
-    1)\tVerzeichnis: $directory
-    2)\tPort:        $port
-    3)\t[$localonly] nur auf Anfragen vom lokalen Rechner antworten
+    1)\tVerzeichnis:    $directory
+    2)\tPort:           $port
+    3)\tKorrekturdatei: $fixfile
+    4)\t[$localonly] nur auf Anfragen vom lokalen Rechner antworten
 
     9)\tEinstellungen speichern
     X)\tEnde
@@ -56,11 +59,17 @@ while true
             ;;
 
         3)
-            if [ "$localonly" = "1" ]
+            echo -n "Korrekturdatei (Datei aus Dateiverzeichnis oder voller Pfad): "
+            read n
+            [ "$n" ] && fixfile=$n
+            ;;
+
+        4)
+            if [ -z "$localonly" ]
               then
-                localonly=
+                localonly='x'
               else
-                localonly='1'
+                localonly=
             fi
             ;;
 
@@ -69,7 +78,14 @@ while true
 port=$port
 localonly=$localonly
 directory=$directory
+fixfile=$fixfile
 " >$SETTINGS
+            echo
+            echo "
+
+*** Die Einstellungen wurden gespeichert
+
+"
             ;;
 
         x|X)

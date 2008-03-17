@@ -149,7 +149,7 @@ namespace zeno
       return std::pair<bool, size_type>(true, l);
     }
 
-    log_debug("article not found (\"" << d.getTitle() << "\" does not match");
+    log_debug("article not found (\"" << d.getTitle() << "\" does not match)");
     return std::pair<bool, size_type>(false, u);
   }
 

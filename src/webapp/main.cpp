@@ -102,8 +102,7 @@ int main(int argc, char* argv[])
        .pushArg("$1.zeno")
        .pushArg("$2");
 
-    app.mapUrl(".*", "skin")
-       .setPathInfo("notfound");
+    app.mapUrl(".*", "notfound");
 
     tnt::Tntconfig config;
     config.setConfigValue("ZenoPath", directory);

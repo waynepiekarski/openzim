@@ -1,5 +1,6 @@
 AM_CPPFLAGS=-I$(top_builddir)/include
-bin_PROGRAMS = zenoDump zenoSearch zenoIntStream
+bin_PROGRAMS = zenoDump zenoSearch
+noinst_PROGRAMS = zenoIntStream
 zenoDump_SOURCES = zenoDump.cpp
 zenoSearch_SOURCES = zenoSearch.cpp
 zenoIntStream_SOURCES = zenoIntStream.cpp

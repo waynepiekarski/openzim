@@ -48,13 +48,13 @@ namespace zeno
 
   Article File::getArticle(char ns, const QUnicodeString& url, bool collate)
   {
-    log_debug("getArticle('" << ns << "', \"" << url << "\", " << collate << ')');
+    log_debug(getFilename() << ".getArticle('" << ns << "', \"" << url << "\", " << collate << ')');
     return impl->getArticle(ns, url, collate);
   }
 
   Article File::getArticle(size_type idx)
   {
-    log_debug("getArticle(" << idx << ')');
+    log_debug(getFilename() << ".getArticle(" << idx << ')');
     return impl->getArticle(idx);
   }
 

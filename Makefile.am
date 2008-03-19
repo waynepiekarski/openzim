@@ -5,4 +5,4 @@ SUBDIRS = \
 	include
 
 dist_bin_SCRIPTS = TntReaderConfig
-EXTRA_DIST = tntnet.conf tntnet.properties
+EXTRA_DIST = tntnet.conf

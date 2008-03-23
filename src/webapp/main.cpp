@@ -25,6 +25,19 @@
 #include <cxxtools/arg.h>
 #include <cxxtools/inifile.h>
 
+namespace
+{
+  bool isTrue(char ch)
+  {
+    return ch == 't' || ch == 'T' || ch == 'y' || ch == 'Y' || ch == '1';
+  }
+
+  bool isTrue(const std::string& s)
+  {
+    return !s.empty() && isTrue(s.at(0));
+  }
+}
+
 int main(int argc, char* argv[])
 {
   try
@@ -62,7 +75,7 @@ int main(int argc, char* argv[])
     if (listenIp.empty())
     {
       std::string localonly = settings.getValue("TntReader", "localonly", "0");
-      listenIp = localonly.empty() ? "0.0.0.0" : "127.0.0.1";
+      listenIp = isTrue(localonly) ? "0.0.0.0" : "127.0.0.1";
     }
 
     unsigned short port = settings.getValueT<unsigned short>("TntReader", "port", 8080);

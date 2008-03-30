@@ -62,24 +62,48 @@ namespace zeno
           countArticles(0)
           { }
 
+      Dirent&     getDirent()                 { return dirent; }
+      const Dirent& getDirent() const         { return dirent; }
+      void        setDirent(const Dirent& d)  { dirent = d; }
+
       const File& getFile() const             { return file; }
       File&       getFile()                   { return file; }
+      void        setFile(const File& f)      { file = f; }
+
       size_type   getIndex() const            { return idx; }
+      void        setIndex(size_type i)       { idx = i; }
+
       const std::string&
                   getParameter() const        { return dirent.getParameter(); }
+      void        setParameter(const std::string& p)  { dirent.setParameter(p); }
+
       offset_type getDataOffset() const       { return dirent.getOffset(); }
+      void        setDataOffset(offset_type o) { dirent.setOffset(o); }
+
       size_type   getDataLen() const          { return dirent.getSize(); }
+      void        setSize(size_type s)        { dirent.setSize(s); }
+
       CompressionType getCompression() const  { return dirent.getCompression(); }
       bool        isCompressionZip() const    { return dirent.isCompressionZip(); }
+      void        setCompression(CompressionType c)  { dirent.setCompression(c); }
+
       QUnicodeString getUrl() const           { return QUnicodeString(std::string(1, getNamespace()) + '/' + dirent.getTitle()); }
       QUnicodeString getTitle() const         { return QUnicodeString(dirent.getTitle()); }
+      void        setTitle(const QUnicodeString& title)   { dirent.setTitle(title.getValue()); }
+
       MimeType    getLibraryMimeType() const  { return dirent.getMimeType(); }
+      void        setLibraryMimeType(MimeType m) { dirent.setMimeType(m); }
       const std::string&
                   getMimeType() const;
+
       bool        getRedirectFlag() const     { return dirent.getRedirectFlag(); }
+      void        setRedirectFlag(bool sw = true)  { dirent.setRedirectFlag(sw); }
+
       char        getNamespace() const        { return dirent.getNamespace(); }
+      void        setNamespace(char ns)       { dirent.setNamespace(ns); }
 
       operator bool()   { return getDataOffset() != 0; }
+
       bool operator< (const Article& a) const
         { return getNamespace() < a.getNamespace()
               || getNamespace() == a.getNamespace()
@@ -87,6 +111,7 @@ namespace zeno
 
       const std::string& getRawData() const;
       const std::string& getData() const;
+      void setData(const std::string& data);
   };
 
 }

@@ -22,6 +22,7 @@
 #include <zeno/article.h>
 #include <zeno/dirent.h>
 #include <zeno/qunicode.h>
+#include <zeno/fileheader.h>
 #include <cxxtools/log.h>
 #include <tnt/deflatestream.h>
 #include <sstream>
@@ -41,32 +42,18 @@ namespace zeno
 
     filename = fname;
 
-    const unsigned headerSize = 0x3c;
-    char header[headerSize];
-    if (!zenoFile.read(header, headerSize) || zenoFile.gcount() !=  headerSize)
-      throw ZenoFileFormatError("format-error: header too short in zeno-file");
+    Fileheader header;
+    zenoFile >> header;
+    if (zenoFile.fail())
+      throw ZenoFileFormatError("error reading zeno-file header");
 
-    size_type rMagic = fromLittleEndian<size_type>(header + 0x0);
-    if (rMagic != 1439867043)
-    {
-      std::ostringstream msg;
-      msg << "invalid magic number " << rMagic << " found - 1439867043 expected";
-      throw ZenoFileFormatError(msg.str());
-    }
+    size_type rCount = header.getCount();
+    offset_type rIndexPos = header.getIndexPos();
+    size_type rIndexLen = header.getIndexLen();
+    offset_type rIndexPtrPos = header.getIndexPtrPos();
+    size_type rIndexPtrLen = header.getIndexPtrLen();
 
-    size_type rVersion = fromLittleEndian<size_type>(header + 0x4);
-    if (rVersion != 3)
-    {
-      std::ostringstream msg;
-      msg << "invalid zenofile version " << rVersion << " found - 3 expected";
-      throw ZenoFileFormatError(msg.str());
-    }
-
-    size_type rCount = fromLittleEndian<size_type>(header + 0x8);
-    offset_type rIndexPos = fromLittleEndian<offset_type>(header + 0x10);
-    size_type rIndexLen = fromLittleEndian<size_type>(header + 0x18);
-    offset_type rIndexPtrPos = fromLittleEndian<offset_type>(header + 0x20);
-    size_type rIndexPtrLen = fromLittleEndian<size_type>(header + 0x28);
+    log_debug("magic=" << header.getMagicNumber() << " version=" << header.getVersion() << " count=" << rCount << " indexpos=" << rIndexPos << " indexlen=" << rIndexLen << " indexptrpos=" << rIndexPtrPos << " indexptrlen=" << rIndexPtrLen);
 
     log_debug("read " << rIndexPtrLen << " bytes");
     std::vector<size_type> buffer(rCount);
@@ -105,7 +92,7 @@ namespace zeno
 
   std::pair<bool, size_type> FileImpl::findArticle(char ns, const QUnicodeString& title, bool collate)
   {
-    log_debug("find article " << ns << " \"" << title << "\", " << collate);
+    log_debug("find article " << ns << " \"" << title << "\", " << collate << " in file \"" << filename << '"');
 
     if (getNamespaces().find(ns) == std::string::npos)
     {
@@ -135,7 +122,7 @@ namespace zeno
         l = p;
       else
       {
-        log_debug("article found after " << itcount << " iterations");
+        log_debug("article found after " << itcount << " iterations in file \"" << filename << "\" at index " << p);
         return std::pair<bool, size_type>(true, p);
       }
     }
@@ -145,7 +132,7 @@ namespace zeno
                     : title.compare(QUnicodeString(d.getTitle()));
     if (c == 0)
     {
-      log_debug("article found after " << itcount << " iterations");
+      log_debug("article found after " << itcount << " iterations in file \"" << filename << "\" at index " << l);
       return std::pair<bool, size_type>(true, l);
     }
 
@@ -265,19 +252,10 @@ namespace zeno
 
   Dirent FileImpl::readDirentNolock()
   {
-    char header[26];
-    if (!zenoFile.read(header, 26) || zenoFile.gcount() != 26)
-      throw ZenoFileFormatError("format-error: can't read index-header in \"" + filename + '"');
-
-    Dirent dirent(header);
-
-    std::string extra;
-    if (dirent.getExtraLen() > 0)
-      extra = readDataNolock(dirent.getExtraLen());
-
-    dirent.setExtra(extra);
-    //log_debug("title=" << dirent.getTitle());
-
+    Dirent dirent;
+    zenoFile >> dirent;
+    if (!zenoFile)
+      throw ZenoFileFormatError("error reading directory index in \"" + filename + '"');
     return dirent;
   }
 

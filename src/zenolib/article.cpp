@@ -20,6 +20,7 @@
 #include <zeno/article.h>
 #include <cxxtools/log.h>
 #include <tnt/inflatestream.h>
+#include <tnt/deflatestream.h>
 #include <sstream>
 
 log_define("zeno.article")
@@ -95,4 +96,19 @@ namespace zeno
     return uncompressedData;
   }
 
+  void Article::setData(const std::string& data_)
+  {
+    uncompressedData = data_;
+    if (isCompressionZip())
+    {
+      std::ostringstream u;
+      tnt::DeflateStream ds(u);
+      ds << data_ << std::flush;
+      data = u.str();
+    }
+    else
+    {
+      data = data_;
+    }
+  }
 }

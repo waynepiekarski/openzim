@@ -20,6 +20,8 @@
 #ifndef ZENO_ZENO_H
 #define ZENO_ZENO_H
 
+#include <stdint.h>
+
 namespace zeno
 {
   typedef uint32_t size_type;

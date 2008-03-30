@@ -6,6 +6,7 @@ libzeno_la_SOURCES = \
 	articlesearch.cpp \
 	dirent.cpp \
 	file.cpp \
+	fileheader.cpp \
 	fileimpl.cpp \
 	files.cpp \
 	indexarticle.cpp \

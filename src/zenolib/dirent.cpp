@@ -28,9 +28,12 @@ namespace zeno
   //////////////////////////////////////////////////////////////////////
   // Dirent
   //
+
+  const size_type Dirent::headerSize;
+
   Dirent::Dirent()
   {
-    std::fill(header, header + 26, '\0');
+    std::fill(header, header + headerSize, '\0');
   }
 
   void Dirent::setExtra(const std::string& extra)
@@ -46,5 +49,35 @@ namespace zeno
       title.assign(extra, 0, p);
       parameter.assign(extra, p + 1, extra.size() - p - 1);
     }
+
+    setExtraLen(extra.size());
   }
+
+  std::ostream& operator<< (std::ostream& out, const Dirent& dirent)
+  {
+    out.write(dirent.header, Dirent::headerSize);
+    out << dirent.title;
+    if (!dirent.parameter.empty())
+      out << '\0' << dirent.parameter;
+    return out;
+  }
+
+  std::istream& operator>> (std::istream& in, Dirent& dirent)
+  {
+    in.read(dirent.header, Dirent::headerSize);
+    if (in.gcount() != Dirent::headerSize)
+      in.setstate(std::ios::failbit);
+    else
+    {
+      std::string extra;
+      char ch;
+      uint16_t len = dirent.getExtraLen();
+      extra.reserve(len);
+      while (len-- && in.get(ch))
+        extra += ch;
+      dirent.setExtra(extra);
+    }
+    return in;
+  }
+
 }

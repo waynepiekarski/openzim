@@ -28,6 +28,9 @@ namespace zeno
 {
   class Dirent
   {
+      friend std::ostream& operator<< (std::ostream& out, const Dirent& fh);
+      friend std::istream& operator>> (std::istream& in, Dirent& fh);
+
     public:
       enum CompressionType
       {
@@ -50,33 +53,59 @@ namespace zeno
         zenoMimeImageIcon
       };
 
+      static const unsigned headerSize = 26;
+
     private:
 
-      char header[26];
+      char header[headerSize];
       std::string title;
       std::string parameter;
 
+      void adjustExtraLen()
+      { setExtraLen(parameter.empty() ? title.size() : (title.size() + parameter.size() + 1)); }
+
     public:
       Dirent();
-      explicit Dirent(char header_[26], std::string extra_ = std::string())
+      explicit Dirent(char header_[headerSize], std::string extra_ = std::string())
         {
-          std::copy(header_, header_ + 26, header);
+          std::copy(header_, header_ + headerSize, header);
           setExtra(extra_);
         }
 
       offset_type getOffset() const        { return fromLittleEndian<offset_type>(header); }
+      void        setOffset(offset_type o) { *reinterpret_cast<offset_type*>(header + 0) = fromLittleEndian<offset_type>(&o); }
+
       size_type   getSize() const          { return fromLittleEndian<size_type>(header + 8); }
+      void        setSize(size_type s)     { *reinterpret_cast<size_type*>(header + 8) = fromLittleEndian<size_type>(&s); }
+
       CompressionType getCompression() const { return static_cast<CompressionType>(header[12]); }
       bool        isCompressionZip() const { return getCompression() == zenocompZip; }
-      MimeType    getMimeType() const      { return static_cast<MimeType>(header[13]); }
-      bool        getRedirectFlag() const  { return static_cast<bool>(header[14]); }
-      char        getNamespace() const     { return static_cast<char>(header[15]); }
-      uint16_t    getExtraLen() const      { return fromLittleEndian<uint16_t>(header + 24); }
+      void        setCompression(CompressionType c)
+                                           { header[12] = c; }
 
-      void setExtra(const std::string& extra_);
+      MimeType    getMimeType() const      { return static_cast<MimeType>(header[13]); }
+      void        setMimeType(MimeType m)  { header[13] = m; }
+      bool        getRedirectFlag() const  { return static_cast<bool>(header[14]); }
+      void        setRedirectFlag(bool sw = true)   { header[14] = sw; }
+
+      char        getNamespace() const     { return static_cast<char>(header[15]); }
+      void        setNamespace(char ns)    { header[15] = ns; }
+
+      uint16_t    getExtraLen() const      { return fromLittleEndian<uint16_t>(header + 24); }
+      void        setExtraLen(uint16_t l)  { *reinterpret_cast<uint16_t*>(header + 24) = fromLittleEndian<uint16_t>(&l); } 
+
+      void        setExtra(const std::string& extra_);
+
       const std::string& getTitle() const      { return title; }
-      const std::string& getParameter() const   { return parameter; }
+      void        setTitle(const std::string& t)  { title = t; adjustExtraLen(); }
+
+      const std::string& getParameter() const  { return parameter; }
+      void        setParameter(const std::string& p)  { parameter = p; adjustExtraLen(); }
+      std::string getExtra() const          { return parameter.empty() ? title : (title + '\0' + parameter); }
   };
+
+  std::ostream& operator<< (std::ostream& out, const Dirent& fh);
+  std::istream& operator>> (std::istream& in, Dirent& fh);
 
 }
 

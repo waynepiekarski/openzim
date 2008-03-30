@@ -24,6 +24,7 @@
 #include <cxxtools/loginit.h>
 #include <cxxtools/arg.h>
 #include <cxxtools/inifile.h>
+#include <signal.h>
 
 namespace
 {
@@ -40,6 +41,9 @@ namespace
 
 int main(int argc, char* argv[])
 {
+  signal(SIGPIPE, SIG_IGN);
+  signal(SIGABRT, SIG_IGN);
+
   try
   {
     log_init();

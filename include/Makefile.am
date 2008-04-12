@@ -1,5 +1,6 @@
 nobase_include_HEADERS = \
 	zeno/article.h \
+	zeno/articlebase.h \
 	zeno/articlesearch.h \
 	zeno/dirent.h \
 	zeno/endian.h \

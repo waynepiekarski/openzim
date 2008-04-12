@@ -20,51 +20,33 @@
 #ifndef ZENO_ARTICLE_H
 #define ZENO_ARTICLE_H
 
-#include <string>
-#include <zeno/zeno.h>
+#include <zeno/articlebase.h>
 #include <zeno/file.h>
-#include <zeno/dirent.h>
-#include <zeno/qunicode.h>
 
 namespace zeno
 {
-  class Article
+  class Article : public ArticleBase
   {
-    public:
-      typedef Dirent::CompressionType CompressionType;
-      typedef Dirent::MimeType MimeType;
-
     private:
-      Dirent dirent;
       File file;
       size_type idx;
-      mutable bool dataRead;
-      mutable std::string data;
-      mutable std::string uncompressedData;
-      mutable unsigned countArticles;
+      bool dataRead;
 
     public:
       Article() : dataRead(true) { }
       Article(size_type idx_, const Dirent& dirent_, const File& file_,
               const std::string& data_)
-        : file(file_),
+        : ArticleBase(dirent_, data_),
+          file(file_),
           idx(idx_),
-          dirent(dirent_),
-          dataRead(true),
-          data(data_),
-          countArticles(0)
+          dataRead(true)
           { }
       Article(size_type idx_, const Dirent& dirent_, const File& file_)
-        : file(file_),
+        : ArticleBase(dirent_),
+          file(file_),
           idx(idx_),
-          dirent(dirent_),
-          dataRead(false),
-          countArticles(0)
+          dataRead(false)
           { }
-
-      Dirent&     getDirent()                 { return dirent; }
-      const Dirent& getDirent() const         { return dirent; }
-      void        setDirent(const Dirent& d)  { dirent = d; }
 
       const File& getFile() const             { return file; }
       File&       getFile()                   { return file; }
@@ -73,45 +55,9 @@ namespace zeno
       size_type   getIndex() const            { return idx; }
       void        setIndex(size_type i)       { idx = i; }
 
-      const std::string&
-                  getParameter() const        { return dirent.getParameter(); }
-      void        setParameter(const std::string& p)  { dirent.setParameter(p); }
-
-      offset_type getDataOffset() const       { return dirent.getOffset(); }
-      void        setDataOffset(offset_type o) { dirent.setOffset(o); }
-
-      size_type   getDataLen() const          { return dirent.getSize(); }
-      void        setSize(size_type s)        { dirent.setSize(s); }
-
-      CompressionType getCompression() const  { return dirent.getCompression(); }
-      bool        isCompressionZip() const    { return dirent.isCompressionZip(); }
-      void        setCompression(CompressionType c)  { dirent.setCompression(c); }
-
-      QUnicodeString getUrl() const           { return QUnicodeString(std::string(1, getNamespace()) + '/' + dirent.getTitle()); }
-      QUnicodeString getTitle() const         { return QUnicodeString(dirent.getTitle()); }
-      void        setTitle(const QUnicodeString& title)   { dirent.setTitle(title.getValue()); }
-
-      MimeType    getLibraryMimeType() const  { return dirent.getMimeType(); }
-      void        setLibraryMimeType(MimeType m) { dirent.setMimeType(m); }
-      const std::string&
-                  getMimeType() const;
-
-      bool        getRedirectFlag() const     { return dirent.getRedirectFlag(); }
-      void        setRedirectFlag(bool sw = true)  { dirent.setRedirectFlag(sw); }
-
-      char        getNamespace() const        { return dirent.getNamespace(); }
-      void        setNamespace(char ns)       { dirent.setNamespace(ns); }
-
-      operator bool()   { return getDataOffset() != 0; }
-
-      bool operator< (const Article& a) const
-        { return getNamespace() < a.getNamespace()
-              || getNamespace() == a.getNamespace()
-               && getUrl() < a.getUrl(); }
+      QUnicodeString getUrl() const           { return QUnicodeString(std::string(1, getNamespace()) + '/' + getDirent().getTitle()); }
 
       const std::string& getRawData() const;
-      const std::string& getData() const;
-      void setData(const std::string& data);
   };
 
 }

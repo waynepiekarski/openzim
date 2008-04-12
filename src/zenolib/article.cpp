@@ -19,96 +19,24 @@
 
 #include <zeno/article.h>
 #include <cxxtools/log.h>
-#include <tnt/inflatestream.h>
-#include <tnt/deflatestream.h>
-#include <sstream>
 
 log_define("zeno.article")
 
 namespace zeno
 {
-  const std::string& Article::getMimeType() const
-  {
-    static const std::string textHtml = "text/html";
-    static const std::string textPlain = "text/plain";
-    static const std::string imageJpeg = "image/jpeg";
-    static const std::string imagePng = "image/png";
-    static const std::string imageTiff = "image/tiff";
-    static const std::string textCss = "text/css";
-    static const std::string imageGif = "image/gif";
-    static const std::string index = "text/plain";
-    static const std::string applicationJavaScript = "application/x-javascript";
-    static const std::string imageIcon = "image/x-icon";
-
-    switch (getLibraryMimeType())
-    {
-      case Dirent::zenoMimeTextHtml:
-        return textHtml;
-      case Dirent::zenoMimeTextPlain:
-        return textPlain;
-      case Dirent::zenoMimeImageJpeg:
-        return imageJpeg;
-      case Dirent::zenoMimeImagePng:
-        return imagePng;
-      case Dirent::zenoMimeImageTiff:
-        return imageTiff;
-      case Dirent::zenoMimeTextCss:
-        return textCss;
-      case Dirent::zenoMimeImageGif:
-        return imageGif;
-      case Dirent::zenoMimeIndex:
-        return index;
-      case Dirent::zenoMimeApplicationJavaScript:
-        return applicationJavaScript;
-      case Dirent::zenoMimeImageIcon:
-        return imageIcon;
-    }
-
-    return textHtml;
-  }
-
   const std::string& Article::getRawData() const
   {
+    log_trace("getRawData()");
+
     if (!dataRead)
     {
-      data = const_cast<File&>(file).readData(getDataOffset(), getDataLen());
-      dataRead = true;
+      Article* article = const_cast<Article*>(this);
+      log_debug("read data from file");
+      article->setRawData(const_cast<File&>(file).readData(getDataOffset(), getDataLen()));
+      article->dataRead = true;
     }
-    return data;
+
+    return ArticleBase::getRawData();
   }
 
-  const std::string& Article::getData() const
-  {
-    if (uncompressedData.empty() && !getRawData().empty())
-    {
-      if (isCompressionZip())
-      {
-        std::ostringstream u;
-        tnt::InflateStream is(u);
-        is << getRawData() << std::flush;
-        uncompressedData = u.str();
-      }
-      else
-      {
-        uncompressedData = getRawData();
-      }
-    }
-    return uncompressedData;
-  }
-
-  void Article::setData(const std::string& data_)
-  {
-    uncompressedData = data_;
-    if (isCompressionZip())
-    {
-      std::ostringstream u;
-      tnt::DeflateStream ds(u);
-      ds << data_ << std::flush;
-      data = u.str();
-    }
-    else
-    {
-      data = data_;
-    }
-  }
 }

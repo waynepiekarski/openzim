@@ -5,12 +5,14 @@ libzeno_la_SOURCES = \
 	article.cpp \
 	articlebase.cpp \
 	articlesearch.cpp \
+	deflatestream.cpp \
 	dirent.cpp \
 	file.cpp \
 	fileheader.cpp \
 	fileimpl.cpp \
 	files.cpp \
 	indexarticle.cpp \
+	inflatestream.cpp \
 	qunicode.cpp \
 	search.cpp \
 	zintstream.cpp

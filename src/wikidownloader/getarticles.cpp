@@ -28,29 +28,27 @@
 #include <cxxtools/httprequest.h>
 #include <cxxtools/httpreply.h>
 #include <cxxtools/loginit.h>
+#include <zeno/articlebase.h>
 
 log_define("wikicrawler")
 
-class Article
+class Article : public zeno::ArticleBase
 {
     std::string url;
-    std::string title;
     std::string heading;
-    std::string content;
 
   public:
     explicit Article(const std::string& url, const std::string& title);
 
     const std::string& getUrl() const      { return url; }
-    const std::string& getTitle() const    { return title; }
     const std::string& getHeading() const  { return heading; }
-    const std::string& getContent() const  { return content; }
 };
 
-Article::Article(const std::string& url_, const std::string& title_)
-  : url(url_),
-    title(title_)
+Article::Article(const std::string& url_, const std::string& title)
+  : url(url_)
 {
+  setTitle(zeno::QUnicodeString(title));
+
   cxxtools::HttpRequest req("http://de.wikipedia.org/wiki/" + url);
   req.addHeader("User-Agent:", "TntReader/1.0.2");
   req.addHeader("Accept:", "*/*");
@@ -59,12 +57,13 @@ Article::Article(const std::string& url_, const std::string& title_)
   std::ostringstream contentStream;
   contentStream << rep.rdbuf();
   std::string allContent = contentStream.str();
-  static tnt::Regex reg("<h1 class=\"firstHeading\">([^<]+)</h1>(.*)<!--\\s*NewPP limit report");
+  //static tnt::Regex reg("<h1 class=\"firstHeading\">([^<]+)</h1>(.*)<!--\\s*NewPP limit report");
+  static tnt::Regex reg("<h1 class=\"firstHeading\">([^<]+)</h1>.*<!--\\s*start\\s+content\\s*-->(.*)<!--\\send\\s+content\\s*-->");
   tnt::RegexSMatch match;
   if (reg.match(allContent, match))
   {
     heading = match.get(1);
-    content = match.get(2);
+    setData(match.get(2));
   }
   else
   {
@@ -102,8 +101,8 @@ GetArticles::GetArticles(int& argc, char* argv[])
     "   and title = :title");
 
   insArticle = conn.prepare(
-    "insert into article (namespace, title, url, data)"
-    " values (:namespace, :title, :url, :data)");
+    "insert into article (namespace, mimetype, title, url, data, compression)"
+    " values (:namespace, :mimetype, :title, :url, :data, :compression)");
   insRedirect = conn.prepare(
     "insert into article (namespace, title, url, redirect)"
     " values (:namespace, :title, :url, :redirect)");
@@ -149,11 +148,14 @@ int GetArticles::run()
             << "\tredirect=" << redirect
             << "\turl=" << url
             << "\ttitle=" << title
-            << "\tcontent size=" << article.getContent().size() << std::endl;
+            << "\tcontent size=" << article.getData().size() << std::endl;
         if (redirect)
           processRedirect(article);
         else
+        {
+          article.tryCompress(0.95);
           processArticle(article);
+        }
       }
 
       from = title;
@@ -165,9 +167,11 @@ void GetArticles::processArticle(const Article& article)
 {
   tntdb::Transaction trans(conn);
   insArticle.set("namespace", 'A')
-            .set("title", article.getTitle())
+            .set("mimetype", zeno::Dirent::zenoMimeTextHtml)
+            .set("title", article.getTitle().toUtf8())
             .set("url", article.getUrl())
-            .set("data", tntdb::Blob(article.getContent().data(), article.getContent().size()))
+            .set("data", tntdb::Blob(article.getRawData().data(), article.getRawData().size()))
+            .set("compression", article.getCompression())
             .execute();
   trans.commit();
 }
@@ -176,10 +180,10 @@ void GetArticles::processRedirect(const Article& article)
 {
   tntdb::Transaction trans(conn);
   insRedirect.set("namespace", 'A')
-            .set("title", article.getTitle())
-            .set("url", article.getUrl())
-            .set("redirect", article.getHeading())
-            .execute();
+             .set("title", article.getTitle().toUtf8())
+             .set("url", article.getUrl())
+             .set("redirect", article.getHeading())
+             .execute();
   trans.commit();
 }
 

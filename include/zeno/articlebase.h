@@ -57,11 +57,12 @@ namespace zeno
       void        setDataOffset(offset_type o) { dirent.setOffset(o); }
 
       size_type   getDataLen() const          { return dirent.getSize(); }
-      void        setSize(size_type s)        { dirent.setSize(s); }
 
       CompressionType getCompression() const  { return dirent.getCompression(); }
       bool        isCompressionZip() const    { return dirent.isCompressionZip(); }
-      void        setCompression(CompressionType c)  { dirent.setCompression(c); }
+      void        setCompression(CompressionType c, bool modifyData = false);
+      /// compress, if it reduces size significantly
+      void        tryCompress(double maxSize = 0.9);
 
       QUnicodeString getTitle() const         { return QUnicodeString(dirent.getTitle()); }
       void        setTitle(const QUnicodeString& title)   { dirent.setTitle(title.getValue()); }

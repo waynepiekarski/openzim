@@ -32,7 +32,8 @@ namespace zeno
     {
       Article* article = const_cast<Article*>(this);
       log_debug("read data from file");
-      article->setRawData(const_cast<File&>(file).readData(getDataOffset(), getDataLen()));
+      article->setRawData(const_cast<File&>(file).readData(getDirent().getOffset(),
+        getDirent().getSize()));
       article->dataRead = true;
     }
 

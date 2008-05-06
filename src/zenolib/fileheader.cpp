@@ -40,7 +40,7 @@ namespace zeno
   std::ostream& operator<< (std::ostream& out, const Fileheader& fh)
   {
     out.write(fh.header, Fileheader::headerSize);
-    for (unsigned i = 0; i < 57; ++i)
+    for (unsigned i = 0; i < Fileheader::headerFill; ++i)
       out << '\0';
     return out;
   }

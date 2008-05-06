@@ -15,7 +15,8 @@ create index article_ix1 on article(namespace, title);
 create table zenofile
 (
   zid          serial  not null primary key,
-  filename     text    not null
+  filename     text    not null,
+  count        integer
 );
 
 create table zenoarticles
@@ -29,3 +30,5 @@ create table zenoarticles
   foreign key (zid) references zenofile,
   foreign key (aid) references article
 );
+
+create index zenoarticles_ix1 on zenoarticles(zid, direntpos);

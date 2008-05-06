@@ -19,8 +19,8 @@
 
 #include <zeno/articlebase.h>
 #include <cxxtools/log.h>
-#include <tnt/inflatestream.h>
-#include <tnt/deflatestream.h>
+#include <zeno/inflatestream.h>
+#include <zeno/deflatestream.h>
 #include <sstream>
 
 log_define("zeno.article.base")
@@ -78,8 +78,9 @@ namespace zeno
     {
       if (isCompressionZip())
       {
+        log_debug("uncompress data");
         std::ostringstream u;
-        tnt::InflateStream is(u);
+        zeno::InflateStream is(u);
         is << getRawData() << std::flush;
         uncompressedData = u.str();
       }
@@ -91,20 +92,67 @@ namespace zeno
     return uncompressedData;
   }
 
+  void ArticleBase::tryCompress(double maxSize)
+  {
+    if (isCompressionZip())
+      return;
+
+    setCompression(Dirent::zenocompZip, true);
+    unsigned rawSize = getRawData().size();
+    unsigned compressedSize = getData().size();
+    double r = static_cast<double>(rawSize) / static_cast<double>(compressedSize);
+    log_debug("raw size=" << rawSize << " compressed size=" << compressedSize << " ratio=" << r);
+    if (r > maxSize)
+    {
+      log_debug("not worth compressing");
+      setCompression(Dirent::zenocompNone);
+    }
+  }
+
+  void ArticleBase::setCompression(CompressionType c, bool modifyData)
+  {
+    if (dirent.getCompression() != c)
+    {
+      if (modifyData)
+      {
+        if (isCompressionZip())
+        {
+          // we need to uncompress the data
+
+          uncompressedData = getData(); // this returns the uncompressed data
+          data = uncompressedData;
+          dirent.setCompression(c);     // disable compression
+        }
+        else
+        {
+          // we need to compress the data
+
+          dirent.setCompression(c);     // enable compression
+          setData(data);  // setting the data with compression enabled compresses it
+        }
+      }
+      else
+        dirent.setCompression(c);
+    }
+  }
+
   void ArticleBase::setData(const std::string& data_)
   {
     uncompressedData = data_;
     if (isCompressionZip())
     {
+      log_debug("compress data");
       std::ostringstream u;
-      tnt::DeflateStream ds(u);
+      zeno::DeflateStream ds(u);
       ds << data_ << std::flush;
+      ds.end();
       data = u.str();
     }
     else
     {
       data = data_;
     }
+    dirent.setSize(data.size());
   }
 
 }

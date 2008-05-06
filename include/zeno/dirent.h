@@ -102,6 +102,14 @@ namespace zeno
       const std::string& getParameter() const  { return parameter; }
       void        setParameter(const std::string& p)  { parameter = p; adjustExtraLen(); }
       std::string getExtra() const          { return parameter.empty() ? title : (title + '\0' + parameter); }
+
+      unsigned    getDirentSize() const
+      {
+        unsigned s = headerSize + title.size();
+        if (!parameter.empty())
+          s += (parameter.size() + 1);
+        return s;
+      }
   };
 
   std::ostream& operator<< (std::ostream& out, const Dirent& fh);

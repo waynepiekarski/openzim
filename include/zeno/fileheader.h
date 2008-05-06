@@ -34,9 +34,10 @@ namespace zeno
     public:
       static const size_type MAGIC;
       static const size_type VERSION;
+      static const unsigned headerSize = 60;
+      static const unsigned headerFill = 58;
 
     private:
-      static const unsigned headerSize = 0x3c;
       char header[headerSize];
 
     public:

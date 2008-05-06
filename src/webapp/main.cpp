@@ -86,6 +86,7 @@ int main(int argc, char* argv[])
 
     std::string directory = settings.getValue("TntReader", "directory", ".");
     std::string fixfile = settings.getValue("TntReader", "fixfile", "Wikipedia2.zeno");
+    std::string defaultFile = settings.getValue("TntReader", "defaultfile", "wikipedia.zeno");
 
     tnt::Tntnet app;
     tnt::Worker::setEnableCompression(false);
@@ -101,7 +102,7 @@ int main(int argc, char* argv[])
 
     app.mapUrl("^/(.)/(.+.svg)$", "zenocomp")
        .setPathInfo("$2.png")
-       .pushArg("wikipedia.zeno")
+       .pushArg(defaultFile)
        .pushArg("$1");
 
     app.mapUrl("^/(.+)/(.)/(.+.svg)$", "zenocomp")
@@ -111,7 +112,7 @@ int main(int argc, char* argv[])
 
     app.mapUrl("^/(.)/(.+)$", "zenocomp")
        .setPathInfo("$2")
-       .pushArg("wikipedia.zeno")
+       .pushArg(defaultFile)
        .pushArg("$1");
 
     app.mapUrl("^/(.+)/(.)/(.+)$", "zenocomp")

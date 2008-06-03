@@ -33,6 +33,9 @@ class Zenowriter
     unsigned zid;
     unsigned commitRate;
     std::string outdir;
+    std::string dburl;
+
+    tntdb::Connection& getConnection();
 
     struct ArticleInfo
     {
@@ -70,6 +73,9 @@ class Zenowriter
 
     const std::string& getOutdir() const  { return outdir; }
     void setOutdir(const std::string& o)  { outdir = o; }
+
+    const std::string& getDburl() const  { return dburl; }
+    void setDburl(const std::string& d)  { dburl = d; }
 
 };
 

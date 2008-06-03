@@ -34,17 +34,25 @@ Zenowriter::Zenowriter(const char* filename_)
   : basename(filename_),
     commitRate(1)
 {
-  conn = tntdb::connect("postgresql:dbname=zeno");
+}
 
-  zid = conn.prepare("select zid from zenofile where filename = :filename")
-            .set("filename", basename)
-            .selectValue()
-            .getUnsigned();
+tntdb::Connection& Zenowriter::getConnection()
+{
+  if (!conn)
+  {
+    conn = tntdb::connect(dburl);
+    zid = conn.prepare("select zid from zenofile where filename = :filename")
+              .set("filename", basename)
+              .selectValue()
+              .getUnsigned();
+  }
+
+  return conn;
 }
 
 void Zenowriter::readArticles()
 {
-  tntdb::Statement stmt = conn.prepare(
+  tntdb::Statement stmt = getConnection().prepare(
     "select a.aid, a.title, length(a.data), a.redirect"
     "  from zenoarticles z"
     "  join article a"
@@ -91,7 +99,7 @@ void Zenowriter::dump()
 
 void Zenowriter::prepareFile()
 {
-  tntdb::Statement upd = conn.prepare(
+  tntdb::Statement upd = getConnection().prepare(
     "update zenoarticles"
     "   set direntpos = :direntpos,"
     "       datapos = :datapos"
@@ -105,7 +113,7 @@ void Zenowriter::prepareFile()
   cxxtools::HiresTime t0 = cxxtools::HiresTime::gettimeofday();
   std::cout << "calculate offsets ";
 
-  conn.beginTransaction();
+  getConnection().beginTransaction();
 
   for (ArticleMapType::const_iterator it = articleMap.begin();
        it != articleMap.end(); ++it)
@@ -137,18 +145,18 @@ void Zenowriter::prepareFile()
 
     if (++count % commitRate == 0)
     {
-      conn.commitTransaction();
-      conn.beginTransaction();
+      getConnection().commitTransaction();
+      getConnection().beginTransaction();
       std::cout << '.' << std::flush;
     }
   }
 
-  conn.prepare("update zenofile set count = :count where zid = :zid")
+  getConnection().prepare("update zenofile set count = :count where zid = :zid")
       .set("zid", zid)
       .set("count", count)
       .execute();
       
-  conn.commitTransaction();
+  getConnection().commitTransaction();
 
   cxxtools::HiresTime t1 = cxxtools::HiresTime::gettimeofday();
   std::cout << ' ' << count << "; " << (t1 - t0) << " seconds" << std::endl;
@@ -201,7 +209,7 @@ void Zenowriter::writeDirectory(std::ofstream& ofile)
   cxxtools::HiresTime t0 = cxxtools::HiresTime::gettimeofday();
   std::cout << "write directory   " << std::flush;
 
-  tntdb::Statement stmt = conn.prepare(
+  tntdb::Statement stmt = getConnection().prepare(
     "select namespace, title, url, redirect, mimetype, compression"
     "  from article"
     " where aid = :aid");
@@ -248,7 +256,7 @@ void Zenowriter::writeData(std::ofstream& ofile)
   cxxtools::HiresTime t0 = cxxtools::HiresTime::gettimeofday();
   std::cout << "write data        " << std::flush;
 
-  tntdb::Statement stmt = conn.prepare(
+  tntdb::Statement stmt = getConnection().prepare(
     "select data"
     "  from article"
     " where aid = :aid");
@@ -305,6 +313,7 @@ int main(int argc, char* argv[])
     cxxtools::Arg<bool> output(argc, argv, 'c');
     cxxtools::Arg<unsigned> commitRate(argc, argv, 'C', 1000);
     cxxtools::Arg<std::string> outdir(argc, argv, 'O', ".");
+    cxxtools::Arg<std::string> dburl(argc, argv, "--db", "postgresql:dbname=zeno");
 
     if (argc <= 1)
     {
@@ -314,6 +323,7 @@ int main(int argc, char* argv[])
 
     Zenowriter app(argv[1]);
 
+    app.setDburl(dburl);
     app.setCommitRate(commitRate);
     app.setOutdir(outdir);
 

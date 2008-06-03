@@ -93,7 +93,8 @@ GetArticles::GetArticles(int& argc, char* argv[])
   : from(cxxtools::Arg<std::string>(argc, argv, 'f', "%20%")),
     count(0)
 {
-  conn = tntdb::connect("postgresql:dbname=zeno");
+  cxxtools::Arg<std::string> dburl(argc, argv, "--db", "postgresql:dbname=zeno");
+  conn = tntdb::connect(dburl);
 
   selArticle = conn.prepare(
     "select 1 from article"

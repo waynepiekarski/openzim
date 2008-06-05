@@ -226,7 +226,9 @@ void Zenowriter::writeDirectory(std::ofstream& ofile)
     char ns = row[0].getChar();
     std::string title = row[1].getString();
     std::string url = row[2].getString();
-    std::string redirect = row[3].getString();
+    std::string redirect;
+    if (!row[3].isNull())
+      redirect = row[3].getString();
     unsigned mimetype = row[4].isNull() ? 0 : row[4].getUnsigned();
     unsigned compression = row[5].isNull() ? 0 : row[5].getUnsigned();
 

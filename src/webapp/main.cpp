@@ -21,6 +21,7 @@
 #include <fstream>
 #include <tnt/tntnet.h>
 #include <tnt/worker.h>
+#include <tnt/tntconfig.h>
 #include <cxxtools/loginit.h>
 #include <cxxtools/arg.h>
 #include <cxxtools/inifile.h>

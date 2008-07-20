@@ -17,7 +17,7 @@
  *
  */
 
-#include "zenowriter2.h"
+#include "zenowriter.h"
 #include <iostream>
 #include <fstream>
 #include <cxxtools/log.h>
@@ -54,6 +54,8 @@ tntdb::Connection& Zenowriter::getConnection()
 
 void Zenowriter::prepareSort()
 {
+  std::cout << "sort articles " << std::flush;
+
   typedef std::map<zeno::QUnicodeString, unsigned> ArticlesType;
 
   ArticlesType articles;
@@ -85,10 +87,14 @@ void Zenowriter::prepareSort()
     upd.set("sort", sort++)
        .set("aid", it->second)
        .execute();
+
+  std::cout << std::endl;
 }
 
 void Zenowriter::cleanup()
 {
+  std::cout << "cleanup old data" << std::flush;
+
   tntdb::Statement stmt = getConnection().prepare(
     "delete from zenodata"
     " where zid = :zid");
@@ -108,12 +114,15 @@ void Zenowriter::cleanup()
 
   stmt.set("zid", zid)
       .execute();
+
+  std::cout << std::endl;
 }
 
 void Zenowriter::prepareFile()
 {
   prepareSort();
 
+  std::cout << "prepare file " << std::flush;
   tntdb::Statement updArticle = getConnection().prepare(
     "update zenoarticles"
     "   set direntlen  = :direntlen,"
@@ -181,7 +190,7 @@ void Zenowriter::prepareFile()
               .set("direntlen", direntlen)
               .set("datapos", datapos)
               .set("dataoffset", dataoffset)
-              .set("datasize", articledata.size())
+              .set("datasize", static_cast<unsigned>(articledata.size()))
               .set("did", did)
               .execute();
 
@@ -191,6 +200,8 @@ void Zenowriter::prepareFile()
 
   if (!data.empty())
     insertDataChunk(data, did, insData);
+
+  std::cout << std::endl;
 }
 
 unsigned Zenowriter::insertDataChunk(const std::string& data, unsigned did, tntdb::Statement& insData)
@@ -204,8 +215,9 @@ unsigned Zenowriter::insertDataChunk(const std::string& data, unsigned did, tntd
   log_debug("after compression " << u.str().size());
 
   log_debug("insert datachunk " << did << " with " << u.str().size() << " bytes");
+  tntdb::Blob bdata(u.str().data(), u.str().size());
   insData.set("did", did)
-         .set("data", u.str())
+         .set("data", bdata)
          .execute();
   return u.str().size();
 }

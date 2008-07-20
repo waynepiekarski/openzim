@@ -19,25 +19,29 @@ create table zenofile
   count        integer
 );
 
+create table zenodata
+(
+  zid          integer not null,
+  did          integer not null,
+  data         bytea not null,
+  primary key (zid, did)
+);
+
 create table zenoarticles
 (
   zid          integer not null,
   aid          integer not null,
-  direntpos    bigint,
+  sort         integer,
+  direntlen    bigint,
   datapos      bigint,
+  dataoffset   bigint,
+  datasize     bigint,
+  did          bigint,
 
   primary key (zid, aid),
   foreign key (zid) references zenofile,
   foreign key (aid) references article
 );
 
-create index zenoarticles_ix1 on zenoarticles(zid, direntpos);
-
-create table zenodata
-(
-  zid          integer not null,
-  did          integer not null,
-  data         bytea,
-  primary key (zid, did),
-  foreign key (zid) references zenofile
-);
+create index zenoarticles_ix1 on zenoarticles(zid, direntlen);
+create index zenoarticles_ix2 on zenoarticles(zid, sort);

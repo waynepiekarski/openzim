@@ -22,7 +22,6 @@
 #include <zeno/inflatestream.h>
 #include <zeno/deflatestream.h>
 #include <sstream>
-#include "LzmaDec.h"
 
 log_define("zeno.article.base")
 

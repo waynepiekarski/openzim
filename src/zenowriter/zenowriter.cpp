@@ -101,8 +101,7 @@ void Zenowriter::prepareFile()
 {
   tntdb::Statement upd = getConnection().prepare(
     "update zenoarticles"
-    "   set direntpos = :direntpos,"
-    "       datapos = :datapos"
+    "   set datapos    = :datapos"
     " where zid = :zid"
     "   and aid = :aid");
   upd.set("zid", zid);
@@ -136,7 +135,6 @@ void Zenowriter::prepareFile()
     }
 
     upd.set("aid", aid)
-       .set("direntpos", indexLen)
        .set("datapos", dataLen)
        .execute();
 

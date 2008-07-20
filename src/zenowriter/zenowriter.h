@@ -52,8 +52,8 @@ class Zenowriter
     unsigned indexPos;
     zeno::size_type dataPos;
     unsigned dataLen;
-
-    zeno::Fileheader header;
+    unsigned dataOffset;
+    unsigned dataSize;
 
     void writeHeader(std::ofstream& ofile);
     void writeIndexPtr(std::ofstream& ofile);

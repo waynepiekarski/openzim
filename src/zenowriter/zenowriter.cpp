@@ -169,13 +169,11 @@ void Zenowriter::prepareFile()
     {
       // redirect
       std::string redirect = row[3].getString();
-      direntlen = zeno::Dirent::headerSize + redirect.size();
     }
     else
     {
       // article
       articledata = row[2].getString();
-      direntlen = zeno::Dirent::headerSize + title.size();
       if (!data.empty() && data.size() + articledata.size() / 2 >= minChunkSize)
       {
         datapos += insertDataChunk(data, did, insData);
@@ -185,6 +183,8 @@ void Zenowriter::prepareFile()
       }
       data += articledata;
     }
+
+    direntlen = zeno::Dirent::headerSize + title.size();
 
     updArticle.set("aid", aid)
               .set("direntlen", direntlen)

@@ -18,12 +18,12 @@
  */
 
 #include <iostream>
+#include <sstream>
 #include <tntdb/connect.h>
 #include <tntdb/row.h>
 #include <tntdb/blob.h>
 #include <tntdb/statement.h>
 #include <zeno/article.h>
-#include <cxxtools/convert.h>
 #include <cxxtools/loginit.h>
 
 int main(int argc, char* argv[])
@@ -41,7 +41,11 @@ int main(int argc, char* argv[])
 
     for (int a = 1; a < argc; ++a)
     {
-      unsigned n = cxxtools::convert<unsigned>(argv[a]);
+      std::istringstream in(argv[a]);
+      unsigned n;
+      if (!in >> n)
+        continue;
+
       tntdb::Row row = selArticle.set("aid", n)
                                  .selectRow();
       zeno::Article article;

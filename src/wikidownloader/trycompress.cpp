@@ -25,6 +25,7 @@
 #include <zeno/article.h>
 #include <cxxtools/convert.h>
 #include <cxxtools/loginit.h>
+#include <cxxtools/arg.h>
 
 int main(int argc, char* argv[])
 {
@@ -32,7 +33,8 @@ int main(int argc, char* argv[])
   {
     log_init();
 
-    tntdb::Connection conn = tntdb::connect("postgresql:dbname=zeno");
+    cxxtools::Arg<std::string> dburl(argc, argv, "--db", "postgresql:dbname=zeno");
+    tntdb::Connection conn = tntdb::connect(dburl);
 
     tntdb::Statement selArticle = conn.prepare(
       "select aid, title, data"

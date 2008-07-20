@@ -22,6 +22,7 @@
 #include <zeno/inflatestream.h>
 #include <zeno/deflatestream.h>
 #include <sstream>
+#include "LzmaDec.h"
 
 log_define("zeno.article.base")
 
@@ -72,29 +73,41 @@ namespace zeno
     return data;
   }
 
-  const std::string& ArticleBase::getData() const
+  std::string ArticleBase::getData() const
   {
     if (uncompressedData.empty() && !getRawData().empty())
     {
       if (isCompressionZip())
       {
-        log_debug("uncompress data");
+        log_debug("uncompress data (zlib)");
         std::ostringstream u;
         zeno::InflateStream is(u);
         is << getRawData() << std::flush;
         uncompressedData = u.str();
+      }
+      else if (isCompressionBzip2())
+      {
+        // TODO
+        log_debug("uncompress data (bzip2)");
+      }
+      else if (isCompressionLzma())
+      {
+        // TODO
+        log_debug("uncompress data (lzma)");
       }
       else
       {
         uncompressedData = getRawData();
       }
     }
-    return uncompressedData;
+
+    return getArticleSize() > 0 ? uncompressedData.substr(getArticleOffset(), getArticleSize())
+                                : uncompressedData;
   }
 
   void ArticleBase::tryCompress(double maxSize)
   {
-    if (isCompressionZip())
+    if (isCompressed())
       return;
 
     setCompression(Dirent::zenocompZip, true);
@@ -115,7 +128,7 @@ namespace zeno
     {
       if (modifyData)
       {
-        if (isCompressionZip())
+        if (isCompressed())
         {
           // we need to uncompress the data
 

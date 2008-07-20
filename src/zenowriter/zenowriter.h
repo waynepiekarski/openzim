@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef ZENOWRITER_H
-#define ZENOWRITER_H
+#ifndef ZENOWRITER2_H
+#define ZENOWRITER2_H
 
 #include <map>
 #include <iosfwd>
@@ -32,44 +32,35 @@ class Zenowriter
     std::string basename;
     unsigned zid;
     unsigned commitRate;
+    unsigned minChunkSize;
     std::string outdir;
     std::string dburl;
 
     tntdb::Connection& getConnection();
 
-    struct ArticleInfo
-    {
-      unsigned aid;
-      unsigned titlesize;
-      unsigned datasize;
-      unsigned redirectsize;
-    };
-
-    typedef std::map<zeno::QUnicodeString, ArticleInfo> ArticleMapType;
-    ArticleMapType articleMap;
     unsigned indexLen;
-    unsigned indexPtrPos;
-    unsigned indexPos;
-    zeno::size_type dataPos;
-    unsigned dataLen;
-    unsigned dataOffset;
-    unsigned dataSize;
 
-    void writeHeader(std::ofstream& ofile);
-    void writeIndexPtr(std::ofstream& ofile);
-    void writeDirectory(std::ofstream& ofile);
-    void writeData(std::ofstream& ofile);
+    zeno::Fileheader header;
+
+    void writeHeader(std::ostream& ofile);
+    void writeIndexPtr(std::ostream& ofile);
+    void writeDirectory(std::ostream& ofile);
+    void writeData(std::ostream& ofile);
+    unsigned insertDataChunk(const std::string& data, unsigned did, tntdb::Statement& insData);
 
   public:
     explicit Zenowriter(const char* basename);
 
-    void readArticles();
-    void dump();
+    void cleanup();
     void prepareFile();
+    void prepareSort();
     void outputFile();
 
     unsigned getCommitRate() const  { return commitRate; }
     void setCommitRate(unsigned c)  { commitRate = c; }
+
+    unsigned getMinChunkSize() const  { return minChunkSize; }
+    void setMinChunkSize(unsigned s)  { minChunkSize = s; }
 
     const std::string& getOutdir() const  { return outdir; }
     void setOutdir(const std::string& o)  { outdir = o; }

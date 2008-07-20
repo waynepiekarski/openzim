@@ -99,6 +99,9 @@ void ZenoDumper::findArticle(char ns, const char* url, bool collate)
 
 void ZenoDumper::dumpArticle(bool raw)
 {
+  log_trace("dump article; raw data size=" << pos->getRawData().size());
+  std::string data = raw ? pos->getRawData() : pos->getData();
+  //log_debug("data size=" << data.size());
   std::cout << (raw ? pos->getRawData() : pos->getData()) << std::flush;
 }
 
@@ -139,7 +142,9 @@ void ZenoDumper::listArticle(const zeno::Article& article, bool extra, bool inde
   std::cout <<
     "\tnamespace:       " << article.getNamespace() << "\n"
     "\tmime-type:       " << article.getLibraryMimeType() << "\n"
-    "\tredirect-flag:   " << article.getRedirectFlag() << std::endl;
+    "\tredirect-flag:   " << article.getRedirectFlag() << "\n"
+    "\tarticle-size:    " << article.getArticleSize() << "\n"
+    "\tarticle-offset:  " << article.getArticleOffset() << std::endl;
   if (extra)
   {
     std::string parameter = article.getParameter();

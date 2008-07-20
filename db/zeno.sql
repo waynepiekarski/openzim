@@ -32,3 +32,12 @@ create table zenoarticles
 );
 
 create index zenoarticles_ix1 on zenoarticles(zid, direntpos);
+
+create table zenodata
+(
+  zid          integer not null,
+  did          integer not null,
+  data         bytea,
+  primary key (zid, did),
+  foreign key (zid) references zenofile
+);

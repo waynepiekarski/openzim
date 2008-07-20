@@ -36,7 +36,9 @@ namespace zeno
       {
         zenocompDefault,
         zenocompNone,
-        zenocompZip
+        zenocompZip,
+        zenocompBzip2,
+        zenocompLzma
       };
 
       enum MimeType
@@ -75,11 +77,15 @@ namespace zeno
       offset_type getOffset() const        { return fromLittleEndian<offset_type>(header); }
       void        setOffset(offset_type o) { *reinterpret_cast<offset_type*>(header + 0) = fromLittleEndian<offset_type>(&o); }
 
+      // size of article data
       size_type   getSize() const          { return fromLittleEndian<size_type>(header + 8); }
       void        setSize(size_type s)     { *reinterpret_cast<size_type*>(header + 8) = fromLittleEndian<size_type>(&s); }
 
       CompressionType getCompression() const { return static_cast<CompressionType>(header[12]); }
-      bool        isCompressionZip() const { return getCompression() == zenocompZip; }
+      bool        isCompressionZip() const   { return getCompression() == zenocompZip; }
+      bool        isCompressionBzip2() const   { return getCompression() == zenocompBzip2; }
+      bool        isCompressionLzma() const  { return getCompression() == zenocompLzma; }
+      bool        isCompressed() const       { return isCompressionZip() || isCompressionLzma(); }
       void        setCompression(CompressionType c)
                                            { header[12] = c; }
 
@@ -90,6 +96,14 @@ namespace zeno
 
       char        getNamespace() const     { return static_cast<char>(header[15]); }
       void        setNamespace(char ns)    { header[15] = ns; }
+
+      // offset inside article data
+      size_type   getArticleOffset() const      { return fromLittleEndian<size_type>(header + 16); }
+      void        setArticleOffset(size_type o) { *reinterpret_cast<size_type*>(header + 16) = fromLittleEndian<size_type>(&o); }
+
+      // size of article data
+      size_type   getArticleSize() const      { return fromLittleEndian<size_type>(header + 20); }
+      void        setArticleSize(size_type s) { *reinterpret_cast<size_type*>(header + 20) = fromLittleEndian<size_type>(&s); }
 
       uint16_t    getExtraLen() const      { return fromLittleEndian<uint16_t>(header + 24); }
       void        setExtraLen(uint16_t l)  { *reinterpret_cast<uint16_t*>(header + 24) = fromLittleEndian<uint16_t>(&l); } 

@@ -60,6 +60,9 @@ namespace zeno
 
       CompressionType getCompression() const  { return dirent.getCompression(); }
       bool        isCompressionZip() const    { return dirent.isCompressionZip(); }
+      bool        isCompressionBzip2() const  { return dirent.isCompressionBzip2(); }
+      bool        isCompressionLzma() const   { return dirent.isCompressionLzma(); }
+      bool        isCompressed() const        { return isCompressionZip() || isCompressionLzma(); }
       void        setCompression(CompressionType c, bool modifyData = false);
       /// compress, if it reduces size significantly
       void        tryCompress(double maxSize = 0.9);
@@ -72,11 +75,17 @@ namespace zeno
       const std::string&
                   getMimeType() const;
 
-      bool        getRedirectFlag() const     { return dirent.getRedirectFlag(); }
-      void        setRedirectFlag(bool sw = true)  { dirent.setRedirectFlag(sw); }
+      bool        getRedirectFlag() const         { return dirent.getRedirectFlag(); }
+      void        setRedirectFlag(bool sw = true) { dirent.setRedirectFlag(sw); }
 
       char        getNamespace() const        { return dirent.getNamespace(); }
       void        setNamespace(char ns)       { dirent.setNamespace(ns); }
+
+      size_type   getArticleOffset() const      { return dirent.getArticleOffset(); }
+      void        setArticleOffset(size_type o) { dirent.setArticleOffset(o); }
+
+      size_type   getArticleSize() const        { return dirent.getArticleSize(); }
+      void        setArticleSize(size_type s)   { dirent.setArticleSize(s); }
 
       operator bool()   { return getDataOffset() != 0; }
 
@@ -92,7 +101,7 @@ namespace zeno
         uncompressedData.clear();
       }
 
-      const std::string& getData() const;
+      std::string getData() const;
       void setData(const std::string& data);
   };
 

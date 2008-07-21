@@ -35,6 +35,7 @@ class Zenowriter
     unsigned minChunkSize;
     std::string outdir;
     std::string dburl;
+    bool compressZlib;
 
     tntdb::Connection& getConnection();
 
@@ -68,6 +69,8 @@ class Zenowriter
     const std::string& getDburl() const  { return dburl; }
     void setDburl(const std::string& d)  { dburl = d; }
 
+    bool isCompressZlib() const           { return compressZlib; }
+    void setCompressZlib(bool sw = true)  { compressZlib = sw; }
 };
 
 #endif

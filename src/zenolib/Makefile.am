@@ -6,6 +6,9 @@ libzeno_la_SOURCES = \
 	article.cpp \
 	articlebase.cpp \
 	articlesearch.cpp \
+	bunzip2stream.cpp \
+	bzip2.cpp \
+	bzip2stream.cpp \
 	deflatestream.cpp \
 	dirent.cpp \
 	file.cpp \
@@ -18,4 +21,4 @@ libzeno_la_SOURCES = \
 	search.cpp \
 	zintstream.cpp
 
-libzeno_la_LDFLAGS=-lcxxtools -ltntnet
+libzeno_la_LDFLAGS=-lcxxtools -lz -lbz2

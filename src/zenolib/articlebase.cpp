@@ -21,6 +21,7 @@
 #include <cxxtools/log.h>
 #include <zeno/inflatestream.h>
 #include <zeno/deflatestream.h>
+#include <zeno/bunzip2stream.h>
 #include <sstream>
 
 log_define("zeno.article.base")
@@ -74,6 +75,9 @@ namespace zeno
 
   std::string ArticleBase::getData() const
   {
+    if (getRedirectFlag())
+      return std::string();
+
     if (uncompressedData.empty() && !getRawData().empty())
     {
       if (isCompressionZip())
@@ -86,8 +90,11 @@ namespace zeno
       }
       else if (isCompressionBzip2())
       {
-        // TODO
         log_debug("uncompress data (bzip2)");
+        std::ostringstream u;
+        zeno::Bunzip2Stream is(u);
+        is << getRawData() << std::flush;
+        uncompressedData = u.str();
       }
       else if (isCompressionLzma())
       {

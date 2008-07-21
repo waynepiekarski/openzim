@@ -19,6 +19,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <set>
 #include <zeno/file.h>
 #include <zeno/files.h>
 #include <zeno/fileiterator.h>
@@ -27,6 +28,8 @@
 #include <cxxtools/arg.h>
 #include <cxxtools/loginit.h>
 #include <stdexcept>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 log_define("zeno.dumper");
 
@@ -53,6 +56,7 @@ class ZenoDumper
     static void listArticle(const zeno::Article& article, bool extra, bool indexcontent);
     void listArticle(bool extra, bool indexcontent)
       { listArticle(*pos, extra, indexcontent); }
+    void dumpFiles(const std::string& directory);
 };
 
 void ZenoDumper::listZenoFiles(const std::string& directory)
@@ -135,16 +139,16 @@ void ZenoDumper::listArticle(const zeno::Article& article, bool extra, bool inde
     "\tidx:             " << article.getIndex() << "\n"
     "\toff:             " << article.getDataOffset() << "\n"
     "\tlen:             " << article.getDataLen() << "\n"
-    "\tcompression:     " << static_cast<unsigned>(article.getCompression()) << "\n";
-  if (article.getCompression())
-    std::cout <<
-    "\tuncompressedlen: " << article.getData().size() << "\n";
-  std::cout <<
     "\tnamespace:       " << article.getNamespace() << "\n"
     "\tmime-type:       " << article.getLibraryMimeType() << "\n"
     "\tredirect-flag:   " << article.getRedirectFlag() << "\n"
     "\tarticle-size:    " << article.getArticleSize() << "\n"
-    "\tarticle-offset:  " << article.getArticleOffset() << std::endl;
+    "\tarticle-offset:  " << article.getArticleOffset() << "\n"
+    "\tcompression:     " << static_cast<unsigned>(article.getCompression()) << "\n";
+  if (article.getCompression())
+    std::cout <<
+    "\tuncompressedlen: " << article.getUncompressedLen() << "\n";
+
   if (extra)
   {
     std::string parameter = article.getParameter();
@@ -175,6 +179,26 @@ void ZenoDumper::listArticle(const zeno::Article& article, bool extra, bool inde
   }
 }
 
+void ZenoDumper::dumpFiles(const std::string& directory)
+{
+  std::set<char> ns;
+  for (zeno::File::const_iterator it = pos; it != file.end(); ++it)
+  {
+    std::string d = directory + '/' + it->getNamespace();
+    if (ns.find(it->getNamespace()) == ns.end())
+      ::mkdir(d.c_str(), 0777);
+    std::string t = it->getTitle().getValue();
+    std::string::size_type p;
+    while ((p = t.find('/')) != std::string::npos)
+      t.replace(p, 1, "%2f");
+    std::string f = d + '/' + t;
+    std::ofstream out(f.c_str());
+    out << it->getData();
+    if (!out)
+      throw std::runtime_error("error writing file " + f);
+  }
+}
+
 int main(int argc, char* argv[])
 {
   try
@@ -194,6 +218,7 @@ int main(int argc, char* argv[])
     cxxtools::Arg<bool> indexcontent(argc, argv, 'X');
     cxxtools::Arg<char> ns(argc, argv, 'n', 'A');  // namespace
     cxxtools::Arg<bool> collate(argc, argv, 'c');
+    cxxtools::Arg<const char*> dumpAll(argc, argv, 'D');
 
     if (argc <= 1)
     {
@@ -201,7 +226,7 @@ int main(int argc, char* argv[])
                    "\n"
                    "options:\n"
                    "  -F        print fileinfo\n"
-                   "  -L        list zenofiles in directory\n"
+                   "  -L        list zenofiles in directory with contained namespaces\n"
                    "  -N ns     print info about namespace\n"
                    "  -i        print info about articles\n"
                    "  -d        print data of articles\n"
@@ -212,6 +237,7 @@ int main(int argc, char* argv[])
                    "  -x        print extra parameters\n"
                    "  -X        print index contents\n"
                    "  -n ns     specify namespace (default 'A')\n"
+                   "  -D dir    dump all files into directory\n"
                    "\n"
                    "examples:\n"
                    "  " << argv[0] << " -F wikipedia.zeno\n"
@@ -250,6 +276,10 @@ int main(int argc, char* argv[])
       app.locateArticle(indexOffset);
     else if (find.isSet())
       app.findArticle(ns, find, collate);
+
+    // dump files
+    if (dumpAll.isSet())
+      app.dumpFiles(dumpAll.getValue());
 
     // print requested info
     if (data || rawdump)

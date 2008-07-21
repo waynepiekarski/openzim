@@ -28,12 +28,14 @@
 #include <zeno/dirent.h>
 #include <zeno/fileheader.h>
 #include <zeno/deflatestream.h>
+#include <zeno/bzip2stream.h>
 
 log_define("zeno.writer")
 
 Zenowriter::Zenowriter(const char* basename_)
   : basename(basename_),
-    minChunkSize(65536)
+    minChunkSize(65536),
+    compressZlib(false)
 { 
 }
 
@@ -209,9 +211,18 @@ unsigned Zenowriter::insertDataChunk(const std::string& data, unsigned did, tntd
   // insert into zenodata
   log_debug("compress data " << data.size());
   std::ostringstream u;
-  zeno::DeflateStream ds(u);
-  ds << data << std::flush;
-  ds.end();
+  if (compressZlib)
+  {
+    zeno::DeflateStream ds(u);
+    ds << data << std::flush;
+    ds.end();
+  }
+  else
+  {
+    zeno::Bzip2Stream ds(u);
+    ds << data << std::flush;
+    ds.end();
+  }
   log_debug("after compression " << u.str().size());
 
   log_debug("insert datachunk " << did << " with " << u.str().size() << " bytes");
@@ -326,7 +337,7 @@ void Zenowriter::writeDirectory(std::ostream& ofile)
     dirent.setArticleOffset(dataoffset);
     dirent.setArticleSize(datasize);
     dirent.setSize(blob.size());
-    dirent.setCompression(zeno::Dirent::zenocompZip);
+    dirent.setCompression(compressZlib ? zeno::Dirent::zenocompZip : zeno::Dirent::zenocompBzip2);
     dirent.setMimeType(static_cast<zeno::Dirent::MimeType>(mimetype));
     dirent.setRedirectFlag(!redirect.empty());
     dirent.setNamespace(ns);
@@ -385,7 +396,8 @@ int main(int argc, char* argv[])
     log_init();
 
     cxxtools::Arg<std::string> dburl(argc, argv, "--db", "postgresql:dbname=zeno");
-    cxxtools::Arg<unsigned> minChunkSize(argc, argv, 's', 65536);
+    cxxtools::Arg<unsigned> minChunkSize(argc, argv, 's', 64);
+    cxxtools::Arg<bool> compressZlib(argc, argv, 'z');
 
     if (argc <= 1)
     {
@@ -395,7 +407,8 @@ int main(int argc, char* argv[])
 
     Zenowriter app(argv[1]);
     app.setDburl(dburl);
-    app.setMinChunkSize(minChunkSize);
+    app.setMinChunkSize(minChunkSize * 1024);
+    app.setCompressZlib(compressZlib);
     app.cleanup();
     app.prepareFile();
     app.outputFile();

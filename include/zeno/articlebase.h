@@ -103,6 +103,11 @@ namespace zeno
 
       std::string getData() const;
       void setData(const std::string& data);
+
+      size_type getUncompressedLen() const
+        { return getRedirectFlag() ? 0
+               : getArticleSize()  ? getArticleSize()
+               : getData().size(); }
   };
 
 }

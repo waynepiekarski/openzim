@@ -43,12 +43,17 @@ namespace zeno
   class InflateStreamBuf : public std::streambuf
   {
       z_stream stream;
-      char_type* obuffer;
+      char_type* iobuffer;
       unsigned bufsize;
-      std::streambuf* sink;
+      std::streambuf* sinksource;
+
+      char_type* ibuffer()            { return iobuffer; }
+      std::streamsize ibuffer_size()  { return bufsize >> 1; }
+      char_type* obuffer()            { return iobuffer + ibuffer_size(); }
+      std::streamsize obuffer_size()  { return bufsize >> 1; }
 
     public:
-      explicit InflateStreamBuf(std::streambuf* sink_, unsigned bufsize = 8192);
+      explicit InflateStreamBuf(std::streambuf* sinksource_, unsigned bufsize = 8192);
       ~InflateStreamBuf();
 
       /// see std::streambuf
@@ -58,7 +63,7 @@ namespace zeno
       /// see std::streambuf
       int sync();
 
-      void setSink(std::streambuf* sink_)   { sink = sink_; }
+      void setSinksource(std::streambuf* sinksource_)   { sinksource = sinksource_; }
       uLong getAdler() const   { return stream.adler; }
   };
 
@@ -67,17 +72,19 @@ namespace zeno
       InflateStreamBuf streambuf;
 
     public:
-      explicit InflateStream(std::streambuf* sink)
+      explicit InflateStream(std::streambuf* sinksource, unsigned bufsize = 8192)
         : std::ostream(0),
-          streambuf(sink)
+          streambuf(sinksource, bufsize)
         { init(&streambuf); }
-      explicit InflateStream(std::ostream& sink)
+      explicit InflateStream(std::ios& sinksource, unsigned bufsize = 8192)
         : std::ostream(0),
-          streambuf(sink.rdbuf())
+          streambuf(sinksource.rdbuf(), bufsize)
         { init(&streambuf); }
 
-      void setSink(std::streambuf* sink)   { streambuf.setSink(sink); }
-      void setSink(std::ostream& sink)     { streambuf.setSink(sink.rdbuf()); }
+      void setSinksource(std::streambuf* sinksource)   { streambuf.setSinksource(sinksource); }
+      void setSinksource(std::ios& sinksource)         { streambuf.setSinksource(sinksource.rdbuf()); }
+      void setSink(std::ostream& sink)                 { streambuf.setSinksource(sink.rdbuf()); }
+      void setSource(std::istream& source)             { streambuf.setSinksource(source.rdbuf()); }
       uLong getAdler() const   { return streambuf.getAdler(); }
   };
 }

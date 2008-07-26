@@ -44,10 +44,10 @@ namespace zeno
     }
   }
 
-  InflateStreamBuf::InflateStreamBuf(std::streambuf* sink_, unsigned bufsize_)
-    : obuffer(new char_type[bufsize_]),
+  InflateStreamBuf::InflateStreamBuf(std::streambuf* sinksource_, unsigned bufsize_)
+    : iobuffer(new char_type[bufsize_]),
       bufsize(bufsize_),
-      sink(sink_)
+      sinksource(sinksource_)
   {
     stream.zalloc = Z_NULL;
     stream.zfree = Z_NULL;
@@ -58,45 +58,46 @@ namespace zeno
     stream.avail_in = 0;
 
     checkError(::inflateInit(&stream), stream);
-    setp(obuffer, obuffer + bufsize);
   }
 
   InflateStreamBuf::~InflateStreamBuf()
   {
     ::inflateEnd(&stream);
-    delete[] obuffer;
+    delete[] iobuffer;
   }
 
   InflateStreamBuf::int_type InflateStreamBuf::overflow(int_type c)
   {
     log_debug("InflateStreamBuf::overflow");
 
-    // initialize input-stream for
-    stream.next_in = (Bytef*)obuffer;
-    stream.avail_in = pptr() - pbase();
-
-    int ret;
-    do
+    if (pptr())
     {
-      // initialize zbuffer
-      cxxtools::Dynbuffer<Bytef> zbuffer(bufsize);
-      stream.next_out = zbuffer.data();
-      stream.avail_out = bufsize;
+      // initialize input-stream for
+      stream.next_in = (Bytef*)obuffer();
+      stream.avail_in = pptr() - pbase();
 
-      log_debug("pre:avail_out=" << stream.avail_out << " avail_in=" << stream.avail_in);
-      ret = ::inflate(&stream, Z_SYNC_FLUSH);
-      checkError(ret, stream);
-      log_debug("post:avail_out=" << stream.avail_out << " avail_in=" << stream.avail_in << " ret=" << ret);
+      int ret;
+      do
+      {
+        // initialize ibuffer
+        stream.next_out = (Bytef*)ibuffer();
+        stream.avail_out = ibuffer_size();
 
-      // copy zbuffer to sink
-      std::streamsize count = bufsize - stream.avail_out;
-      std::streamsize n = sink->sputn(reinterpret_cast<char*>(zbuffer.data()), count);
-      if (n < count)
-        return traits_type::eof();
-    } while (ret != Z_STREAM_END && stream.avail_in > 0);
+        log_debug("pre:avail_out=" << stream.avail_out << " avail_in=" << stream.avail_in);
+        ret = ::inflate(&stream, Z_SYNC_FLUSH);
+        checkError(ret, stream);
+        log_debug("post:avail_out=" << stream.avail_out << " avail_in=" << stream.avail_in << " ret=" << ret);
+
+        // copy zbuffer to sinksource
+        std::streamsize count = ibuffer_size() - stream.avail_out;
+        std::streamsize n = sinksource->sputn(reinterpret_cast<char*>(ibuffer()), count);
+        if (n < count)
+          return traits_type::eof();
+      } while (ret != Z_STREAM_END && stream.avail_in > 0);
+    }
 
     // reset outbuffer
-    setp(obuffer, obuffer + bufsize);
+    setp(obuffer(), obuffer() + obuffer_size());
     if (c != traits_type::eof())
       sputc(traits_type::to_char_type(c));
 
@@ -105,12 +106,55 @@ namespace zeno
 
   InflateStreamBuf::int_type InflateStreamBuf::underflow()
   {
-    return traits_type::eof();
+    // read from sinksource and decompress into obuffer
+
+    stream.next_out = (Bytef*)obuffer();
+    stream.avail_out = obuffer_size();
+
+    do
+    {
+      // fill ibuffer first if needed
+      if (stream.avail_in == 0)
+      {
+        if (sinksource->in_avail() > 0)
+        {
+          // there is data already available
+          // read compressed data from source into ibuffer
+          log_debug("in_avail=" << sinksource->in_avail());
+          stream.avail_in = sinksource->sgetn(ibuffer(), std::min(sinksource->in_avail(), ibuffer_size()));
+        }
+        else
+        {
+          // no data available
+          stream.avail_in = sinksource->sgetn(ibuffer(), ibuffer_size());
+          log_debug(stream.avail_in << " bytes read from source");
+          if (stream.avail_in == 0)
+            return traits_type::eof();
+        }
+
+        stream.next_in = (Bytef*)ibuffer();
+      }
+
+      // we decompress it now into obuffer
+
+      // at least one character received from source - pass to decompressor
+
+      log_debug("pre:avail_out=" << stream.avail_out << " avail_in=" << stream.avail_in);
+      int ret = ::inflate(&stream, Z_SYNC_FLUSH);
+      log_debug("post:avail_out=" << stream.avail_out << " avail_in=" << stream.avail_in << " ret=" << ret);
+
+      checkError(ret, stream);
+
+      setg(obuffer(), obuffer(), obuffer() + obuffer_size() - stream.avail_out);
+
+    } while (gptr() == egptr());
+
+    return sgetc();
   }
 
   int InflateStreamBuf::sync()
   {
-    if (overflow(traits_type::eof()) == traits_type::eof())
+    if (pptr() && overflow(traits_type::eof()) == traits_type::eof())
       return -1;
     return 0;
   }

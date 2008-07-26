@@ -19,7 +19,6 @@
 
 #include <zeno/bunzip2stream.h>
 #include <cxxtools/log.h>
-#include <cxxtools/dynbuffer.h>
 #include <sstream>
 
 log_define("zeno.bzip2.uncompress")
@@ -42,53 +41,54 @@ namespace zeno
     }
   }
 
-  Bunzip2StreamBuf::Bunzip2StreamBuf(std::streambuf* sink_, bool small, unsigned bufsize_)
-    : obuffer(new char_type[bufsize_]),
+  Bunzip2StreamBuf::Bunzip2StreamBuf(std::streambuf* sinksource_, bool small, unsigned bufsize_)
+    : iobuffer(new char_type[bufsize_]),
       bufsize(bufsize_),
-      sink(sink_)
+      sinksource(sinksource_)
   {
     memset(&stream, 0, sizeof(bz_stream));
 
     checkError(::BZ2_bzDecompressInit(&stream, 0, static_cast<int>(small)), stream);
-    setp(obuffer, obuffer + bufsize);
   }
 
   Bunzip2StreamBuf::~Bunzip2StreamBuf()
   {
     ::BZ2_bzDecompressEnd(&stream);
-    delete[] obuffer;
+    delete[] iobuffer;
   }
 
   Bunzip2StreamBuf::int_type Bunzip2StreamBuf::overflow(int_type c)
   {
     log_debug("Bunzip2StreamBuf::overflow");
 
-    // initialize input-stream for
-    stream.next_in = obuffer;
-    stream.avail_in = pptr() - pbase();
-
-    int ret;
-    do
+    if (pptr())
     {
-      // initialize zbuffer
-      cxxtools::Dynbuffer<char> zbuffer(bufsize);
-      stream.next_out = zbuffer.data();
-      stream.avail_out = bufsize;
+      // initialize input-stream for
+      stream.next_in = obuffer();
+      stream.avail_in = pptr() - pbase();
 
-      log_debug("pre:avail_out=" << stream.avail_out << " avail_in=" << stream.avail_in);
-      ret = ::BZ2_bzDecompress(&stream);
-      checkError(ret, stream);
-      log_debug("post:avail_out=" << stream.avail_out << " avail_in=" << stream.avail_in << " ret=" << ret);
+      int ret;
+      do
+      {
+        // initialize ibuffer
+        stream.next_out = ibuffer();
+        stream.avail_out = ibuffer_size();
 
-      // copy zbuffer to sink
-      std::streamsize count = bufsize - stream.avail_out;
-      std::streamsize n = sink->sputn(reinterpret_cast<char*>(zbuffer.data()), count);
-      if (n < count)
-        return traits_type::eof();
-    } while (ret != BZ_STREAM_END && stream.avail_in > 0);
+        log_debug("pre:avail_out=" << stream.avail_out << " avail_in=" << stream.avail_in);
+        ret = ::BZ2_bzDecompress(&stream);
+        checkError(ret, stream);
+        log_debug("post:avail_out=" << stream.avail_out << " avail_in=" << stream.avail_in << " ret=" << ret);
+
+        // copy ibuffer to sinksource
+        std::streamsize count = ibuffer_size() - stream.avail_out;
+        std::streamsize n = sinksource->sputn(reinterpret_cast<char*>(ibuffer()), count);
+        if (n < count)
+          return traits_type::eof();
+      } while (ret != BZ_STREAM_END && stream.avail_in > 0);
+    }
 
     // reset outbuffer
-    setp(obuffer, obuffer + bufsize);
+    setp(obuffer(), obuffer() + obuffer_size());
     if (c != traits_type::eof())
       sputc(traits_type::to_char_type(c));
 
@@ -97,12 +97,55 @@ namespace zeno
 
   Bunzip2StreamBuf::int_type Bunzip2StreamBuf::underflow()
   {
-    return traits_type::eof();
+    // read from sinksource and decompress into obuffer
+
+    stream.next_out = obuffer();
+    stream.avail_out = obuffer_size();
+
+    do
+    {
+      // fill ibuffer first if needed
+      if (stream.avail_in == 0)
+      {
+        if (sinksource->in_avail() > 0)
+        {
+          // there is data already available
+          // read compressed data from source into ibuffer
+          log_debug("in_avail=" << sinksource->in_avail());
+          stream.avail_in = sinksource->sgetn(ibuffer(), std::min(sinksource->in_avail(), ibuffer_size()));
+        }
+        else
+        {
+          // no data available
+          stream.avail_in = sinksource->sgetn(ibuffer(), ibuffer_size());
+          log_debug(stream.avail_in << " bytes read from source");
+          if (stream.avail_in == 0)
+            return traits_type::eof();
+        }
+
+        stream.next_in = ibuffer();
+      }
+
+      // we decompress it now into obuffer
+
+      // at least one character received from source - pass to decompressor
+
+      log_debug("pre:avail_out=" << stream.avail_out << " avail_in=" << stream.avail_in);
+      int ret = ::BZ2_bzDecompress(&stream);
+      log_debug("post:avail_out=" << stream.avail_out << " avail_in=" << stream.avail_in << " ret=" << ret);
+
+      checkError(ret, stream);
+
+      setg(obuffer(), obuffer(), obuffer() + obuffer_size() - stream.avail_out);
+
+    } while (gptr() == egptr());
+
+    return sgetc();
   }
 
   int Bunzip2StreamBuf::sync()
   {
-    if (overflow(traits_type::eof()) == traits_type::eof())
+    if (pptr() && overflow(traits_type::eof()) == traits_type::eof())
       return -1;
     return 0;
   }

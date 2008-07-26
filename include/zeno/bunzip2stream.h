@@ -39,12 +39,17 @@ namespace zeno
   class Bunzip2StreamBuf : public std::streambuf
   {
       bz_stream stream;
-      char_type* obuffer;
+      char_type* iobuffer;
       unsigned bufsize;
-      std::streambuf* sink;
+      std::streambuf* sinksource;
+
+      char_type* ibuffer()            { return iobuffer; }
+      std::streamsize ibuffer_size()  { return bufsize >> 1; }
+      char_type* obuffer()            { return iobuffer + ibuffer_size(); }
+      std::streamsize obuffer_size()  { return bufsize >> 1; }
 
     public:
-      explicit Bunzip2StreamBuf(std::streambuf* sink_, bool small = false, unsigned bufsize = 8192);
+      explicit Bunzip2StreamBuf(std::streambuf* sinksource_, bool small = false, unsigned bufsize = 8192);
       ~Bunzip2StreamBuf();
 
       /// see std::streambuf
@@ -54,25 +59,27 @@ namespace zeno
       /// see std::streambuf
       int sync();
 
-      void setSink(std::streambuf* sink_)   { sink = sink_; }
+      void setSinksource(std::streambuf* sinksource_)   { sinksource = sinksource_; }
   };
 
-  class Bunzip2Stream : public std::ostream
+  class Bunzip2Stream : public std::iostream
   {
       Bunzip2StreamBuf streambuf;
 
     public:
-      explicit Bunzip2Stream(std::streambuf* sink, bool small = false, unsigned bufsize = 8192)
-        : std::ostream(0),
-          streambuf(sink, small, bufsize)
+      explicit Bunzip2Stream(std::streambuf* sinksource, bool small = false, unsigned bufsize = 8192)
+        : std::iostream(0),
+          streambuf(sinksource, small, bufsize)
         { init(&streambuf); }
-      explicit Bunzip2Stream(std::ostream& sink, bool small = false, unsigned bufsize = 8192)
-        : std::ostream(0),
-          streambuf(sink.rdbuf(), small, bufsize)
+      explicit Bunzip2Stream(std::ios& sinksource, bool small = false, unsigned bufsize = 8192)
+        : std::iostream(0),
+          streambuf(sinksource.rdbuf(), small, bufsize)
         { init(&streambuf); }
 
-      void setSink(std::streambuf* sink)   { streambuf.setSink(sink); }
-      void setSink(std::ostream& sink)     { streambuf.setSink(sink.rdbuf()); }
+      void setSinksource(std::streambuf* sinksource)   { streambuf.setSinksource(sinksource); }
+      void setSinksource(std::ios& sinksource)         { streambuf.setSinksource(sinksource.rdbuf()); }
+      void setSink(std::ostream& sink)                 { streambuf.setSinksource(sink.rdbuf()); }
+      void setSource(std::istream& source)             { streambuf.setSinksource(source.rdbuf()); }
   };
 }
 

@@ -37,6 +37,7 @@ namespace zeno
       Dirent dirent;
       std::string data;
       mutable std::string uncompressedData;
+      void uncompressData() const;
 
     public:
       ArticleBase() { }
@@ -81,6 +82,9 @@ namespace zeno
       char        getNamespace() const        { return dirent.getNamespace(); }
       void        setNamespace(char ns)       { dirent.setNamespace(ns); }
 
+      size_type   getRedirectIndex() const      { return dirent.getRedirectIndex(); }
+      void        setRedirectIndex(size_type o) { dirent.setRedirectIndex(o); }
+
       size_type   getArticleOffset() const      { return dirent.getArticleOffset(); }
       void        setArticleOffset(size_type o) { dirent.setArticleOffset(o); }
 
@@ -105,9 +109,10 @@ namespace zeno
       void setData(const std::string& data);
 
       size_type getUncompressedLen() const
-        { return getRedirectFlag() ? 0
-               : getArticleSize()  ? getArticleSize()
-               : getData().size(); }
+      {
+        uncompressData();
+        return uncompressedData.size();
+      }
   };
 
 }

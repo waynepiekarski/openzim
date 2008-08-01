@@ -14,7 +14,7 @@ AC_PROG_CC
 AM_PROG_CC_C_O
 AC_PROG_CXX
 AC_PROG_LIBTOOL
-AC_CHECK_HEADER([zlib.h], , AC_MSG_ERROR([zlib not found]))
+AC_CHECK_HEADER([zlib.h], , AC_MSG_ERROR([zlib header not found]))
 AC_CHECK_HEADER([bzlib.h], , AC_MSG_ERROR([bzip2 header files not found]))
 
 AC_LANG(C++)

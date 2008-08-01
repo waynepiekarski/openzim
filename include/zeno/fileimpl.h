@@ -27,6 +27,7 @@
 #include <cxxtools/refcounted.h>
 #include <zeno/zeno.h>
 #include <zeno/qunicode.h>
+#include <zeno/fileheader.h>
 
 namespace zeno
 {
@@ -36,6 +37,7 @@ namespace zeno
   class FileImpl : public cxxtools::RefCounted
   {
       std::ifstream zenoFile;
+      Fileheader header;
       std::string filename;
       std::string namespaces;
 
@@ -53,6 +55,7 @@ namespace zeno
       FileImpl(const char* fname);
 
       const std::string& getFilename() const   { return filename; }
+      const Fileheader& getFileheader() const  { return header; }
 
       Article getArticle(char ns, const QUnicodeString& url, bool collate);
       Article getArticle(char ns, const std::string& url, bool collate);

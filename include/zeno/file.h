@@ -44,6 +44,7 @@ namespace zeno
       std::string readData(offset_type off, size_type count);
 
       const std::string& getFilename() const   { return impl->getFilename(); }
+      const Fileheader& getFileheader() const  { return impl->getFileheader(); }
 
       Article getArticle(char ns, const std::string& url, bool collate = false);
       Article getArticle(char ns, const QUnicodeString& url, bool collate = false);

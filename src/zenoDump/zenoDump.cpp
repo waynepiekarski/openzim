@@ -78,7 +78,12 @@ void ZenoDumper::listZenoFiles(const std::string& directory, char ns)
 void ZenoDumper::printInfo()
 {
   std::cout << "count-articles: " << file.getCountArticles() << "\n"
-            << "namespaces: " << file.getNamespaces() << std::endl;
+               "namespaces: " << file.getNamespaces() << "\n"
+               "index ptr pos: " << file.getFileheader().getIndexPtrPos() << "\n"
+               "index ptr len: " << file.getFileheader().getIndexPtrLen() << "\n"
+               "index pos: " << file.getFileheader().getIndexPos() << "\n"
+               "index len: " << file.getFileheader().getIndexLen() << "\n"
+               "data pos: " << file.getFileheader().getDataPos() << std::endl;
 }
 
 void ZenoDumper::printNsInfo(char ch)
@@ -137,17 +142,28 @@ void ZenoDumper::listArticle(const zeno::Article& article, bool extra, bool inde
   std::cout <<
       "title: " << article.getTitle() << "\n"
     "\tidx:             " << article.getIndex() << "\n"
-    "\toff:             " << article.getDataOffset() << "\n"
-    "\tlen:             " << article.getDataLen() << "\n"
     "\tnamespace:       " << article.getNamespace() << "\n"
-    "\tmime-type:       " << article.getLibraryMimeType() << "\n"
-    "\tredirect-flag:   " << article.getRedirectFlag() << "\n"
-    "\tarticle-size:    " << article.getArticleSize() << "\n"
-    "\tarticle-offset:  " << article.getArticleOffset() << "\n"
-    "\tcompression:     " << static_cast<unsigned>(article.getCompression()) << "\n";
-  if (article.getCompression())
+    "\tredirect:        " << article.getRedirectFlag() << "\n";
+
+  if (article.getRedirectFlag())
+  {
     std::cout <<
-    "\tuncompressedlen: " << article.getUncompressedLen() << "\n";
+      "\tredirect index:  " << article.getRedirectIndex() << "\n";
+  }
+  else
+  {
+    std::cout <<
+      "\toff:             " << article.getDataOffset() << "\n"
+      "\tlen:             " << article.getDataLen() << "\n"
+      "\tmime-type:       " << article.getLibraryMimeType() << "\n"
+      "\tarticle-size:    " << article.getArticleSize() << "\n"
+      "\tarticle-offset:  " << article.getArticleOffset() << "\n"
+      "\tcompression:     " << static_cast<unsigned>(article.getCompression()) << "\n";
+
+    if (article.getCompression())
+      std::cout <<
+      "\tuncompressedlen: " << article.getUncompressedLen() << "\n";
+  }
 
   if (extra)
   {

@@ -73,12 +73,9 @@ namespace zeno
     return data;
   }
 
-  std::string ArticleBase::getData() const
+  void ArticleBase::uncompressData() const
   {
-    if (getRedirectFlag())
-      return std::string();
-
-    if (uncompressedData.empty() && !getRawData().empty())
+    if (!getRedirectFlag() && uncompressedData.empty() && !getRawData().empty())
     {
       if (isCompressionZip())
       {
@@ -106,6 +103,13 @@ namespace zeno
         uncompressedData = getRawData();
       }
     }
+  }
+
+  std::string ArticleBase::getData() const
+  {
+    if (getRedirectFlag())
+      return std::string();
+    uncompressData();
 
     return getArticleSize() > 0 ? uncompressedData.substr(getArticleOffset(), getArticleSize())
                                 : uncompressedData;

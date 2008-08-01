@@ -102,8 +102,8 @@ GetArticles::GetArticles(int& argc, char* argv[])
     "   and title = :title");
 
   insArticle = conn.prepare(
-    "insert into article (namespace, mimetype, title, url, data, compression)"
-    " values (:namespace, :mimetype, :title, :url, :data, :compression)");
+    "insert into article (namespace, mimetype, title, url, data)"
+    " values (:namespace, :mimetype, :title, :url, :data)");
   insRedirect = conn.prepare(
     "insert into article (namespace, title, url, redirect)"
     " values (:namespace, :title, :url, :redirect)");
@@ -153,10 +153,7 @@ int GetArticles::run()
         if (redirect)
           processRedirect(article);
         else
-        {
-          article.tryCompress(0.95);
           processArticle(article);
-        }
       }
 
       from = title;
@@ -172,7 +169,6 @@ void GetArticles::processArticle(const Article& article)
             .set("title", article.getTitle().toUtf8())
             .set("url", article.getUrl())
             .set("data", tntdb::Blob(article.getRawData().data(), article.getRawData().size()))
-            .set("compression", article.getCompression())
             .execute();
   trans.commit();
 }

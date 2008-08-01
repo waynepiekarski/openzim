@@ -42,7 +42,6 @@ namespace zeno
 
     filename = fname;
 
-    Fileheader header;
     zenoFile >> header;
     if (zenoFile.fail())
       throw ZenoFileFormatError("error reading zeno-file header");

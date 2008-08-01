@@ -60,6 +60,8 @@ namespace zeno
 
       size_type getIndexPtrLen() const   { return fromLittleEndian<size_type>(header + 0x28); }
       void      setIndexPtrLen(size_type l) { *reinterpret_cast<size_type*>(header + 0x28) = fromLittleEndian<size_type>(&l); }
+
+      offset_type getDataPos() const   { return getIndexPos() + getIndexLen(); }
   };
 
   std::ostream& operator<< (std::ostream& out, const Fileheader& fh);

@@ -25,6 +25,7 @@
 #include <tntdb/connection.h>
 #include <zeno/qunicode.h>
 #include <zeno/fileheader.h>
+#include <zeno/dirent.h>
 
 class Zenowriter
 {
@@ -35,7 +36,7 @@ class Zenowriter
     unsigned minChunkSize;
     std::string outdir;
     std::string dburl;
-    bool compressZlib;
+    zeno::Dirent::CompressionType compression;
 
     tntdb::Connection& getConnection();
 
@@ -69,8 +70,7 @@ class Zenowriter
     const std::string& getDburl() const  { return dburl; }
     void setDburl(const std::string& d)  { dburl = d; }
 
-    bool isCompressZlib() const           { return compressZlib; }
-    void setCompressZlib(bool sw = true)  { compressZlib = sw; }
+    void setCompression(zeno::Dirent::CompressionType c)  { compression = c; }
 };
 
 #endif

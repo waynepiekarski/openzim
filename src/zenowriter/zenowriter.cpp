@@ -168,7 +168,7 @@ void Zenowriter::prepareFile()
   std::string data;
 
   tntdb::Statement stmt = getConnection().prepare(
-    "select a.aid, a.title, a.data, r.aid"
+    "select a.aid, a.title, a.mimetype, a.data, r.aid"
     "  from zenoarticles z"
     "  join article a"
     "    on a.aid = z.aid"
@@ -190,27 +190,35 @@ void Zenowriter::prepareFile()
     tntdb::Row row = *cur;
     unsigned aid = row[0].getUnsigned();
     std::string title = row[1].getString();
+    zeno::Dirent::MimeType mimetype(static_cast<zeno::Dirent::MimeType>(row[2].getUnsigned()));
+
     log_debug("process article \"" << title << '"');
+
     unsigned direntlen;
     tntdb::Blob articledata;
     unsigned redirect = std::numeric_limits<unsigned>::max();
-    if (row[3].isNull())
+
+    if (row[4].isNull())
     {
       // article
-      row[2].getBlob(articledata);
-      if (!data.empty() && data.size() + articledata.size() / 2 >= minChunkSize)
+      row[3].getBlob(articledata);
+
+      if (!data.empty() && (!mimeDoCompress(mimetype)
+                         || data.size() + articledata.size() / 2 >= minChunkSize))
       {
-        datapos += insertDataChunk(data, did, insData);
+        log_debug("insert previous data");
+        datapos += insertDataChunk(data, did, insData, true);
         dataoffset = 0;
         data.clear();
         ++did;
       }
+
       data.append(articledata.data(), articledata.size());
     }
     else
     {
       // redirect
-      redirect = row[3].getUnsigned();
+      redirect = row[4].getUnsigned();
     }
 
     direntlen = zeno::Dirent::headerSize + title.size();
@@ -227,7 +235,16 @@ void Zenowriter::prepareFile()
               .set("did", did)
               .execute();
 
-    dataoffset += articledata.size();
+    if (!mimeDoCompress(mimetype) && !data.empty())
+    {
+      log_debug("insert non compression data");
+      datapos += insertDataChunk(data, did, insData, false);
+      dataoffset = 0;
+      data.clear();
+      ++did;
+    }
+    else
+      dataoffset += articledata.size();
 
     if (++count % commitRate == 0)
     {
@@ -238,21 +255,22 @@ void Zenowriter::prepareFile()
   }
 
   if (!data.empty())
-    insertDataChunk(data, did, insData);
+    insertDataChunk(data, did, insData, true);
 
   transaction.commit();
 
   std::cout << std::endl;
 }
 
-unsigned Zenowriter::insertDataChunk(const std::string& data, unsigned did, tntdb::Statement& insData)
+unsigned Zenowriter::insertDataChunk(const std::string& data, unsigned did, tntdb::Statement& insData, bool compress)
 {
   // insert into zenodata
-  log_debug("compress data " << data.size());
   std::string zdata;
 
-  if (compression == zeno::Dirent::zenocompZip)
+  if (compress && compression == zeno::Dirent::zenocompZip)
   {
+    log_debug("zlib compress data " << data.size());
+
     std::ostringstream u;
     zeno::DeflateStream ds(u);
     ds << data << std::flush;
@@ -260,8 +278,10 @@ unsigned Zenowriter::insertDataChunk(const std::string& data, unsigned did, tntd
     zdata = u.str();
     log_debug("after zlib compression " << zdata.size());
   }
-  else if (compression == zeno::Dirent::zenocompBzip2)
+  else if (compress && compression == zeno::Dirent::zenocompBzip2)
   {
+    log_debug("bzip2 compress data " << data.size());
+
     std::ostringstream u;
     zeno::Bzip2Stream ds(u);
     ds << data << std::flush;
@@ -378,7 +398,7 @@ void Zenowriter::writeDirectory(std::ostream& ofile)
     std::string redirect;
     if (!row[3].isNull())
       redirect = row[3].getString();
-    unsigned mimetype = row[4].isNull() ? 0 : row[4].getUnsigned();
+    zeno::Dirent::MimeType mimetype = static_cast<zeno::Dirent::MimeType>(row[4].isNull() ? 0 : row[4].getUnsigned());
     unsigned datapos = row[5].getUnsigned();
     unsigned dataoffset = row[6].getUnsigned();
     unsigned datasize = row[7].getUnsigned();
@@ -390,8 +410,8 @@ void Zenowriter::writeDirectory(std::ostream& ofile)
     dirent.setArticleOffset(dataoffset);
     dirent.setArticleSize(datasize);
     dirent.setSize(data.size());
-    dirent.setCompression(compression);
-    dirent.setMimeType(static_cast<zeno::Dirent::MimeType>(mimetype));
+    dirent.setCompression(mimeDoCompress(mimetype) ? compression : zeno::Dirent::zenocompDefault);
+    dirent.setMimeType(mimetype);
     dirent.setRedirectFlag(!redirect.empty());
     dirent.setNamespace(ns);
     dirent.setTitle(title);

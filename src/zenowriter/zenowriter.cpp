@@ -73,7 +73,7 @@ namespace
 
 void Zenowriter::prepareSort()
 {
-  std::cout << "sort articles " << std::flush;
+  std::cout << "sort articles       " << std::flush;
 
   typedef std::map<KeyType, unsigned> ArticlesType;
 
@@ -85,7 +85,10 @@ void Zenowriter::prepareSort()
     "    on a.aid = z.aid"
     " where z.zid = :zid");
   stmt.set("zid", zid);
+
   unsigned count = 0;
+  unsigned process = 0;
+
   for (tntdb::Statement::const_iterator cur = stmt.begin();
        cur != stmt.end(); ++cur)
   {
@@ -95,8 +98,12 @@ void Zenowriter::prepareSort()
     std::string title = row[2].getString();
     articles.insert(ArticlesType::value_type(KeyType(ns, zeno::QUnicodeString(title)), aid));
 
-    if (++count % commitRate == 0)
-      std::cout << '.' << std::flush;
+    ++count;
+    while (process < count * 50 / countArticles + 1)
+    {
+      std::cout << ' ' << process << '%' << std::flush;
+      process += 10;
+    }
   }
 
   tntdb::Statement upd = getConnection().prepare(
@@ -106,18 +113,51 @@ void Zenowriter::prepareSort()
     "   and aid = :aid");
   upd.set("zid", zid);
 
+  tntdb::Transaction transaction(getConnection());
+
   unsigned sort = 0;
+
   for (ArticlesType::const_iterator it = articles.begin(); it != articles.end(); ++it)
+  {
     upd.set("sort", sort++)
        .set("aid", it->second)
        .execute();
 
+    if (sort % commitRate == 0)
+    {
+      transaction.commit();
+      transaction.begin();
+    }
+
+    ++count;
+    while (process < count * 50 / countArticles + 1)
+    {
+      std::cout << ' ' << process << '%' << std::flush;
+      process += 10;
+    }
+  }
+
+  transaction.commit();
+
   std::cout << std::endl;
+}
+
+void Zenowriter::init()
+{
+  tntdb::Statement stmt = getConnection().prepare(
+    "select count(*) from zenoarticles"
+    " where zid = :zid");
+
+  countArticles = stmt.set("zid", zid)
+                      .selectValue()
+                      .getUnsigned();
+
+  std::cout << countArticles << " articles" << std::endl;
 }
 
 void Zenowriter::cleanup()
 {
-  std::cout << "cleanup old data " << std::flush;
+  std::cout << "cleanup database    " << std::flush;
 
   tntdb::Statement stmt = getConnection().prepare(
     "delete from zenodata"
@@ -144,9 +184,11 @@ void Zenowriter::cleanup()
 
 void Zenowriter::prepareFile()
 {
+  cleanup();
   prepareSort();
 
-  std::cout << "prepare file " << std::flush;
+  std::cout << "prepare file        " << std::flush;
+
   tntdb::Statement updArticle = getConnection().prepare(
     "update zenoarticles"
     "   set direntlen  = :direntlen,"
@@ -168,7 +210,7 @@ void Zenowriter::prepareFile()
   std::string data;
 
   tntdb::Statement stmt = getConnection().prepare(
-    "select a.aid, a.title, a.mimetype, a.data, r.aid"
+    "select a.aid, a.title, a.mimetype, a.data, a.redirect, r.aid"
     "  from zenoarticles z"
     "  join article a"
     "    on a.aid = z.aid"
@@ -183,6 +225,7 @@ void Zenowriter::prepareFile()
   unsigned dataoffset = 0;
   tntdb::Transaction transaction(getConnection());
   unsigned count = 0;
+  unsigned process = 0;
 
   for (tntdb::Statement::const_iterator cur = stmt.begin();
        cur != stmt.end(); ++cur)
@@ -203,14 +246,14 @@ void Zenowriter::prepareFile()
       // article
       row[3].getBlob(articledata);
 
-      if (!data.empty() && (!mimeDoCompress(mimetype)
+      if (!data.empty() && (compression == zeno::Dirent::zenocompNone
+                         || !mimeDoCompress(mimetype)
                          || data.size() + articledata.size() / 2 >= minChunkSize))
       {
-        log_debug("insert previous data");
-        datapos += insertDataChunk(data, did, insData, true);
+        log_debug("insert data chunk");
+        datapos += insertDataChunk(data, did++, insData, true);
         dataoffset = 0;
         data.clear();
-        ++did;
       }
 
       data.append(articledata.data(), articledata.size());
@@ -218,7 +261,7 @@ void Zenowriter::prepareFile()
     else
     {
       // redirect
-      redirect = row[4].getUnsigned();
+      redirect = row[5].getUnsigned();
     }
 
     direntlen = zeno::Dirent::headerSize + title.size();
@@ -235,13 +278,12 @@ void Zenowriter::prepareFile()
               .set("did", did)
               .execute();
 
-    if (!mimeDoCompress(mimetype) && !data.empty())
+    if (!redirect && !mimeDoCompress(mimetype) && !data.empty())
     {
       log_debug("insert non compression data");
-      datapos += insertDataChunk(data, did, insData, false);
+      datapos += insertDataChunk(data, did++, insData, false);
       dataoffset = 0;
       data.clear();
-      ++did;
     }
     else
       dataoffset += articledata.size();
@@ -250,12 +292,19 @@ void Zenowriter::prepareFile()
     {
       transaction.commit();
       transaction.begin();
-      std::cout << '.' << std::flush;
+    }
+
+    while (process < count * 100 / countArticles + 1)
+    {
+      std::cout << ' ' << process << '%' << std::flush;
+      process += 10;
     }
   }
 
   if (!data.empty())
-    insertDataChunk(data, did, insData, true);
+  {
+    insertDataChunk(data, did++, insData, true);
+  }
 
   transaction.commit();
 
@@ -288,7 +337,6 @@ unsigned Zenowriter::insertDataChunk(const std::string& data, unsigned did, tntd
     ds.end();
     zdata = u.str();
     log_debug("after bzip2 compression " << zdata.size());
-
   }
   else
   {
@@ -306,7 +354,7 @@ unsigned Zenowriter::insertDataChunk(const std::string& data, unsigned did, tntd
 
 void Zenowriter::writeHeader(std::ostream& ofile)
 {
-  std::cout << "write header " << std::flush;
+  std::cout << "write header        " << std::flush;
 
   unsigned indexPtrPos = zeno::Fileheader::headerSize + zeno::Fileheader::headerFill;
 
@@ -341,7 +389,7 @@ void Zenowriter::writeHeader(std::ostream& ofile)
 
 void Zenowriter::writeIndexPtr(std::ostream& ofile)
 {
-  std::cout << "write index ptr " << std::flush;
+  std::cout << "write index ptr     " << std::flush;
 
   tntdb::Statement stmt = getConnection().prepare(
     "select direntlen"
@@ -353,6 +401,7 @@ void Zenowriter::writeIndexPtr(std::ostream& ofile)
   zeno::size_type dataPos = 0;
 
   unsigned count = 0;
+  unsigned process = 0;
   for (tntdb::Statement::const_iterator cur = stmt.begin();
        cur != stmt.end(); ++cur)
   {
@@ -362,8 +411,12 @@ void Zenowriter::writeIndexPtr(std::ostream& ofile)
     dataPos += direntlen;
     log_debug("direntlen=" << direntlen << " dataPos=" << dataPos);
 
-    if (++count % commitRate == 0)
-      std::cout << '.' << std::flush;
+    ++count;
+    while (process < count * 100 / countArticles + 1)
+    {
+      std::cout << ' ' << process << '%' << std::flush;
+      process += 10;
+    }
   }
 
   std::cout << std::endl;
@@ -371,7 +424,7 @@ void Zenowriter::writeIndexPtr(std::ostream& ofile)
 
 void Zenowriter::writeDirectory(std::ostream& ofile)
 {
-  std::cout << "write directory " << std::flush;
+  std::cout << "write directory     " << std::flush;
 
   tntdb::Statement stmt = getConnection().prepare(
     "select a.namespace, a.title, a.url, a.redirect, a.mimetype, z.datapos,"
@@ -385,6 +438,9 @@ void Zenowriter::writeDirectory(std::ostream& ofile)
     " where z.zid = :zid"
     " order by z.sort, a.aid");
   stmt.set("zid", zid);
+
+  unsigned count = 0;
+  unsigned process = 0;
 
   zeno::size_type database = header.getIndexPos() + indexLen;
   for (tntdb::Statement::const_iterator cur = stmt.begin();
@@ -417,6 +473,13 @@ void Zenowriter::writeDirectory(std::ostream& ofile)
     dirent.setTitle(title);
 
     ofile << dirent;
+
+    ++count;
+    while (process < count * 100 / countArticles + 1)
+    {
+      std::cout << ' ' << process << '%' << std::flush;
+      process += 10;
+    }
   }
 
   std::cout << std::endl;
@@ -424,14 +487,21 @@ void Zenowriter::writeDirectory(std::ostream& ofile)
 
 void Zenowriter::writeData(std::ostream& ofile)
 {
-  std::cout << "write data " << std::flush;
-
   tntdb::Statement stmt = getConnection().prepare(
+    "select count(*) from zenodata where zid = :zid");
+  unsigned countDatachunks = stmt.set("zid", zid).selectValue().getUnsigned();
+
+  std::cout << "write data          " << std::flush;
+
+  stmt = getConnection().prepare(
     "select data"
     "  from zenodata"
     " where zid = :zid"
     " order by did");
   stmt.set("zid", zid);
+
+  unsigned count = 0;
+  unsigned process = 0;
 
   for (tntdb::Statement::const_iterator cur = stmt.begin();
        cur != stmt.end(); ++cur)
@@ -440,6 +510,13 @@ void Zenowriter::writeData(std::ostream& ofile)
     tntdb::Blob data;
     row[0].getBlob(data);
     ofile.write(data.data(), data.size());
+
+    ++count;
+    while (process < count * 100 / countDatachunks + 1)
+    {
+      std::cout << ' ' << process << '%' << std::flush;
+      process += 10;
+    }
   }
 
   std::cout << std::endl;
@@ -472,13 +549,21 @@ int main(int argc, char* argv[])
     cxxtools::Arg<std::string> dburl(argc, argv, "--db", "postgresql:dbname=zeno");
     cxxtools::Arg<unsigned> minChunkSize(argc, argv, 's', 256);
     cxxtools::Arg<bool> compressZlib(argc, argv, 'z');
-    cxxtools::Arg<bool> compressBzip2(argc, argv, 'j');
     cxxtools::Arg<bool> noCompress(argc, argv, 'n');
     cxxtools::Arg<unsigned> commitRate(argc, argv, 'C', 10000);
+    cxxtools::Arg<bool> prepareOnly(argc, argv, 'p');
+    cxxtools::Arg<bool> generateOnly(argc, argv, 'g');
 
-    if (argc <= 1)
+    if (argc != 2)
     {
-      std::cerr << "usage: " << argv[0] << " zenofile" << std::endl;
+      std::cerr << "usage: " << argv[0] << " [options] zenofile\n"
+                   "\t--db dburl     tntdb-dburl (default: postgresql:dbname=zeno)\n"
+                   "\t-s number      chunk size in kBytes (default: 256)\n"
+                   "\t-z             use zlib\n"
+                   "\t-n             disable compression (default: bzip2)\n"
+                   "\t-C number      commit rate (default: 10000\n"
+                   "\t-p             prepare only\n"
+                   "\t-g             generate only\n";
       return -1;
     }
 
@@ -492,9 +577,14 @@ int main(int argc, char* argv[])
       app.setCompression(zeno::Dirent::zenocompNone);
     else
       app.setCompression(zeno::Dirent::zenocompBzip2);
-    app.cleanup();
-    app.prepareFile();
-    app.outputFile();
+
+    app.init();
+
+    if (!generateOnly)
+      app.prepareFile();
+
+    if (!prepareOnly)
+      app.outputFile();
   }
   catch (const std::exception& e)
   {

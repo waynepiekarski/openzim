@@ -34,6 +34,7 @@ class Zenowriter
     unsigned zid;
     unsigned commitRate;
     unsigned minChunkSize;
+    zeno::size_type countArticles;
     std::string outdir;
     std::string dburl;
     zeno::Dirent::CompressionType compression;
@@ -60,6 +61,7 @@ class Zenowriter
   public:
     explicit Zenowriter(const char* basename);
 
+    void init();
     void cleanup();
     void prepareFile();
     void prepareSort();

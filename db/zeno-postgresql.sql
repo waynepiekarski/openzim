@@ -14,8 +14,7 @@ create unique index article_ix1 on article(namespace, title);
 create table zenofile
 (
   zid          serial  not null primary key,
-  filename     text    not null,
-  count        integer
+  filename     text    not null
 );
 
 create table zenodata
@@ -44,3 +43,12 @@ create table zenoarticles
 
 create index zenoarticles_ix1 on zenoarticles(zid, direntlen);
 create index zenoarticles_ix2 on zenoarticles(zid, sort);
+
+create table words
+(
+  word     text not null primary key,
+  aid      integer not null,
+  pos      integer not null,
+
+  foreign key (aid) references article
+);

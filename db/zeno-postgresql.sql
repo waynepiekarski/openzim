@@ -43,12 +43,3 @@ create table zenoarticles
 
 create index zenoarticles_ix1 on zenoarticles(zid, direntlen);
 create index zenoarticles_ix2 on zenoarticles(zid, sort);
-
-create table words
-(
-  word     text not null primary key,
-  aid      integer not null,
-  pos      integer not null,
-
-  foreign key (aid) references article
-);

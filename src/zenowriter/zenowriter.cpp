@@ -123,7 +123,7 @@ void Zenowriter::prepareSort()
        .set("aid", it->second)
        .execute();
 
-    if (sort % commitRate == 0)
+    if (commitRate && sort % commitRate == 0)
     {
       transaction.commit();
       transaction.begin();
@@ -288,7 +288,7 @@ void Zenowriter::prepareFile()
     else
       dataoffset += articledata.size();
 
-    if (++count % commitRate == 0)
+    if (++count % commitRate == 0 && commitRate)
     {
       transaction.commit();
       transaction.begin();

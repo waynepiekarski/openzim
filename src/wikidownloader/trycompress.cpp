@@ -23,7 +23,6 @@
 #include <tntdb/blob.h>
 #include <tntdb/statement.h>
 #include <zeno/article.h>
-#include <cxxtools/convert.h>
 #include <cxxtools/loginit.h>
 #include <cxxtools/arg.h>
 

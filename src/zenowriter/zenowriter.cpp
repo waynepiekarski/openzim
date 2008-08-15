@@ -73,6 +73,7 @@ namespace
 
 void Zenowriter::prepareSort()
 {
+  log_info("sort articles");
   std::cout << "sort articles       " << std::flush;
 
   typedef std::map<KeyType, unsigned> ArticlesType;
@@ -101,6 +102,7 @@ void Zenowriter::prepareSort()
     ++count;
     while (process < count * 50 / countArticles + 1)
     {
+      log_info("sort articles " << process << '%');
       std::cout << ' ' << process << '%' << std::flush;
       process += 10;
     }
@@ -112,6 +114,8 @@ void Zenowriter::prepareSort()
     " where zid = :zid"
     "   and aid = :aid");
   upd.set("zid", zid);
+
+  log_info("write data to database");
 
   tntdb::Transaction transaction(getConnection());
 
@@ -132,6 +136,7 @@ void Zenowriter::prepareSort()
     ++count;
     while (process < count * 50 / countArticles + 1)
     {
+      log_info("sort articles " << process << '%');
       std::cout << ' ' << process << '%' << std::flush;
       process += 10;
     }
@@ -152,11 +157,13 @@ void Zenowriter::init()
                       .selectValue()
                       .getUnsigned();
 
+  log_info(countArticles << " articles");
   std::cout << countArticles << " articles" << std::endl;
 }
 
 void Zenowriter::cleanup()
 {
+  log_info("cleanup database");
   std::cout << "cleanup database    " << std::flush;
 
   tntdb::Statement stmt = getConnection().prepare(
@@ -187,6 +194,7 @@ void Zenowriter::prepareFile()
   cleanup();
   prepareSort();
 
+  log_info("prepare file");
   std::cout << "prepare file        " << std::flush;
 
   tntdb::Statement updArticle = getConnection().prepare(
@@ -303,6 +311,7 @@ void Zenowriter::prepareFile()
 
     while (process < count * 100 / countArticles + 1)
     {
+      log_info("prepare file " << process << '%');
       std::cout << ' ' << process << '%' << std::flush;
       process += 10;
     }
@@ -316,6 +325,7 @@ void Zenowriter::prepareFile()
   transaction.commit();
 
   std::cout << std::endl;
+  log_info("file prepared");
 }
 
 unsigned Zenowriter::insertDataChunk(const std::string& data, unsigned did, tntdb::Statement& insData, bool compress)
@@ -361,6 +371,7 @@ unsigned Zenowriter::insertDataChunk(const std::string& data, unsigned did, tntd
 
 void Zenowriter::writeHeader(std::ostream& ofile)
 {
+  log_info("write header");
   std::cout << "write header        " << std::flush;
 
   unsigned indexPtrPos = zeno::Fileheader::headerSize + zeno::Fileheader::headerFill;
@@ -396,6 +407,7 @@ void Zenowriter::writeHeader(std::ostream& ofile)
 
 void Zenowriter::writeIndexPtr(std::ostream& ofile)
 {
+  log_info("write index ptr");
   std::cout << "write index ptr     " << std::flush;
 
   tntdb::Statement stmt = getConnection().prepare(
@@ -421,6 +433,7 @@ void Zenowriter::writeIndexPtr(std::ostream& ofile)
     ++count;
     while (process < count * 100 / countArticles + 1)
     {
+      log_info("write index ptr " << process << '%');
       std::cout << ' ' << process << '%' << std::flush;
       process += 10;
     }
@@ -431,6 +444,7 @@ void Zenowriter::writeIndexPtr(std::ostream& ofile)
 
 void Zenowriter::writeDirectory(std::ostream& ofile)
 {
+  log_info("write directory");
   std::cout << "write directory     " << std::flush;
 
   tntdb::Statement stmt = getConnection().prepare(
@@ -484,6 +498,7 @@ void Zenowriter::writeDirectory(std::ostream& ofile)
     ++count;
     while (process < count * 100 / countArticles + 1)
     {
+      log_info("write directory " << process << '%');
       std::cout << ' ' << process << '%' << std::flush;
       process += 10;
     }
@@ -498,6 +513,7 @@ void Zenowriter::writeData(std::ostream& ofile)
     "select count(*) from zenodata where zid = :zid");
   unsigned countDatachunks = stmt.set("zid", zid).selectValue().getUnsigned();
 
+  log_info("write data");
   std::cout << "write data          " << std::flush;
 
   stmt = getConnection().prepare(
@@ -521,6 +537,7 @@ void Zenowriter::writeData(std::ostream& ofile)
     ++count;
     while (process < count * 100 / countDatachunks + 1)
     {
+      log_info("write data " << process << '%');
       std::cout << ' ' << process << '%' << std::flush;
       process += 10;
     }
@@ -545,6 +562,8 @@ void Zenowriter::outputFile()
   writeIndexPtr(zenoFile);
   writeDirectory(zenoFile);
   writeData(zenoFile);
+
+  log_info(filename << " created");
 }
 
 int main(int argc, char* argv[])

@@ -210,7 +210,7 @@ void Zenowriter::prepareFile()
   std::string data;
 
   tntdb::Statement stmt = getConnection().prepare(
-    "select a.aid, a.title, a.mimetype, a.data, a.redirect, r.aid"
+    "select a.aid, a.title, a.mimetype, a.redirect, r.aid"
     "  from zenoarticles z"
     "  join article a"
     "    on a.aid = z.aid"
@@ -220,6 +220,11 @@ void Zenowriter::prepareFile()
     " where z.zid = :zid"
     " order by z.sort, a.aid");
   stmt.set("zid", zid);
+
+  tntdb::Statement stmtSelData = getConnection().prepare(
+    "select data"
+    "  from article"
+    " where aid = :aid");
 
   unsigned datapos = 0;
   unsigned dataoffset = 0;
@@ -241,10 +246,12 @@ void Zenowriter::prepareFile()
     tntdb::Blob articledata;
     unsigned redirect = std::numeric_limits<unsigned>::max();
 
-    if (row[4].isNull())
+    if (row[3].isNull())
     {
       // article
-      row[3].getBlob(articledata);
+      tntdb::Value v = stmtSelData.set("aid", aid)
+                                  .selectValue();
+      v.getBlob(articledata);
 
       if (!data.empty() && (compression == zeno::Dirent::zenocompNone
                          || !mimeDoCompress(mimetype)
@@ -261,7 +268,7 @@ void Zenowriter::prepareFile()
     else
     {
       // redirect
-      redirect = row[5].getUnsigned();
+      redirect = row[4].getUnsigned();
     }
 
     direntlen = zeno::Dirent::headerSize + title.size();

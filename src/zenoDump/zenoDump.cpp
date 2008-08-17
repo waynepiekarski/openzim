@@ -32,7 +32,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-log_define("zeno.dumper");
+log_define("zeno.dumper")
 
 class ZenoDumper
 {

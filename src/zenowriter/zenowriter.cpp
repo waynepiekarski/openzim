@@ -218,13 +218,16 @@ void Zenowriter::prepareFile()
   std::string data;
 
   tntdb::Statement stmt = getConnection().prepare(
-    "select a.aid, a.title, a.mimetype, a.redirect, r.aid"
+    "select a.aid, a.title, a.mimetype, a.redirect, rz.sort"
     "  from zenoarticles z"
     "  join article a"
     "    on a.aid = z.aid"
     "  left outer join article r"
     "    on r.namespace = a.namespace"
     "   and r.title = a.redirect"
+    "  left outer join zenoarticles rz"
+    "    on rz.zid = z.zid"
+    "   and rz.aid = r.aid"
     " where z.zid = :zid"
     " order by z.sort, a.aid");
   stmt.set("zid", zid);

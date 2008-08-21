@@ -53,10 +53,10 @@ class ZenoDumper
     void findArticle(char ns, const char* url, bool collate);
     void dumpArticle(bool raw = false);
     static void printIndexcontent(zeno::IndexArticle article);
-    void listArticles(bool info, bool extra, bool quick, bool indexcontent);
-    static void listArticle(const zeno::Article& article, bool extra, bool quick, bool indexcontent);
-    void listArticle(bool extra, bool quick, bool indexcontent)
-      { listArticle(*pos, extra, quick, indexcontent); }
+    void listArticles(bool info, bool extra, bool verbose, bool indexcontent);
+    static void listArticle(const zeno::Article& article, bool extra, bool verbose, bool indexcontent);
+    void listArticle(bool extra, bool verbose, bool indexcontent)
+      { listArticle(*pos, extra, verbose, indexcontent); }
     void dumpFiles(const std::string& directory);
 };
 
@@ -127,18 +127,18 @@ void ZenoDumper::printIndexcontent(zeno::IndexArticle article)
   }
 }
 
-void ZenoDumper::listArticles(bool info, bool extra, bool quick, bool indexcontent)
+void ZenoDumper::listArticles(bool info, bool extra, bool verbose, bool indexcontent)
 {
   for (zeno::File::const_iterator it = pos; it != file.end(); ++it)
   {
     if (info)
-      listArticle(*it, extra, quick, indexcontent);
+      listArticle(*it, extra, verbose, indexcontent);
     else
       std::cout << it->getUrl() << '\n';
   }
 }
 
-void ZenoDumper::listArticle(const zeno::Article& article, bool extra, bool quick, bool indexcontent)
+void ZenoDumper::listArticle(const zeno::Article& article, bool extra, bool verbose, bool indexcontent)
 {
   std::cout <<
       "title: " << article.getTitle() << "\n"
@@ -161,7 +161,7 @@ void ZenoDumper::listArticle(const zeno::Article& article, bool extra, bool quic
       "\tarticle-offset:  " << article.getArticleOffset() << "\n"
       "\tcompression:     " << static_cast<unsigned>(article.getCompression()) << "\n";
 
-    if (!quick && article.getCompression())
+    if (verbose && article.getCompression())
     {
       cxxtools::HiresTime t0 = cxxtools::HiresTime::gettimeofday();
       zeno::size_type len = article.getUncompressedLen();
@@ -242,7 +242,7 @@ int main(int argc, char* argv[])
     cxxtools::Arg<char> ns(argc, argv, 'n', 'A');  // namespace
     cxxtools::Arg<bool> collate(argc, argv, 'c');
     cxxtools::Arg<const char*> dumpAll(argc, argv, 'D');
-    cxxtools::Arg<bool> quick(argc, argv, 'Q');
+    cxxtools::Arg<bool> verbose(argc, argv, 'v');
 
     if (argc <= 1)
     {
@@ -262,7 +262,7 @@ int main(int argc, char* argv[])
                    "  -X        print index contents\n"
                    "  -n ns     specify namespace (default 'A')\n"
                    "  -D dir    dump all files into directory\n"
-                   "  -Q        quick (do not uncompress articles when -i is set)\n"
+                   "  -v        verbose (print uncompressed length of articles when -i is set)\n"
                    "\n"
                    "examples:\n"
                    "  " << argv[0] << " -F wikipedia.zeno\n"
@@ -310,9 +310,9 @@ int main(int argc, char* argv[])
     if (data || rawdump)
       app.dumpArticle(rawdump);
     else if (list)
-      app.listArticles(info, extra, quick, indexcontent);
+      app.listArticles(info, extra, verbose, indexcontent);
     else if (info)
-      app.listArticle(extra, quick, indexcontent);
+      app.listArticle(extra, verbose, indexcontent);
   }
   catch (const std::exception& e)
   {

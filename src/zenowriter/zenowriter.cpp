@@ -214,9 +214,6 @@ void Zenowriter::prepareFile()
     " values (:zid, :did, :data)");
   insData.set("zid", zid);
 
-  unsigned did = 0;
-  std::string data;
-
   tntdb::Statement stmt = getConnection().prepare(
     "select a.aid, a.title, a.mimetype, a.redirect, rz.sort"
     "  from zenoarticles z"
@@ -237,8 +234,9 @@ void Zenowriter::prepareFile()
     "  from article"
     " where aid = :aid");
 
+  unsigned did = 0;
+  std::string data;
   unsigned datapos = 0;
-  unsigned dataoffset = 0;
   tntdb::Transaction transaction(getConnection());
   unsigned count = 0;
   unsigned process = 0;
@@ -256,6 +254,8 @@ void Zenowriter::prepareFile()
     unsigned direntlen;
     tntdb::Blob articledata;
     unsigned redirect = std::numeric_limits<unsigned>::max();
+    unsigned dataoffset = data.size();
+    unsigned adid = did;
 
     if (row[3].isNull())
     {
@@ -270,23 +270,35 @@ void Zenowriter::prepareFile()
       {
         log_debug("insert data chunk");
         datapos += insertDataChunk(data, did++, insData, true);
+        adid = did;
         dataoffset = 0;
         data.clear();
       }
 
       data.append(articledata.data(), articledata.size());
+
+      if (!mimeDoCompress(mimetype) && !data.empty())
+      {
+        log_debug("insert non compression data");
+        datapos += insertDataChunk(data, did++, insData, false);
+        dataoffset = 0;
+        data.clear();
+      }
     }
     else
     {
       // redirect
       redirect = row[4].getUnsigned();
+      dataoffset = 0;
+      adid = 0;
     }
 
     direntlen = zeno::Dirent::headerSize + title.size();
 
     log_debug("title=\"" << title << "\" aid=" << aid << " direntlen=" << direntlen
         << " datapos=" << datapos << " dataoffset=" << dataoffset
-        << " datasize=" << articledata.size() << " did=" << did);
+        << " datasize=" << articledata.size() << " did=" << did << " mimetype=" << mimetype
+        << " redirect=" << redirect << " data.size()=" << data.size());
 
     updArticle.set("aid", aid)
               .set("direntlen", direntlen)
@@ -295,16 +307,6 @@ void Zenowriter::prepareFile()
               .set("datasize", static_cast<unsigned>(articledata.size()))
               .set("did", did)
               .execute();
-
-    if (!redirect && !mimeDoCompress(mimetype) && !data.empty())
-    {
-      log_debug("insert non compression data");
-      datapos += insertDataChunk(data, did++, insData, false);
-      dataoffset = 0;
-      data.clear();
-    }
-    else
-      dataoffset += articledata.size();
 
     if (++count % commitRate == 0 && commitRate)
     {

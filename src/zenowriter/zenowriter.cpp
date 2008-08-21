@@ -28,15 +28,15 @@
 #include <tntdb/statement.h>
 #include <tntdb/transaction.h>
 #include <zeno/fileheader.h>
-#include <zeno/deflatestream.h>
-#include <zeno/bzip2stream.h>
+#include "zenocompressor.h"
 
 log_define("zeno.writer")
 
 Zenowriter::Zenowriter(const char* basename_)
   : basename(basename_),
     minChunkSize(65536),
-    compression(zeno::Dirent::zenocompNone)
+    compression(zeno::Dirent::zenocompNone),
+    numThreads(4)
 { 
 }
 
@@ -197,181 +197,135 @@ void Zenowriter::prepareFile()
   log_info("prepare file");
   std::cout << "prepare file        " << std::flush;
 
-  tntdb::Statement updArticle = getConnection().prepare(
-    "update zenoarticles"
-    "   set direntlen  = :direntlen,"
-    "       datapos    = :datapos,"
-    "       dataoffset = :dataoffset,"
-    "       datasize   = :datasize,"
-    "       did        = :did"
-    " where zid = :zid"
-    "   and aid = :aid");
-  updArticle.set("zid", zid);
-
-  tntdb::Statement insData = getConnection().prepare(
-    "insert into zenodata"
-    "  (zid, did, data)"
-    " values (:zid, :did, :data)");
-  insData.set("zid", zid);
-
-  tntdb::Statement stmt = getConnection().prepare(
-    "select a.aid, a.title, a.mimetype, a.redirect, rz.sort"
-    "  from zenoarticles z"
-    "  join article a"
-    "    on a.aid = z.aid"
-    "  left outer join article r"
-    "    on r.namespace = a.namespace"
-    "   and r.title = a.redirect"
-    "  left outer join zenoarticles rz"
-    "    on rz.zid = z.zid"
-    "   and rz.aid = r.aid"
-    " where z.zid = :zid"
-    " order by z.sort, a.aid");
-  stmt.set("zid", zid);
-
-  tntdb::Statement stmtSelData = getConnection().prepare(
-    "select data"
-    "  from article"
-    " where aid = :aid");
-
-  unsigned did = 0;
-  std::string data;
-  unsigned datapos = 0;
-  tntdb::Transaction transaction(getConnection());
-  unsigned count = 0;
-  unsigned process = 0;
-
-  for (tntdb::Statement::const_iterator cur = stmt.begin();
-       cur != stmt.end(); ++cur)
   {
-    tntdb::Row row = *cur;
-    unsigned aid = row[0].getUnsigned();
-    std::string title = row[1].getString();
-    zeno::Dirent::MimeType mimetype(static_cast<zeno::Dirent::MimeType>(row[2].getUnsigned()));
+    tntdb::Statement updArticle = getConnection().prepare(
+      "update zenoarticles"
+      "   set direntlen  = :direntlen,"
+      "       dataoffset = :dataoffset,"
+      "       datasize   = :datasize,"
+      "       did        = :did"
+      " where zid = :zid"
+      "   and aid = :aid");
+    updArticle.set("zid", zid);
 
-    log_debug("process article \"" << title << '"');
+    tntdb::Statement stmt = getConnection().prepare(
+      "select a.aid, a.title, a.mimetype, a.redirect, rz.sort"
+      "  from zenoarticles z"
+      "  join article a"
+      "    on a.aid = z.aid"
+      "  left outer join article r"
+      "    on r.namespace = a.namespace"
+      "   and r.title = a.redirect"
+      "  left outer join zenoarticles rz"
+      "    on rz.zid = z.zid"
+      "   and rz.aid = r.aid"
+      " where z.zid = :zid"
+      " order by z.sort, a.aid");
+    stmt.set("zid", zid);
 
-    unsigned direntlen;
-    tntdb::Blob articledata;
-    unsigned redirect = std::numeric_limits<unsigned>::max();
-    unsigned dataoffset = data.size();
-    unsigned adid = did;
+    tntdb::Statement stmtSelData = getConnection().prepare(
+      "select data"
+      "  from article"
+      " where aid = :aid");
 
-    if (row[3].isNull())
+    unsigned did = 0;
+    unsigned dataoffset = 0;
+    unsigned count = 0;
+    unsigned process = 0;
+
+    zeno::ZenoCompressor compressor(dburl, zid, numThreads);
+    zeno::CompressJob job;
+    for (tntdb::Statement::const_iterator cur = stmt.begin();
+         cur != stmt.end(); ++cur)
     {
-      // article
-      tntdb::Value v = stmtSelData.set("aid", aid)
-                                  .selectValue();
-      v.getBlob(articledata);
+      tntdb::Row row = *cur;
+      unsigned aid = row[0].getUnsigned();
+      std::string title = row[1].getString();
+      zeno::Dirent::MimeType mimetype(static_cast<zeno::Dirent::MimeType>(row[2].getUnsigned()));
 
-      if (!data.empty() && (compression == zeno::Dirent::zenocompNone
-                         || !mimeDoCompress(mimetype)
-                         || data.size() + articledata.size() / 2 >= minChunkSize))
+      log_debug("process article \"" << title << '"');
+
+      unsigned direntlen;
+      tntdb::Blob articledata;
+      unsigned redirect = std::numeric_limits<unsigned>::max();
+      unsigned dataoffset = job.data.size();
+      unsigned adid = did;
+
+      if (row[3].isNull())
       {
-        log_debug("insert data chunk");
-        datapos += insertDataChunk(data, did++, insData, true);
-        adid = did;
-        dataoffset = 0;
-        data.clear();
+        // article
+        tntdb::Value v = stmtSelData.set("aid", aid)
+                                    .selectValue();
+        v.getBlob(articledata);
+
+        if (!job.data.empty() && (compression == zeno::Dirent::zenocompNone
+                           || !mimeDoCompress(mimetype)
+                           || job.data.size() + articledata.size() / 2 >= minChunkSize))
+        {
+          log_debug("insert data chunk");
+          job.compression = compression;
+          compressor.put(job);
+          job.aid.clear();
+
+          ++did;
+          adid = did;
+
+          dataoffset = 0;
+          job.data.clear();
+        }
+
+        job.aid.push_back(aid);
+        job.data.append(articledata.data(), articledata.size());
+
+        if (!mimeDoCompress(mimetype) && !job.data.empty())
+        {
+          log_debug("insert non compression data");
+          job.compression = zeno::Dirent::zenocompNone;
+          compressor.put(job);
+          job.aid.clear();
+          ++did;
+          dataoffset = 0;
+          job.data.clear();
+        }
+      }
+      else
+      {
+        // redirect
+        redirect = row[4].getUnsigned();
       }
 
-      data.append(articledata.data(), articledata.size());
+      direntlen = zeno::Dirent::headerSize + title.size();
 
-      if (!mimeDoCompress(mimetype) && !data.empty())
+      log_debug("title=\"" << title << "\" aid=" << aid << " direntlen=" << direntlen
+          << " dataoffset=" << dataoffset << " datasize=" << articledata.size()
+          << " did=" << adid << " mimetype=" << mimetype
+          << " redirect=" << redirect << " data.size()=" << job.data.size());
+
+      updArticle.set("aid", aid)
+                .set("direntlen", direntlen)
+                .set("dataoffset", redirect == std::numeric_limits<unsigned>::max() ? dataoffset : redirect)   // write redirect index into dataoffset since it is a shared field in dirent-structure
+                .set("datasize", static_cast<unsigned>(articledata.size()))
+                .set("did", adid)
+                .execute();
+
+      while (process < ++count * 100 / countArticles + 1)
       {
-        log_debug("insert non compression data");
-        datapos += insertDataChunk(data, did++, insData, false);
-        dataoffset = 0;
-        data.clear();
+        log_info("prepare file " << process << '%');
+        std::cout << ' ' << process << '%' << std::flush;
+        process += 10;
       }
     }
-    else
+
+    if (!job.data.empty())
     {
-      // redirect
-      redirect = row[4].getUnsigned();
-      dataoffset = 0;
-      adid = 0;
+      job.compression = compression;
+      compressor.put(job);
     }
 
-    direntlen = zeno::Dirent::headerSize + title.size();
-
-    log_debug("title=\"" << title << "\" aid=" << aid << " direntlen=" << direntlen
-        << " datapos=" << datapos << " dataoffset=" << dataoffset
-        << " datasize=" << articledata.size() << " did=" << did << " mimetype=" << mimetype
-        << " redirect=" << redirect << " data.size()=" << data.size());
-
-    updArticle.set("aid", aid)
-              .set("direntlen", direntlen)
-              .set("datapos", redirect == std::numeric_limits<unsigned>::max() ? datapos : 0)
-              .set("dataoffset", redirect == std::numeric_limits<unsigned>::max() ? dataoffset : redirect)   // write redirect index into dataoffset since it is a shared field in dirent-structure
-              .set("datasize", static_cast<unsigned>(articledata.size()))
-              .set("did", did)
-              .execute();
-
-    if (++count % commitRate == 0 && commitRate)
-    {
-      transaction.commit();
-      transaction.begin();
-    }
-
-    while (process < count * 100 / countArticles + 1)
-    {
-      log_info("prepare file " << process << '%');
-      std::cout << ' ' << process << '%' << std::flush;
-      process += 10;
-    }
+    std::cout << std::endl;
   }
 
-  if (!data.empty())
-  {
-    insertDataChunk(data, did++, insData, true);
-  }
-
-  transaction.commit();
-
-  std::cout << std::endl;
   log_info("file prepared");
-}
-
-unsigned Zenowriter::insertDataChunk(const std::string& data, unsigned did, tntdb::Statement& insData, bool compress)
-{
-  // insert into zenodata
-  std::string zdata;
-
-  if (compress && compression == zeno::Dirent::zenocompZip)
-  {
-    log_debug("zlib compress data " << data.size());
-
-    std::ostringstream u;
-    zeno::DeflateStream ds(u);
-    ds << data << std::flush;
-    ds.end();
-    zdata = u.str();
-    log_debug("after zlib compression " << zdata.size());
-  }
-  else if (compress && compression == zeno::Dirent::zenocompBzip2)
-  {
-    log_debug("bzip2 compress data " << data.size());
-
-    std::ostringstream u;
-    zeno::Bzip2Stream ds(u);
-    ds << data << std::flush;
-    ds.end();
-    zdata = u.str();
-    log_debug("after bzip2 compression " << zdata.size());
-  }
-  else
-  {
-    zdata = data;
-  }
-
-  log_debug("insert datachunk " << did << " with " << zdata.size() << " bytes");
-  tntdb::Blob bdata(zdata.data(), zdata.size());
-  insData.set("did", did)
-         .set("data", bdata)
-         .execute();
-
-  return zdata.size();
 }
 
 void Zenowriter::writeHeader(std::ostream& ofile)
@@ -584,6 +538,7 @@ int main(int argc, char* argv[])
     cxxtools::Arg<unsigned> commitRate(argc, argv, 'C', 10000);
     cxxtools::Arg<bool> prepareOnly(argc, argv, 'p');
     cxxtools::Arg<bool> generateOnly(argc, argv, 'g');
+    cxxtools::Arg<unsigned> numThreads(argc, argv, 'j', 4);
 
     if (argc != 2)
     {
@@ -592,9 +547,10 @@ int main(int argc, char* argv[])
                    "\t-s number      chunk size in kBytes (default: 256)\n"
                    "\t-z             use zlib\n"
                    "\t-n             disable compression (default: bzip2)\n"
-                   "\t-C number      commit rate (default: 10000\n"
+                   "\t-C number      commit rate (default: 10000)\n"
                    "\t-p             prepare only\n"
                    "\t-g             generate only\n";
+                   "\t-j number      number of parallel compressor threads (default: 4)\n";
       return -1;
     }
 
@@ -608,6 +564,7 @@ int main(int argc, char* argv[])
       app.setCompression(zeno::Dirent::zenocompNone);
     else
       app.setCompression(zeno::Dirent::zenocompBzip2);
+    app.setNumThreads(numThreads);
 
     app.init();
 

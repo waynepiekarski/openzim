@@ -38,6 +38,7 @@ class Zenowriter
     std::string outdir;
     std::string dburl;
     zeno::Dirent::CompressionType compression;
+    unsigned numThreads;
 
     tntdb::Connection& getConnection();
 
@@ -80,6 +81,9 @@ class Zenowriter
     void setDburl(const std::string& d)  { dburl = d; }
 
     void setCompression(zeno::Dirent::CompressionType c)  { compression = c; }
+
+    unsigned getNumThreads() const     { return numThreads; }
+    void setNumThreads(unsigned n)     { numThreads = n; }
 };
 
 #endif

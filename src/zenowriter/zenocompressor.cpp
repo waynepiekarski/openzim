@@ -128,7 +128,11 @@ namespace zeno
         " values (:zid, :did, :data)")),
       updArticle(conn.prepare(
         "update zenoarticles"
-        "   set datapos    = :datapos"
+        "   set direntlen  = :direntlen,"
+        "       dataoffset = :dataoffset,"
+        "       datasize   = :datasize,"
+        "       datapos    = :datapos,"
+        "       did        = :did"
         " where zid = :zid"
         "   and aid = :aid")),
       stop(false),
@@ -204,28 +208,29 @@ namespace zeno
   {
     if (job.compression == zeno::Dirent::zenocompZip)
     {
-      log_debug("zlib compress data " << job.data.size());
+      log_debug("zlib compress " << job.data.size() << " bytes");
 
       std::ostringstream u;
       zeno::DeflateStream ds(u);
       ds << job.data << std::flush;
       ds.end();
       job.zdata = u.str();
-      log_debug("after zlib compression " << job.zdata.size());
+      log_debug("after zlib compression " << job.zdata.size() << " bytes");
     }
     else if (job.compression == zeno::Dirent::zenocompBzip2)
     {
-      log_debug("bzip2 compress data " << job.data.size());
+      log_debug("bzip2 compress " << job.data.size() << " bytes");
 
       std::ostringstream u;
       zeno::Bzip2Stream ds(u);
       ds << job.data << std::flush;
       ds.end();
       job.zdata = u.str();
-      log_debug("after bzip2 compression " << job.zdata.size());
+      log_debug("after bzip2 compression " << job.zdata.size() << " bytes");
     }
     else
     {
+      log_debug("don't compress " << job.data.size() << " bytes");
       job.zdata = job.data;
     }
 
@@ -239,20 +244,28 @@ namespace zeno
 
     readyJobs[job.did] = job;
 
+    log_debug(readyJobs.size() << " ready jobs to update");
+
     ReadyJobsMap::iterator j;
     while ((j = readyJobs.find(insDid)) != readyJobs.end())
     {
-      for (CompressJob::AidType::const_iterator it = j->second.aid.begin();
-        it != j->second.aid.end(); ++it)
+      log_debug("update " << j->second.articles.size() << " articles of did " << insDid);
+      for (CompressJob::ArticlesType::const_iterator it = j->second.articles.begin();
+        it != j->second.articles.end(); ++it)
       {
-        log_debug("update article " << *it << " datapos=" << datapos);
+        log_debug("update article " << it->aid);
         updArticle.set("datapos", datapos)
-                  .set("aid", *it)
+                  .set("aid", it->aid)
+                  .set("direntlen", it->direntlen)
+                  .set("dataoffset", it->dataoffset)
+                  .set("datasize", it->datasize)
+                  .set("did", insDid)
                   .execute();
       }
 
       ++insDid;
       datapos += j->second.zdata.size();
+      readyJobs.erase(j);
     }
   }
 }

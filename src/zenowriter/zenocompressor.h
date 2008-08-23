@@ -33,8 +33,23 @@ namespace zeno
 {
   struct CompressJob
   {
-    typedef std::vector<unsigned> AidType;
-    AidType aid;
+    struct Article
+    {
+      unsigned aid;
+      unsigned direntlen;
+      unsigned dataoffset;
+      unsigned datasize;
+      Article() { }
+      Article(unsigned aid_, unsigned direntlen_, unsigned dataoffset_, unsigned datasize_)
+        : aid(aid_),
+          direntlen(direntlen_),
+          dataoffset(dataoffset_),
+          datasize(datasize_)
+        { }
+    };
+
+    typedef std::vector<Article> ArticlesType;
+    ArticlesType articles;
     std::string data;
     zeno::Dirent::CompressionType compression;
   };

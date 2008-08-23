@@ -198,15 +198,14 @@ void Zenowriter::prepareFile()
   std::cout << "prepare file        " << std::flush;
 
   {
-    tntdb::Statement updArticle = getConnection().prepare(
+     // write redirect index into dataoffset since it is a shared field in dirent-structure
+    tntdb::Statement updRedirect = getConnection().prepare(
       "update zenoarticles"
       "   set direntlen  = :direntlen,"
-      "       dataoffset = :dataoffset,"
-      "       datasize   = :datasize,"
-      "       did        = :did"
+      "       dataoffset = :redirect"
       " where zid = :zid"
       "   and aid = :aid");
-    updArticle.set("zid", zid);
+    updRedirect.set("zid", zid);
 
     tntdb::Statement stmt = getConnection().prepare(
       "select a.aid, a.title, a.mimetype, a.redirect, rz.sort"
@@ -228,7 +227,6 @@ void Zenowriter::prepareFile()
       "  from article"
       " where aid = :aid");
 
-    unsigned did = 0;
     unsigned dataoffset = 0;
     unsigned count = 0;
     unsigned process = 0;
@@ -245,11 +243,10 @@ void Zenowriter::prepareFile()
 
       log_debug("process article \"" << title << '"');
 
-      unsigned direntlen;
+      unsigned direntlen = zeno::Dirent::headerSize + title.size();
       tntdb::Blob articledata;
       unsigned redirect = std::numeric_limits<unsigned>::max();
       unsigned dataoffset = job.data.size();
-      unsigned adid = did;
 
       if (row[3].isNull())
       {
@@ -265,16 +262,17 @@ void Zenowriter::prepareFile()
           log_debug("insert data chunk");
           job.compression = compression;
           compressor.put(job);
-          job.aid.clear();
-
-          ++did;
-          adid = did;
-
+          job.articles.clear();
           dataoffset = 0;
           job.data.clear();
         }
 
-        job.aid.push_back(aid);
+        log_debug("add article " << aid << ": \"" << title << '"');
+
+        job.articles.push_back(
+            zeno::CompressJob::Article(
+                aid, direntlen, dataoffset, articledata.size()));
+
         job.data.append(articledata.data(), articledata.size());
 
         if (!mimeDoCompress(mimetype) && !job.data.empty())
@@ -282,8 +280,7 @@ void Zenowriter::prepareFile()
           log_debug("insert non compression data");
           job.compression = zeno::Dirent::zenocompNone;
           compressor.put(job);
-          job.aid.clear();
-          ++did;
+          job.articles.clear();
           dataoffset = 0;
           job.data.clear();
         }
@@ -292,21 +289,13 @@ void Zenowriter::prepareFile()
       {
         // redirect
         redirect = row[4].getUnsigned();
+
+        log_debug("update redirect " << aid << ": \"" << title << '"');
+        updRedirect.set("aid", aid)
+                   .set("direntlen", direntlen)
+                   .set("redirect", redirect)
+                   .execute();
       }
-
-      direntlen = zeno::Dirent::headerSize + title.size();
-
-      log_debug("title=\"" << title << "\" aid=" << aid << " direntlen=" << direntlen
-          << " dataoffset=" << dataoffset << " datasize=" << articledata.size()
-          << " did=" << adid << " mimetype=" << mimetype
-          << " redirect=" << redirect << " data.size()=" << job.data.size());
-
-      updArticle.set("aid", aid)
-                .set("direntlen", direntlen)
-                .set("dataoffset", redirect == std::numeric_limits<unsigned>::max() ? dataoffset : redirect)   // write redirect index into dataoffset since it is a shared field in dirent-structure
-                .set("datasize", static_cast<unsigned>(articledata.size()))
-                .set("did", adid)
-                .execute();
 
       while (process < ++count * 100 / countArticles + 1)
       {
@@ -376,18 +365,18 @@ void Zenowriter::writeIndexPtr(std::ostream& ofile)
     " order by sort, aid");
   stmt.set("zid", zid);
 
-  zeno::size_type dataPos = 0;
+  zeno::size_type dirpos = 0;
 
   unsigned count = 0;
   unsigned process = 0;
   for (tntdb::Statement::const_iterator cur = stmt.begin();
        cur != stmt.end(); ++cur)
   {
-    zeno::size_type ptr0 = fromLittleEndian<zeno::size_type>(&dataPos);
+    zeno::size_type ptr0 = fromLittleEndian<zeno::size_type>(&dirpos);
     ofile.write(reinterpret_cast<const char*>(&ptr0), sizeof(ptr0));
     unsigned direntlen = cur->getUnsigned(0);
-    dataPos += direntlen;
-    log_debug("direntlen=" << direntlen << " dataPos=" << dataPos);
+    dirpos += direntlen;
+    log_debug("direntlen=" << direntlen << " dirpos=" << dirpos);
 
     ++count;
     while (process < count * 100 / countArticles + 1)
@@ -408,11 +397,11 @@ void Zenowriter::writeDirectory(std::ostream& ofile)
 
   tntdb::Statement stmt = getConnection().prepare(
     "select a.namespace, a.title, a.url, a.redirect, a.mimetype, z.datapos,"
-    "       z.dataoffset, z.datasize, d.data"
+    "       z.dataoffset, z.datasize, length(d.data)"
     "  from article a"
     "  join zenoarticles z"
     "    on z.aid = a.aid"
-    "  join zenodata d"
+    "  left outer join zenodata d"
     "    on d.zid = z.zid"
     "   and d.did = z.did"
     " where z.zid = :zid"
@@ -438,14 +427,13 @@ void Zenowriter::writeDirectory(std::ostream& ofile)
     unsigned datapos = row[5].getUnsigned();
     unsigned dataoffset = row[6].getUnsigned();
     unsigned datasize = row[7].getUnsigned();
-    tntdb::Blob data;
-    row[8].getBlob(data);
+    unsigned datalen = row[8].isNull() ? 0 : row[8].getUnsigned();
 
     zeno::Dirent dirent;
     dirent.setOffset(database + datapos);
     dirent.setArticleOffset(dataoffset);
     dirent.setArticleSize(datasize);
-    dirent.setSize(data.size());
+    dirent.setSize(datalen);
     dirent.setCompression(mimeDoCompress(mimetype) ? compression : zeno::Dirent::zenocompDefault);
     dirent.setMimeType(mimetype);
     dirent.setRedirectFlag(!redirect.empty());

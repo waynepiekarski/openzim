@@ -411,7 +411,7 @@ void Zenowriter::writeDirectory(std::ostream& ofile)
   unsigned count = 0;
   unsigned process = 0;
 
-  zeno::size_type database = header.getIndexPos() + indexLen;
+  zeno::offset_type database = header.getIndexPos() + indexLen;
   for (tntdb::Statement::const_iterator cur = stmt.begin();
        cur != stmt.end(); ++cur)
   {
@@ -424,7 +424,7 @@ void Zenowriter::writeDirectory(std::ostream& ofile)
     if (!row[3].isNull())
       redirect = row[3].getString();
     zeno::Dirent::MimeType mimetype = static_cast<zeno::Dirent::MimeType>(row[4].isNull() ? 0 : row[4].getUnsigned());
-    unsigned datapos = row[5].getUnsigned();
+    zeno::offset_type datapos = row[5].getUnsigned64();
     unsigned dataoffset = row[6].getUnsigned();
     unsigned datasize = row[7].getUnsigned();
     unsigned datalen = row[8].isNull() ? 0 : row[8].getUnsigned();

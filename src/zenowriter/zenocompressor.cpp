@@ -72,7 +72,7 @@ namespace zeno
       std::deque<CompressJobX> queue;
       bool stop;
 
-      unsigned datapos;
+      zeno::offset_type datapos;
       unsigned nextDid; // next data id to assign
       unsigned insDid;  // next data id to insert
       typedef std::map<unsigned, CompressJobX> ReadyJobsMap;  // map did to job
@@ -254,7 +254,7 @@ namespace zeno
         it != j->second.articles.end(); ++it)
       {
         log_debug("update article " << it->aid);
-        updArticle.set("datapos", datapos)
+        updArticle.setUnsigned64("datapos", datapos)
                   .set("aid", it->aid)
                   .set("direntlen", it->direntlen)
                   .set("dataoffset", it->dataoffset)

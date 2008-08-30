@@ -50,7 +50,6 @@ class Zenowriter
     void writeIndexPtr(std::ostream& ofile);
     void writeDirectory(std::ostream& ofile);
     void writeData(std::ostream& ofile);
-    unsigned insertDataChunk(const std::string& data, unsigned did, tntdb::Statement& insData, bool compress);
 
     static bool mimeDoCompress(zeno::Dirent::MimeType t)
     { return t == zeno::Dirent::zenoMimeTextHtml

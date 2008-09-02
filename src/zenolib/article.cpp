@@ -19,9 +19,6 @@
 
 #include <zeno/article.h>
 #include <cxxtools/log.h>
-#include <zeno/inflatestream.h>
-#include <zeno/bunzip2stream.h>
-#include <sstream>
 
 log_define("zeno.article")
 

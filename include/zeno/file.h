@@ -42,6 +42,7 @@ namespace zeno
       explicit File(FileImpl* impl);
 
       std::string readData(offset_type off, size_type count);
+      std::string uncompressData(const Dirent& dirent, const std::string& data);
 
       const std::string& getFilename() const   { return impl->getFilename(); }
       const Fileheader& getFileheader() const  { return impl->getFileheader(); }

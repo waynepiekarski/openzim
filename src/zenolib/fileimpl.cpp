@@ -24,7 +24,8 @@
 #include <zeno/qunicode.h>
 #include <zeno/fileheader.h>
 #include <cxxtools/log.h>
-#include <tnt/deflatestream.h>
+#include <zeno/inflatestream.h>
+#include <zeno/bunzip2stream.h>
 #include <sstream>
 
 log_define("zeno.file.impl")
@@ -35,7 +36,8 @@ namespace zeno
   // FileImpl
   //
   FileImpl::FileImpl(const char* fname)
-    : zenoFile(fname)
+    : zenoFile(fname),
+      uncompressCache(16)
   {
     if (!zenoFile)
       throw ZenoFileFormatError(std::string("can't open zeno-file \"") + fname + '"');
@@ -256,6 +258,48 @@ namespace zeno
     if (!zenoFile)
       throw ZenoFileFormatError("error reading directory index in \"" + filename + '"');
     return dirent;
+  }
+
+  std::string FileImpl::uncompressData(const Dirent& dirent, const std::string& data)
+  {
+    if (!dirent.isCompressed())
+      return data;
+
+    std::string uncompressedData = uncompressCache.get(
+        std::make_pair(dirent.getOffset(), dirent.getSize()));
+
+    if (uncompressedData.empty())
+    {
+      log_debug("cache miss for offset " << dirent.getOffset() << ", size " << dirent.getSize());
+      if (dirent.isCompressionZip())
+      {
+        log_debug("uncompress data (zlib)");
+        std::ostringstream u;
+        zeno::InflateStream is(u);
+        is << data << std::flush;
+        uncompressedData = u.str();
+      }
+      else if (dirent.isCompressionBzip2())
+      {
+        log_debug("uncompress data (bzip2)");
+        std::ostringstream u;
+        zeno::Bunzip2Stream is(u);
+        is << data << std::flush;
+        uncompressedData = u.str();
+      }
+      else if (dirent.isCompressionLzma())
+      {
+        // TODO
+        log_debug("uncompress data (lzma)");
+      }
+
+      uncompressCache.put(std::make_pair(dirent.getOffset(), dirent.getSize()),
+                          uncompressedData);
+    }
+    else
+      log_debug("cache hit for offset " << dirent.getOffset() << ", size " << dirent.getSize());
+
+    return uncompressedData;
   }
 
 }

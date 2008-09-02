@@ -85,7 +85,7 @@ namespace zeno
       bool        isCompressionZip() const   { return getCompression() == zenocompZip; }
       bool        isCompressionBzip2() const { return getCompression() == zenocompBzip2; }
       bool        isCompressionLzma() const  { return getCompression() == zenocompLzma; }
-      bool        isCompressed() const       { return isCompressionZip() || isCompressionLzma(); }
+      bool        isCompressed() const       { return isCompressionZip() || isCompressionBzip2() || isCompressionLzma(); }
       void        setCompression(CompressionType c)
                                            { header[12] = c; }
 

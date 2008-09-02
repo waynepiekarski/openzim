@@ -19,11 +19,70 @@
 
 #include <zeno/article.h>
 #include <cxxtools/log.h>
+#include <zeno/inflatestream.h>
+#include <zeno/bunzip2stream.h>
+#include <sstream>
 
 log_define("zeno.article")
 
 namespace zeno
 {
+  const std::string& Article::getMimeType() const
+  {
+    static const std::string textHtml = "text/html";
+    static const std::string textPlain = "text/plain";
+    static const std::string imageJpeg = "image/jpeg";
+    static const std::string imagePng = "image/png";
+    static const std::string imageTiff = "image/tiff";
+    static const std::string textCss = "text/css";
+    static const std::string imageGif = "image/gif";
+    static const std::string index = "text/plain";
+    static const std::string applicationJavaScript = "application/x-javascript";
+    static const std::string imageIcon = "image/x-icon";
+
+    switch (getLibraryMimeType())
+    {
+      case Dirent::zenoMimeTextHtml:
+        return textHtml;
+      case Dirent::zenoMimeTextPlain:
+        return textPlain;
+      case Dirent::zenoMimeImageJpeg:
+        return imageJpeg;
+      case Dirent::zenoMimeImagePng:
+        return imagePng;
+      case Dirent::zenoMimeImageTiff:
+        return imageTiff;
+      case Dirent::zenoMimeTextCss:
+        return textCss;
+      case Dirent::zenoMimeImageGif:
+        return imageGif;
+      case Dirent::zenoMimeIndex:
+        return index;
+      case Dirent::zenoMimeApplicationJavaScript:
+        return applicationJavaScript;
+      case Dirent::zenoMimeImageIcon:
+        return imageIcon;
+    }
+
+    return textHtml;
+  }
+
+  void Article::uncompressData() const
+  {
+    if (!getRedirectFlag() && uncompressedData.empty() && !getRawData().empty())
+      uncompressedData = const_cast<File&>(file).uncompressData(dirent, getRawData());
+  }
+
+  std::string Article::getData() const
+  {
+    if (getRedirectFlag())
+      return std::string();
+    uncompressData();
+
+    return getArticleSize() > 0 ? uncompressedData.substr(getArticleOffset(), getArticleSize())
+                                : uncompressedData;
+  }
+
   const std::string& Article::getRawData() const
   {
     log_trace("getRawData()");
@@ -32,12 +91,13 @@ namespace zeno
     {
       Article* article = const_cast<Article*>(this);
       log_debug("read data from file");
-      article->setRawData(const_cast<File&>(file).readData(getDirent().getOffset(),
+      article->data.assign(
+        const_cast<File&>(file).readData(getDirent().getOffset(),
         getDirent().getSize()));
       article->dataRead = true;
     }
 
-    return ArticleBase::getRawData();
+    return data;
   }
 
 }

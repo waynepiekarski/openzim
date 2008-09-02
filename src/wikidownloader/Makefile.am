@@ -1,11 +1,8 @@
-bin_PROGRAMS = getarticles dumparticle trycompress uncompress putarticle
+bin_PROGRAMS = getarticles putarticle
 
 AM_CPPFLAGS=-I$(top_builddir)/include
 
 getarticles_SOURCES = getarticles.cpp
-dumparticle_SOURCES = dumparticle.cpp
-trycompress_SOURCES = trycompress.cpp
-uncompress_SOURCES = uncompress.cpp
 putarticle_SOURCES = putarticle.cpp
 
 AM_LDFLAGS = -ltntnet -ltntdb

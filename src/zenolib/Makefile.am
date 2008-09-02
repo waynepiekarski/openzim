@@ -4,7 +4,6 @@ lib_LTLIBRARIES = libzeno.la
 
 libzeno_la_SOURCES = \
 	article.cpp \
-	articlebase.cpp \
 	articlesearch.cpp \
 	bunzip2stream.cpp \
 	bzip2.cpp \

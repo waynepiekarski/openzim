@@ -1,6 +1,5 @@
 nobase_include_HEADERS = \
 	zeno/article.h \
-	zeno/articlebase.h \
 	zeno/articlesearch.h \
 	zeno/bunzip2stream.h \
 	zeno/bzip2.h \

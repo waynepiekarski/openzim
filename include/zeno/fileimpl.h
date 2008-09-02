@@ -28,6 +28,7 @@
 #include <zeno/zeno.h>
 #include <zeno/qunicode.h>
 #include <zeno/fileheader.h>
+#include <zeno/cache.h>
 
 namespace zeno
 {
@@ -51,6 +52,8 @@ namespace zeno
       Dirent readDirentNolock();
       Dirent readDirentNolock(offset_type off);
 
+      Cache<std::pair<offset_type, size_type>, std::string> uncompressCache;
+
     public:
       FileImpl(const char* fname);
 
@@ -69,6 +72,7 @@ namespace zeno
       std::string getNamespaces();
 
       std::string readData(offset_type off, size_type count);
+      std::string uncompressData(const Dirent& dirent, const std::string& data);
   };
 
 }

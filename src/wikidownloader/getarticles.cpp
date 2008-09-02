@@ -28,11 +28,11 @@
 #include <cxxtools/httprequest.h>
 #include <cxxtools/httpreply.h>
 #include <cxxtools/loginit.h>
-#include <zeno/articlebase.h>
+#include <zeno/article.h>
 
 log_define("wikicrawler")
 
-class Article : public zeno::ArticleBase
+class Article : public zeno::Article
 {
     std::string url;
     std::string heading;

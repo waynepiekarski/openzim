@@ -40,6 +40,11 @@ namespace zeno
     return impl->readData(off, count);
   }
 
+  std::string File::uncompressData(const Dirent& dirent, const std::string& data)
+  {
+    return impl->uncompressData(dirent, data);
+  }
+
   Article File::getArticle(char ns, const std::string& url, bool collate)
   {
     log_debug("getArticle('" << ns << "', \"" << url << "\", " << collate << ')');

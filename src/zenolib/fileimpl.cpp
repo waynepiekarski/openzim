@@ -265,8 +265,7 @@ namespace zeno
     if (!dirent.isCompressed())
       return data;
 
-    std::string uncompressedData = uncompressCache.get(
-        std::make_pair(dirent.getOffset(), dirent.getSize()));
+    std::string uncompressedData = uncompressCache.get(dirent.getOffset());
 
     if (uncompressedData.empty())
     {
@@ -293,8 +292,7 @@ namespace zeno
         log_debug("uncompress data (lzma)");
       }
 
-      uncompressCache.put(std::make_pair(dirent.getOffset(), dirent.getSize()),
-                          uncompressedData);
+      uncompressCache.put(dirent.getOffset(), uncompressedData);
     }
     else
       log_debug("cache hit for offset " << dirent.getOffset() << ", size " << dirent.getSize());

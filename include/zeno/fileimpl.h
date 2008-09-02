@@ -52,7 +52,7 @@ namespace zeno
       Dirent readDirentNolock();
       Dirent readDirentNolock(offset_type off);
 
-      Cache<std::pair<offset_type, size_type>, std::string> uncompressCache;
+      Cache<offset_type, std::string> uncompressCache;
 
     public:
       FileImpl(const char* fname);

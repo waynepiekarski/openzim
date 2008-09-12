@@ -52,7 +52,8 @@ namespace zeno
         zenoMimeImageGif,
         zenoMimeIndex,
         zenoMimeApplicationJavaScript,
-        zenoMimeImageIcon
+        zenoMimeImageIcon,
+        zenoMimeTextXml,
       };
 
       static const unsigned headerSize = 26;

@@ -54,11 +54,11 @@ int main(int argc, char* argv[])
     tntdb::Connection conn = tntdb::connect(dburl);
 
     tntdb::Statement insArticle = conn.prepare(
-      "insert into article (namespace, mimetype, title, url, data)"
-      " values (:namespace, :mimetype, :title, :url, :data)");
+      "insert into article (namespace, mimetype, title, data)"
+      " values (:namespace, :mimetype, :title, :data)");
     tntdb::Statement insRedirect = conn.prepare(
-      "insert into article (namespace, title, url, redirect)"
-      " values (:namespace, :title, :url, :redirect)");
+      "insert into article (namespace, title, redirect)"
+      " values (:namespace, :title, :redirect)");
 
     for (int a = 1; a < argc; ++a)
     {
@@ -90,7 +90,6 @@ int main(int argc, char* argv[])
         insArticle.set("namespace", ns)
                   .set("mimetype", zeno::Dirent::zenoMimeTextHtml)
                   .set("title", title)
-                  .set("url", title)
                   .set("data", data)
                   .execute();
       }
@@ -113,7 +112,6 @@ int main(int argc, char* argv[])
         // insert redirect
         insRedirect.set("namespace", ns)
                    .set("title", title)
-                   .set("url", title)
                    .set("redirect", redirect)
                    .execute();
       }

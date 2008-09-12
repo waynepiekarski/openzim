@@ -3,7 +3,6 @@ create table article
   aid          serial  not null primary key,
   namespace    text    not null,
   title        text    not null,
-  url          text    not null,
   redirect     text,     -- title of redirect target
   mimetype     integer,
   data         bytea

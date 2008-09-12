@@ -396,7 +396,7 @@ void Zenowriter::writeDirectory(std::ostream& ofile)
   std::cout << "write directory     " << std::flush;
 
   tntdb::Statement stmt = getConnection().prepare(
-    "select a.namespace, a.title, a.url, a.redirect, a.mimetype, z.datapos,"
+    "select a.namespace, a.title, a.redirect, a.mimetype, z.datapos,"
     "       z.dataoffset, z.datasize, length(d.data)"
     "  from article a"
     "  join zenoarticles z"
@@ -419,15 +419,14 @@ void Zenowriter::writeDirectory(std::ostream& ofile)
 
     char ns = row[0].getChar();
     std::string title = row[1].getString();
-    std::string url = row[2].getString();
     std::string redirect;
-    if (!row[3].isNull())
-      redirect = row[3].getString();
-    zeno::Dirent::MimeType mimetype = static_cast<zeno::Dirent::MimeType>(row[4].isNull() ? 0 : row[4].getUnsigned());
-    zeno::offset_type datapos = row[5].getUnsigned64();
-    unsigned dataoffset = row[6].getUnsigned();
-    unsigned datasize = row[7].getUnsigned();
-    unsigned datalen = row[8].isNull() ? 0 : row[8].getUnsigned();
+    if (!row[2].isNull())
+      redirect = row[2].getString();
+    zeno::Dirent::MimeType mimetype = static_cast<zeno::Dirent::MimeType>(row[3].isNull() ? 0 : row[3].getUnsigned());
+    zeno::offset_type datapos = row[4].getUnsigned64();
+    unsigned dataoffset = row[5].getUnsigned();
+    unsigned datasize = row[6].getUnsigned();
+    unsigned datalen = row[7].isNull() ? 0 : row[7].getUnsigned();
 
     zeno::Dirent dirent;
     dirent.setOffset(database + datapos);

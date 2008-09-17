@@ -4,6 +4,7 @@ SUBDIRS = \
 	src/webapp \
 	src/wikidownloader \
 	src/zenowriter \
+	src/zenoindexer \
 	include
 
 dist_bin_SCRIPTS = TntReaderConfig

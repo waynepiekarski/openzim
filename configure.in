@@ -28,6 +28,7 @@ AC_CONFIG_FILES([
   src/webapp/Makefile
   src/wikidownloader/Makefile
   src/zenowriter/Makefile
+  src/zenoindexer/Makefile
   include/Makefile
   ])
 

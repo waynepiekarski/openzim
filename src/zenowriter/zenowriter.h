@@ -39,6 +39,7 @@ class Zenowriter
     std::string dburl;
     zeno::Dirent::CompressionType compression;
     unsigned numThreads;
+    bool createIndex;
 
     tntdb::Connection& getConnection();
 
@@ -64,6 +65,7 @@ class Zenowriter
     void init();
     void cleanup();
     void prepareFile();
+    void createWordIndex();
     void prepareSort();
     void outputFile();
 

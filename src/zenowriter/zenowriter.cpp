@@ -36,7 +36,8 @@ Zenowriter::Zenowriter(const char* basename_)
   : basename(basename_),
     minChunkSize(65536),
     compression(zeno::Dirent::zenocompNone),
-    numThreads(4)
+    numThreads(4),
+    createIndex(false)
 { 
 }
 
@@ -69,6 +70,69 @@ namespace
     bool operator< (const KeyType& k) const
     { return ns < k.ns || ns == k.ns && title < k.title; }
   };
+}
+
+void Zenowriter::createWordIndex()
+{
+  log_info("create word index (not implemented yet)");
+  // TODO: create indexarticle with namespace 'X' from words
+  //
+  // format of indexarticle:
+  //   title contains the word
+  //   parameter in dirent needs to be empty to distinquish from old format,
+  //     which used the parameter field
+  // the data:
+  //   4 x integer: number of entries for each category (0 first)
+  //   each entry:
+  //     article index (integer)
+  //     position of word in article (integer)
+  //
+  // In contrast the the previous format (directmedia format) we don't use
+  // integer compression since the article data is compressed, which leads to
+  // much better compression at the cost of slower access.
+  //
+  tntdb::Statement stmt = getConnection().prepare(
+    "select w.word, w.weight, z.sort, w.pos"
+    "  from words w"
+    "  join zenoarticles z"
+    "    on w.aid = z.aid"
+    " where z.zid = 1 order by 1, 2, 3, 4");
+
+  std::string currentWord;
+
+  struct Entry
+  {
+    unsigned index;
+    unsigned pos;
+    Entry() {}
+    Entry(unsigned index_, unsigned pos_)
+      : index(index_), pos(pos_) { }
+  };
+
+  // for each weight one vector of entries
+  std::vector<Entry> data[4];
+
+  for (tntdb::Statement::const_iterator cur = stmt.begin(); cur != stmt.end(); ++cur)
+  {
+    tntdb::Row row = *cur;
+    std::string word = row[0].getString();
+    unsigned weight = row[1].getUnsigned();
+    unsigned idx = row[2].getUnsigned();
+    unsigned pos = row[3].getUnsigned();
+
+    if (word != currentWord)
+    {
+      if (currentWord.empty())
+        currentWord = word;
+      else
+      {
+        // TODO create document data and send to compressor
+        std::string document;
+      }
+    }
+
+    data[weight].push_back(Entry(idx, pos));
+  }
 }
 
 void Zenowriter::prepareSort()
@@ -192,6 +256,10 @@ void Zenowriter::cleanup()
 void Zenowriter::prepareFile()
 {
   cleanup();
+
+  if (createIndex)
+    createWordIndex();
+
   prepareSort();
 
   log_info("prepare file");
@@ -519,13 +587,15 @@ int main(int argc, char* argv[])
     log_init();
 
     cxxtools::Arg<std::string> dburl(argc, argv, "--db", "postgresql:dbname=zeno");
-    cxxtools::Arg<unsigned> minChunkSize(argc, argv, 's', 256);
+    cxxtools::Arg<unsigned> minChunkSize(argc, argv, 's', 512);
     cxxtools::Arg<bool> compressZlib(argc, argv, 'z');
+    cxxtools::Arg<bool> compressLzma(argc, argv, 'l');
     cxxtools::Arg<bool> noCompress(argc, argv, 'n');
     cxxtools::Arg<unsigned> commitRate(argc, argv, 'C', 10000);
     cxxtools::Arg<bool> prepareOnly(argc, argv, 'p');
     cxxtools::Arg<bool> generateOnly(argc, argv, 'g');
     cxxtools::Arg<unsigned> numThreads(argc, argv, 'j', 4);
+    cxxtools::Arg<bool> createIndex(argc, argv, 'x');
 
     if (argc != 2)
     {
@@ -533,6 +603,7 @@ int main(int argc, char* argv[])
                    "\t--db dburl     tntdb-dburl (default: postgresql:dbname=zeno)\n"
                    "\t-s number      chunk size in kBytes (default: 256)\n"
                    "\t-z             use zlib\n"
+                   "\t-l             use lzma (experimental)\n"
                    "\t-n             disable compression (default: bzip2)\n"
                    "\t-C number      commit rate (default: 10000)\n"
                    "\t-p             prepare only\n"
@@ -547,11 +618,15 @@ int main(int argc, char* argv[])
     app.setMinChunkSize(minChunkSize * 1024);
     if (compressZlib)
       app.setCompression(zeno::Dirent::zenocompZip);
+    else if (compressLzma)
+      app.setCompression(zeno::Dirent::zenocompLzma);
     else if (noCompress)
       app.setCompression(zeno::Dirent::zenocompNone);
     else
       app.setCompression(zeno::Dirent::zenocompBzip2);
+
     app.setNumThreads(numThreads);
+    app.setCreateIndex(createIndex);
 
     app.init();
 

@@ -36,7 +36,7 @@ class Zenoindexer : public zeno::ArticleParseEventEx
     typedef std::set<std::string> TrivialWordsType;
     TrivialWordsType trivialWords;
 
-    void insertWord(unsigned category, const std::string& word, unsigned pos);
+    void insertWord(unsigned weight, const std::string& word, unsigned pos);
 
   public:
     explicit Zenoindexer(tntdb::Connection& conn);
@@ -51,8 +51,8 @@ Zenoindexer::Zenoindexer(tntdb::Connection& conn_)
   : conn(conn_)
 {
   insWord = conn.prepare(
-    "insert into words (word, aid, pos, category)"
-    " values (:word, :aid, :pos, :category)");
+    "insert into words (word, aid, pos, weight)"
+    " values (:word, :aid, :pos, :weight)");
 
   tntdb::Statement selTrivialWords = conn.prepare(
     "select word from trivialwords");
@@ -60,11 +60,11 @@ Zenoindexer::Zenoindexer(tntdb::Connection& conn_)
     trivialWords.insert(cur->getString(0));
 }
 
-void Zenoindexer::insertWord(unsigned category, const std::string& word, unsigned pos)
+void Zenoindexer::insertWord(unsigned weight, const std::string& word, unsigned pos)
 {
   insWord.set("word", word)
          .set("pos", pos)
-         .set("category", category)
+         .set("weight", weight)
          .execute();
 }
 
@@ -126,7 +126,8 @@ int main(int argc, char* argv[])
       "select aid, title, data"
       "  from article"
       " where mimetype = 0"
-      "   and aid not in (select distinct aid from words)");
+      "   and aid not in (select distinct aid from words)"
+      " order by namespace, title");
 
     for (tntdb::Statement::const_iterator cur = stmt.begin(); cur != stmt.end(); ++cur)
     {

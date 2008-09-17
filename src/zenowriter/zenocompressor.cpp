@@ -17,12 +17,17 @@
  *
  */
 
+// TODO: propagate errors to main thread
+
 #include "zenocompressor.h"
 #include <cxxtools/thread.h>
-#include <tntdb/connect.h>
+#include <cxxtools/fork.h>
+#include <cxxtools/pipestream.h>
 #include <cxxtools/log.h>
+#include <tntdb/connect.h>
 #include <zeno/deflatestream.h>
 #include <zeno/bzip2stream.h>
+#include <unistd.h>
 
 log_define("zeno.compressor")
 
@@ -227,6 +232,67 @@ namespace zeno
       ds.end();
       job.zdata = u.str();
       log_debug("after bzip2 compression " << job.zdata.size() << " bytes");
+    }
+    else if (job.compression == zeno::Dirent::zenocompLzma)
+    {
+      log_debug("lzma compress " << job.data.size() << " bytes");
+      cxxtools::Pipestream compressedDataPipe;
+      cxxtools::Fork senderProcess;
+      if (senderProcess.parent())
+      {
+        // receive the compressed data from compressedDataPipe
+        compressedDataPipe.closeWriteFd();
+        std::ostringstream u;
+        log_debug("read compressed data from pipe");
+        u << compressedDataPipe.rdbuf();
+        int ret = senderProcess.wait();
+        if (WEXITSTATUS(ret) != 0)
+          throw std::runtime_error("error in lzma compressor");
+        job.zdata = u.str();
+        log_debug("after lzma compression " << job.zdata.size() << " bytes");
+      }
+      else
+      {
+        // another fork for the lzma process
+        compressedDataPipe.closeReadFd();
+
+        cxxtools::Pipestream uncompressedDataPipe;
+        cxxtools::Fork lzmaProcess;
+        if (lzmaProcess.parent())
+        {
+          // send the data to the lzma process
+          uncompressedDataPipe.closeReadFd();
+          log_debug("sending uncompressed data to lzma process");
+          uncompressedDataPipe << job.data << std::flush;
+          uncompressedDataPipe.closeWriteFd();
+          log_debug("wait lzma process to end");
+          int ret = lzmaProcess.wait();
+          log_debug("lzma process ended with return code " << WEXITSTATUS(ret) << " (" << ret << ')');
+          exit ((WEXITSTATUS(ret) != 0 || uncompressedDataPipe.fail()) ? -1 : 0);
+        }
+        else
+        {
+          // redirect stdin and out and exec lzma
+
+          uncompressedDataPipe.closeWriteFd();
+
+          // redirect stdin to uncompressedDataPipe
+          close(STDIN_FILENO);
+          dup(uncompressedDataPipe.getReadFd());
+
+          // redirect stdout to compressedDataPipe
+          close(STDOUT_FILENO);
+          dup(compressedDataPipe.getWriteFd());
+
+          // execute
+          const char* argv[] = { "lzma", "-c", "-z", "-q", 0 };
+          log_debug("exec lzma process");
+          execvp("/usr/bin/lzma", const_cast<char* const*>(argv));
+          cxxtools::SysError e("execvp");
+          log_fatal("error running lzma process: " << e.what());
+          exit(-1);
+        }
+      }
     }
     else
     {

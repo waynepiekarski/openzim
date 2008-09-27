@@ -30,6 +30,160 @@
 
 log_define("zeno.putarticle")
 
+class UrlRewriter
+{
+private:
+	tntdb::Connection conn;
+    tntdb::Statement selectUrl;
+	std::map<std::string, std::string> cache;
+	std::string zenoname;
+
+public:
+	UrlRewriter(tntdb::Connection& c, const std::string& name = "Wikipedia")
+        : conn(c),
+          selectUrl(conn.prepare(
+            "select title,redirect,namespace from article where url = :url")),
+          zenoname(name)
+          { }
+
+	std::string getUrl(const std::string& filename);
+	void add(const char * filename, const std::string& url, char ns);
+
+	static std::string encode(const char * in, char percent = '%');
+	static std::string decode(const std::string& in);
+};
+
+std::string UrlRewriter::getUrl(const std::string& filename)
+{
+  std::ostringstream out;
+
+  std::map<std::string, std::string>::const_iterator it = cache.find(filename);
+  if (it != cache.end())
+    return it->second;
+
+  try
+  {
+    std::string encodedurl = decode(filename);
+
+    tntdb::Row row = selectUrl.set("url", encodedurl).selectRow();
+    if (row[1].isNull())
+    {
+      out << " href=\"/" << zenoname << "/" << row[2].getString() << "/" << row[0].getString() << "\"";
+    }
+    else
+    {
+      out << " href=\"/" << zenoname << "/" << row[2].getString() << "/" << row[1].getString() << "\"";
+    }
+    cache[filename] = out.str();
+  }
+  catch(const std::exception& e)
+  {
+    out << " href=\"../../../../" << filename << '"';
+  }
+
+  return out.str();
+}
+
+void UrlRewriter::add(const char * filename, const std::string& url, char ns)
+{
+  std::ostringstream out;
+  std::string baseurl = encode(filename);
+
+  out << " href=\"/" << zenoname << "/" << ns << "/" << url << "\"";
+  cache[baseurl] = out.str();
+
+  std::ostringstream likeurlstream;
+  likeurlstream << '%' << encode(filename, '_') << '%';
+  std::ostringstream urlstream;
+  urlstream << "../../../../" << baseurl;
+  std::string likeurl = likeurlstream.str();
+  std::string fullurl = urlstream.str();
+
+  tntdb::Statement selectQuery = conn.prepare(
+    "select aid,data from article where data like :likeurl");
+  selectQuery.set("likeurl", likeurl);
+
+  for (tntdb::Statement::const_iterator cur = selectQuery.begin();
+       cur != selectQuery.end(); ++cur)
+  {
+    tntdb::Row row = *cur;
+
+    tntdb::Blob contentBlob;
+    row[1].getBlob(contentBlob);
+    std::string content(contentBlob.data(), contentBlob.size());
+
+    std::ostringstream zenourl;
+    zenourl << "/" << zenoname << "/A/" << url;
+
+    int pos = content.find(fullurl);
+    while(pos != -1)
+    {
+      content = content.replace(pos, fullurl.size(), zenourl.str());
+
+      pos = content.find(fullurl, pos + fullurl.size());
+    }
+
+    contentBlob.assign(content.data(), content.size());
+
+    tntdb::Statement updateUrl = conn.prepare(
+      "update article set data = :data where aid = :aid");
+    updateUrl.set("data", contentBlob);
+    updateUrl.set("aid", row[0].getUnsigned());
+    updateUrl.execute();
+  }
+}
+
+std::string UrlRewriter::encode(const char * in, char percent)
+{
+  std::ostringstream decodedurl;
+
+  for (const char* c = in; *c; ++c)
+  {
+    if (*c < 0)
+    {
+      static char hex[] = "0123456789ABCDEF";
+      decodedurl << hex[(*c >> 4) & 0xf]
+                 << hex[*c & 0xf];
+    }
+    else if (*c == '~')
+    {
+      decodedurl << percent << "7E";
+    }
+    else
+    {
+      decodedurl << *c;
+    }
+  }
+
+  return decodedurl.str();
+}
+
+std::string UrlRewriter::decode(const std::string& in)
+{
+  std::ostringstream url;
+
+  for(std::string::const_iterator c = in.begin();c != in.end();c++)
+  {
+    switch(*c)
+    {
+      case '%':
+        std::string::value_type code[2];
+        unsigned int decode;
+        code[0] = *++c;
+        code[1] = *++c;
+        sscanf(code, "%2x", &decode);
+        url.put(decode);
+        break;
+                  
+      default:
+        url << *c;
+        break;
+    }
+  }
+
+  return url.str();
+}
+
 std::string mybasename(const std::string& fname)
 {
   std::string::size_type b = fname.find_last_of('/');
@@ -51,14 +205,17 @@ int main(int argc, char* argv[])
 
     cxxtools::Arg<std::string> dburl(argc, argv, "--db", "postgresql:dbname=zeno");
     cxxtools::Arg<char> ns(argc, argv, 'n', 'A');
+    cxxtools::Arg<std::string> zenoname(argc, argv, "--zenoname", "Wikipedia");
     tntdb::Connection conn = tntdb::connect(dburl);
 
     tntdb::Statement insArticle = conn.prepare(
-      "insert into article (namespace, mimetype, title, data)"
-      " values (:namespace, :mimetype, :title, :data)");
+      "insert into article (namespace, mimetype, title, url, data)"
+      " values (:namespace, :mimetype, :title, :url, :data)");
     tntdb::Statement insRedirect = conn.prepare(
-      "insert into article (namespace, title, redirect)"
-      " values (:namespace, :title, :redirect)");
+      "insert into article (namespace, title, url, redirect)"
+      " values (:namespace, :title, :url, :redirect)");
+
+    UrlRewriter rewriter(conn, zenoname);
 
     for (int a = 1; a < argc; ++a)
     {
@@ -72,6 +229,8 @@ int main(int argc, char* argv[])
       std::ostringstream data;
       data << in.rdbuf();
 
+      static cxxtools::Regex regHref("href=\"([^/]+/){4}([^\"]+\\.html)\"");
+
       static cxxtools::Regex regArticle("<h1( class=\"[^\"]*\")?>([^<]+)</h1>.*<!--\\s*start\\s+content\\s*-->(.*)<!--\\send\\s+content\\s*-->");
       static cxxtools::Regex regRedirect("<meta http-equiv=\"Refresh\".*<a href=\"[^\"]*\">([^<]*)");
       cxxtools::RegexSMatch match;
@@ -79,19 +238,37 @@ int main(int argc, char* argv[])
       {
         std::string title = match[2];
         std::string content = match[3];
+        std::ostringstream cleancontent;
+
         log_info(argv[a] << " is article; title=" << title << "; size=" << content.size());
 
         std::cout << "article: \"" << title << '"' << std::endl;
 
         // TODO fix links
+        
+        cxxtools::RegexSMatch hrefmatch;
+        while(regHref.match(content, hrefmatch))
+        {
+          cleancontent << content.substr(0, hrefmatch.offsetBegin(0));
+
+          cleancontent << rewriter.getUrl(hrefmatch.get(2));
+
+          content.erase(0, hrefmatch.offsetEnd(0));
+        }
+
+        cleancontent << content;
+        content = cleancontent.str();
 
         // insert article
         tntdb::Blob data(content.data(), content.size());
         insArticle.set("namespace", ns)
                   .set("mimetype", zeno::Dirent::zenoMimeTextHtml)
                   .set("title", title)
+                  .set("url", argv[a])
                   .set("data", data)
                   .execute();
+
+        rewriter.add(argv[a], title, ns);
       }
       else if (regRedirect.match(data.str(), match))
       {
@@ -112,8 +289,11 @@ int main(int argc, char* argv[])
         // insert redirect
         insRedirect.set("namespace", ns)
                    .set("title", title)
+                   .set("url", argv[a])
                    .set("redirect", redirect)
                    .execute();
+
+        rewriter.add(argv[a], redirect, ns);
       }
       else
       {

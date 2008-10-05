@@ -36,6 +36,16 @@ namespace zeno
 
     log_debug("read entries for article " << getUrl());
 
+    if (getParameter().empty())
+      readEntriesB();
+    else
+      readEntriesZ();
+
+    categoriesRead = true;
+  }
+
+  void IndexArticle::readEntriesZ()
+  {
     std::istringstream s(getParameter());
     s.get();  // skip length byte
     zeno::ZIntStream extra(s);
@@ -102,7 +112,51 @@ namespace zeno
         offset += len;
       }
     }
-    categoriesRead = true;
+
+  }
+
+  namespace
+  {
+    class Eof { };
+
+    zeno::size_type getSizeValue(std::istream& in)
+    {
+      zeno::size_type ret;
+      in.read(reinterpret_cast<char*>(&ret), sizeof(zeno::size_type));
+      if (!in)
+        throw Eof();
+      ret = fromLittleEndian<zeno::size_type>(&ret);
+      return ret;
+    }
+  }
+
+  void IndexArticle::readEntriesB()
+  {
+    try
+    {
+      zeno::size_type categoryCount[4];
+      std::istringstream data(getData());
+      for (unsigned c = 0; c < 4; ++c)
+        categoryCount[c] = getSizeValue(data);
+
+      for (unsigned c = 0; c < 4; ++c)
+      {
+        log_debug("read " << categoryCount[c] << " entries for category " << c);
+        for (unsigned n = 0; n < categoryCount[c]; ++n)
+        {
+          Entry entry;
+          entry.index = getSizeValue(data);
+          if (getNamespace() == 'X')
+            entry.pos = getNamespace() ? getSizeValue(data) : 0;
+          entries[c].push_back(entry);
+        }
+      }
+    }
+    catch (const Eof&)
+    {
+      log_error("end of file when reading index entries for article " << getTitle());
+      return;
+    }
   }
 
 }

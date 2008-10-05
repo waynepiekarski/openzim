@@ -38,12 +38,16 @@ class ZenoDumper
 {
     zeno::File file;
     zeno::File::const_iterator pos;
+    bool verbose;
 
   public:
     explicit ZenoDumper(const char* fname)
       : file(fname),
-        pos(file.begin())
+        pos(file.begin()),
+        verbose(false)
       { }
+
+    void setVerbose(bool sw = true)  { verbose = sw; }
     
     static void listZenoFiles(const std::string& directory);
     static void listZenoFiles(const std::string& directory, char ns);
@@ -53,9 +57,9 @@ class ZenoDumper
     void findArticle(char ns, const char* url, bool collate);
     void dumpArticle(bool raw = false);
     static void printIndexcontent(zeno::IndexArticle article);
-    void listArticles(bool info, bool extra, bool verbose, bool indexcontent);
+    void listArticles(bool info, bool extra, bool indexcontent);
     static void listArticle(const zeno::Article& article, bool extra, bool verbose, bool indexcontent);
-    void listArticle(bool extra, bool verbose, bool indexcontent)
+    void listArticle(bool extra, bool indexcontent)
       { listArticle(*pos, extra, verbose, indexcontent); }
     void dumpFiles(const std::string& directory);
 };
@@ -78,9 +82,10 @@ void ZenoDumper::listZenoFiles(const std::string& directory, char ns)
 
 void ZenoDumper::printInfo()
 {
-  std::cout << "count-articles: " << file.getCountArticles() << "\n"
-               "namespaces: " << file.getNamespaces() << "\n"
-               "index ptr pos: " << file.getFileheader().getIndexPtrPos() << "\n"
+  std::cout << "count-articles: " << file.getCountArticles() << "\n";
+  if (verbose)
+    std::cout << "namespaces: " << file.getNamespaces() << "\n";
+  std::cout << "index ptr pos: " << file.getFileheader().getIndexPtrPos() << "\n"
                "index ptr len: " << file.getFileheader().getIndexPtrLen() << "\n"
                "index pos: " << file.getFileheader().getIndexPos() << "\n"
                "index len: " << file.getFileheader().getIndexLen() << "\n"
@@ -127,7 +132,7 @@ void ZenoDumper::printIndexcontent(zeno::IndexArticle article)
   }
 }
 
-void ZenoDumper::listArticles(bool info, bool extra, bool verbose, bool indexcontent)
+void ZenoDumper::listArticles(bool info, bool extra, bool indexcontent)
 {
   for (zeno::File::const_iterator it = pos; it != file.end(); ++it)
   {
@@ -287,6 +292,7 @@ int main(int argc, char* argv[])
 
     // initalize app
     ZenoDumper app(argv[1]);
+    app.setVerbose(verbose);
 
     // global info
     if (fileinfo)
@@ -310,9 +316,9 @@ int main(int argc, char* argv[])
     if (data || rawdump)
       app.dumpArticle(rawdump);
     else if (list)
-      app.listArticles(info, extra, verbose, indexcontent);
+      app.listArticles(info, extra, indexcontent);
     else if (info)
-      app.listArticle(extra, verbose, indexcontent);
+      app.listArticle(extra, indexcontent);
   }
   catch (const std::exception& e)
   {

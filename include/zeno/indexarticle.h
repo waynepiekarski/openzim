@@ -40,6 +40,8 @@ namespace zeno
       EntriesType entries[4];
       bool categoriesRead;
       void readEntries();
+      void readEntriesZ();  // directmedia style zint-compression
+      void readEntriesB();  // article compressed style
 
       static bool noOffset;
 

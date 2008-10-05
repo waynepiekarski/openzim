@@ -65,6 +65,7 @@ class Zenowriter
     void init();
     void cleanup();
     void prepareFile();
+    void prepareWordIndex();
     void createWordIndex();
     void prepareSort();
     void outputFile();
@@ -85,6 +86,36 @@ class Zenowriter
 
     unsigned getNumThreads() const     { return numThreads; }
     void setNumThreads(unsigned n)     { numThreads = n; }
+
+    bool getCreateIndex() const     { return createIndex; }
+    void setCreateIndex(bool n)     { createIndex = n; }
+
 };
+
+class ZenoIndexEntry
+{
+    friend std::ostream& operator<< (std::ostream& out, const ZenoIndexEntry& entry);
+    char data[2 * sizeof(zeno::size_type)];
+
+  public:
+    ZenoIndexEntry() {}
+    ZenoIndexEntry(zeno::size_type index_, zeno::size_type pos_)
+    {
+      setIndex(index_);
+      setPos(pos_);
+    }
+
+    zeno::size_type getIndex() const        { return fromLittleEndian<zeno::size_type>(data); }
+    void        setIndex(zeno::size_type o) { *reinterpret_cast<zeno::size_type*>(&data[0]) = fromLittleEndian<zeno::size_type>(&o); }
+
+    zeno::size_type getPos() const        { return fromLittleEndian<zeno::size_type>(&data[sizeof(zeno::size_type)]); }
+    void        setPos(zeno::size_type o) { *reinterpret_cast<zeno::size_type*>(&data[sizeof(zeno::size_type)]) = fromLittleEndian<zeno::size_type>(&o); }
+};
+
+inline std::ostream& operator<< (std::ostream& out, const ZenoIndexEntry& entry)
+{
+  out.write(entry.data, 2 * sizeof(zeno::size_type));
+  return out;
+}
 
 #endif

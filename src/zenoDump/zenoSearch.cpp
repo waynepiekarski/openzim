@@ -22,6 +22,9 @@
 #include <cxxtools/log.h>
 #include <zeno/search.h>
 #include <zeno/files.h>
+#include <sys/types.h> 
+#include <sys/stat.h> 
+#include <unistd.h> 
 
 int main(int argc, char* argv[])
 {
@@ -34,7 +37,17 @@ int main(int argc, char* argv[])
       return 1;
     }
 
-    zeno::Files files(argv[1]);
+    zeno::Files files;
+
+    struct stat st;
+    if (stat(argv[1], &st) != 0)
+      throw cxxtools::SysError("stat");
+
+    if (st.st_mode & S_IFDIR)
+      files.addFiles(argv[1]);
+    else
+      files.addFile(argv[1]);
+
     zeno::Search search(files);
     zeno::Search::Results result;
     search.search(result, argv[2]);

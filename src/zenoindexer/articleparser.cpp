@@ -136,7 +136,7 @@ namespace zeno
     //log_debug("ch " << ch << " => " << state);
   }
 
-  char ArticleParser::parseEntityChar()
+  void ArticleParser::parseEntityChar()
   {
     const char* ct [][2] =
       {
@@ -306,6 +306,7 @@ namespace zeno
         break;
 
       case state_word:
+      case state_wordent:
         {
           event.onWord(word, pos);
           state = state_0;

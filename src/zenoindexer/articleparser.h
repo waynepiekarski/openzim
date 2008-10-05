@@ -66,7 +66,7 @@ namespace zeno
       std::string entity;
       unsigned pos;
 
-      char parseEntityChar();
+      void parseEntityChar();
 
     public:
       ArticleParser(ArticleParseEvent& event_)

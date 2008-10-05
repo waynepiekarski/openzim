@@ -35,12 +35,12 @@ namespace zeno
   {
     struct Article
     {
-      unsigned aid;
+      int aid;
       unsigned direntlen;
       unsigned dataoffset;
       unsigned datasize;
       Article() { }
-      Article(unsigned aid_, unsigned direntlen_, unsigned dataoffset_, unsigned datasize_)
+      Article(int aid_, unsigned direntlen_, unsigned dataoffset_, unsigned datasize_)
         : aid(aid_),
           direntlen(direntlen_),
           dataoffset(dataoffset_),
@@ -66,6 +66,7 @@ namespace zeno
       ZenoCompressor(const std::string& dburl, unsigned zid, unsigned numThreads);
       ~ZenoCompressor();
       void put(const CompressJob& job);
+      const std::string& getErrorMessage() const;
   };
 
 }

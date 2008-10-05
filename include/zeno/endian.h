@@ -66,6 +66,10 @@ T fromLittleEndian(const void* ptr, bool fromBigEndian = isBigEndian())
 { return fromLittleEndian(static_cast<const T*>(ptr), fromBigEndian); }
 
 template <typename T>
+T fromLittleEndian(const T& t, bool fromBigEndian = isBigEndian())
+{ return fromLittleEndian(static_cast<const T*>(&t), fromBigEndian); }
+
+template <typename T>
 T fromLittleEndian(std::istream& in, bool fromBigEndian = isBigEndian())
 {
   T data;
@@ -98,6 +102,10 @@ T fromBigEndian(T* ptr, bool fromBigEndian_ = isBigEndian())
 template <typename T>
 T fromBigEndian(const void* ptr, bool fromBigEndian_ = isBigEndian())
 { return fromBigEndian(static_cast<const T*>(ptr), fromBigEndian_); }
+
+template <typename T>
+T fromBigEndian(const T& t, bool fromBigEndian = isBigEndian())
+{ return fromBigEndian(static_cast<const T*>(&t), fromBigEndian); }
 
 template <typename T>
 T fromBigEndian(std::istream& in, bool fromBigEndian_ = isBigEndian())

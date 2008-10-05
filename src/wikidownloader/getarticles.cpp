@@ -159,6 +159,8 @@ int GetArticles::run()
       from = title;
     }
   }
+
+  return 0;
 }
 
 void GetArticles::processArticle(const Article& article)

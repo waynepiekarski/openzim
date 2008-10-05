@@ -57,6 +57,7 @@ namespace zeno
       tntdb::Connection conn;
       tntdb::Statement insData;
       tntdb::Statement updArticle;
+      tntdb::Statement updIndexarticle;
 
       cxxtools::Mutex mutex;
       cxxtools::Condition notEmpty;
@@ -75,6 +76,7 @@ namespace zeno
       };
 
       std::deque<CompressJobX> queue;
+      std::string errorMessage;
       bool stop;
 
       zeno::offset_type datapos;
@@ -92,6 +94,7 @@ namespace zeno
       ZenoCompressorContext(const std::string& dburl, unsigned zid);
       void put(const CompressJob& job);
       void end();
+      const std::string& getErrorMessage() const   { return errorMessage; }
   };
 
   void ZenoCompressorThread::run()
@@ -125,6 +128,11 @@ namespace zeno
     context->put(job);
   }
 
+  const std::string& ZenoCompressor::getErrorMessage() const
+  {
+    return context->getErrorMessage();
+  }
+
   ZenoCompressorContext::ZenoCompressorContext(const std::string& dburl, unsigned zid)
     : conn(tntdb::connect(dburl)),
       insData(conn.prepare(
@@ -140,6 +148,15 @@ namespace zeno
         "       did        = :did"
         " where zid = :zid"
         "   and aid = :aid")),
+      updIndexarticle(conn.prepare(
+        "update indexarticle"
+        "   set direntlen  = :direntlen,"
+        "       dataoffset = :dataoffset,"
+        "       datasize   = :datasize,"
+        "       datapos    = :datapos,"
+        "       did        = :did"
+        " where zid = :zid"
+        "   and xid = :xid")),
       stop(false),
       datapos(0),
       nextDid(0),
@@ -147,6 +164,7 @@ namespace zeno
   {
     insData.set("zid", zid);
     updArticle.set("zid", zid);
+    updIndexarticle.set("zid", zid);
   }
 
   void ZenoCompressorContext::end()
@@ -203,7 +221,18 @@ namespace zeno
           notEmpty.signal();
       }
 
-      doJob(job);
+      try
+      {
+        doJob(job);
+      }
+      catch (const std::exception& e)
+      {
+        std::ostringstream msg;
+        msg << "error in compress job: " << e.what();
+        log_error(msg.str());
+        errorMessage = msg.str();
+        stop = true;
+      }
 
       log_debug("job ready");
     }
@@ -319,14 +348,25 @@ namespace zeno
       for (CompressJob::ArticlesType::const_iterator it = j->second.articles.begin();
         it != j->second.articles.end(); ++it)
       {
-        log_debug("update article " << it->aid);
-        updArticle.setUnsigned64("datapos", datapos)
-                  .set("aid", it->aid)
-                  .set("direntlen", it->direntlen)
-                  .set("dataoffset", it->dataoffset)
-                  .set("datasize", it->datasize)
-                  .set("did", insDid)
-                  .execute();
+        log_debug("update article " << it->aid << " direntlen=" << it->direntlen << " dataoffset=" << it->dataoffset
+            << " datasize=" << it->datasize << " did=" << insDid);
+
+        if (it->aid >= 0)
+          updArticle.setUnsigned64("datapos", datapos)
+                    .set("aid", it->aid)
+                    .set("direntlen", it->direntlen)
+                    .set("dataoffset", it->dataoffset)
+                    .set("datasize", it->datasize)
+                    .set("did", insDid)
+                    .execute();
+        else
+          updIndexarticle.setUnsigned64("datapos", datapos)
+                         .set("xid", -(1+it->aid))
+                         .set("direntlen", it->direntlen)
+                         .set("dataoffset", it->dataoffset)
+                         .set("datasize", it->datasize)
+                         .set("did", insDid)
+                         .execute();
       }
 
       ++insDid;

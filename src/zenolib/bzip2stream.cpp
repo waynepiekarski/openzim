@@ -74,7 +74,7 @@ namespace zeno
     stream.avail_out = sizeof(zbuffer);
 
     // deflate
-    log_debug("pre:avail_out=" << stream.avail_out << " avail_in=" << stream.avail_in);
+    log_debug("pre:avail_out=" << stream.avail_out << " avail_in=" << stream.avail_in << " BZ_RUN");
     int ret = checkError(::BZ2_bzCompress(&stream, BZ_RUN), stream);
     log_debug("post:avail_out=" << stream.avail_out << " avail_in=" << stream.avail_in << " ret=" << ret << " total_out_lo32=" << stream.total_out_lo32);
 
@@ -115,13 +115,12 @@ namespace zeno
     int ret;
     do
     {
-      log_debug("avail_in=" << stream.avail_in);
       // initialize zbuffer
       stream.next_out = zbuffer;
       stream.avail_out = sizeof(zbuffer);
 
-      log_debug("pre:avail_out=" << stream.avail_out << " avail_in=" << stream.avail_in);
-      int ret = checkError(::BZ2_bzCompress(&stream, BZ_FLUSH), stream);
+      log_debug("pre:avail_out=" << stream.avail_out << " avail_in=" << stream.avail_in << " BZ_FLUSH");
+      ret = checkError(::BZ2_bzCompress(&stream, BZ_FLUSH), stream);
       log_debug("post:avail_out=" << stream.avail_out << " avail_in=" << stream.avail_in << " ret=" << ret << " total_out_lo32=" << stream.total_out_lo32);
 
       // copy zbuffer to sink
@@ -133,7 +132,7 @@ namespace zeno
           return -1;
       }
 
-    } while (ret != BZ_RUN);
+    } while (ret != BZ_RUN_OK);
 
     // reset outbuffer
     setp(obuffer.begin(), obuffer.end());
@@ -155,7 +154,7 @@ namespace zeno
       stream.next_out = zbuffer;
       stream.avail_out = sizeof(zbuffer);
 
-      log_debug("pre:avail_out=" << stream.avail_out << " avail_in=" << stream.avail_in);
+      log_debug("pre:avail_out=" << stream.avail_out << " avail_in=" << stream.avail_in << " BZ_FINISH");
       ret = checkError(::BZ2_bzCompress(&stream, BZ_FINISH), stream);
       log_debug("post:avail_out=" << stream.avail_out << " avail_in=" << stream.avail_in << " ret=" << ret << " total_out_lo32=" << stream.total_out_lo32);
 

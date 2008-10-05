@@ -43,7 +43,6 @@ namespace zeno
   {
     QUnicodeString ret;
 
-    char hi = '\0';
     unsigned bytes = 0;
     uint16_t uvalue = 0;
     for (std::string::const_iterator it = v.begin(); it != v.end(); ++it)

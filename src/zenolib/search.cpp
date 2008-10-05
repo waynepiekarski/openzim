@@ -133,11 +133,17 @@ namespace zeno
   {
     for (Files::iterator it = files.begin(); it != files.end(); ++it)
     {
-      if (it->second.hasNamespace('X'))
-        indexfile = it->second;
-      else if (files.getFixFiles().find(it->first) == files.getFixFiles().end()
-            && it->second.hasNamespace('A'))
+      if (it->second.hasNamespace('A'))
+      {
+        log_debug("articlefile " << it->second.getFilename());
         articlefile = it->second;
+      }
+
+      if (it->second.hasNamespace('X'))
+      {
+        log_debug("indexfile " << it->second.getFilename());
+        indexfile = it->second;
+      }
     }
 
     if (!articlefile)
@@ -169,7 +175,7 @@ namespace zeno
 
       IndexArticle indexarticle = indexfile.getArticle('X', QUnicodeString::fromUtf8(token), true);
 
-      for (unsigned cat = 0; cat <= 3; ++cat)
+      for (unsigned cat = 0; cat < 4; ++cat)
       {
         const IndexArticle::EntriesType ent = indexarticle.getCategory(cat);
         for (IndexArticle::EntriesType::const_iterator it = ent.begin(); it != ent.end(); ++it)

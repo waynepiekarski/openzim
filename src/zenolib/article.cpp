@@ -28,6 +28,7 @@ namespace zeno
   {
     static const std::string textHtml = "text/html";
     static const std::string textPlain = "text/plain";
+    static const std::string textXml = "application/xml";
     static const std::string imageJpeg = "image/jpeg";
     static const std::string imagePng = "image/png";
     static const std::string imageTiff = "image/tiff";
@@ -59,6 +60,8 @@ namespace zeno
         return applicationJavaScript;
       case Dirent::zenoMimeImageIcon:
         return imageIcon;
+      case Dirent::zenoMimeTextXml:
+        return textXml;
     }
 
     return textHtml;

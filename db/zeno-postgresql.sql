@@ -57,12 +57,16 @@ create table zenoarticles
   foreign key (aid) references article
 );
 
+create index zenoarticles_ix1 on zenoarticles(zid, direntlen);
+create index zenoarticles_ix2 on zenoarticles(zid, sort);
+
 create table indexarticle
 (
   zid          integer not null,
   xid          serial  not null,
   namespace    text    not null,
   title        text    not null,
+  data         bytea,
   sort         integer,
   direntlen    bigint,
   datapos      bigint,
@@ -74,8 +78,8 @@ create table indexarticle
   foreign key (zid) references zenofile
 );
 
-create index zenoarticles_ix1 on zenoarticles(zid, direntlen);
-create index zenoarticles_ix2 on zenoarticles(zid, sort);
+create index indexarticle_ix1 on indexarticle(zid, xid);
+create index indexarticle_ix2 on indexarticle(zid, sort);
 
 create table words
 (

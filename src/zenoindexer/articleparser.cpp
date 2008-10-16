@@ -37,6 +37,24 @@ namespace zeno
         {
           state = state_ent;
         }
+        else if (static_cast<unsigned char>(ch) >> 5 == 6)
+        {
+          utf8counter = 1;
+          utf8char = ch;
+          state = state_utf8;
+        }
+        else if (static_cast<unsigned char>(ch) >> 4 == 0xe)
+        {
+          utf8counter = 2;
+          utf8char = ch;
+          state = state_utf8;
+        }
+        else if (static_cast<unsigned char>(ch) >> 3 == 0x1e)
+        {
+          utf8counter = 3;
+          utf8char = ch;
+          state = state_utf8;
+        }
         else if (!std::isspace(ch) && !std::ispunct(ch))
         {
           word = std::tolower(ch);
@@ -110,11 +128,29 @@ namespace zeno
       case state_word:
         if (ch == '&')
           state = state_wordent;
+        else if (static_cast<unsigned char>(ch) >> 5 == 6)
+        {
+          utf8counter = 1;
+          utf8char = ch;
+          state = state_wordutf8;
+        }
+        else if (static_cast<unsigned char>(ch) >> 4 == 0xe)
+        {
+          utf8counter = 2;
+          utf8char = ch;
+          state = state_wordutf8;
+        }
+        else if (static_cast<unsigned char>(ch) >> 3 == 0x1e)
+        {
+          utf8counter = 3;
+          utf8char = ch;
+          state = state_wordutf8;
+        }
         else if (!std::isspace(ch) && !std::ispunct(ch))
           word += std::tolower(ch);
         else
         {
-          event.onWord(word, pos);
+          event.onWord(word, pos - word.size());
           state = ch == '<' ? state_tag0 : state_0;
         }
         break;
@@ -128,6 +164,37 @@ namespace zeno
         }
         else
           entity += ch;
+        break;
+
+      case state_utf8:
+      case state_wordutf8:
+        if (static_cast<unsigned char>(ch) >> 6 == 2)
+        {
+          utf8char += ch;
+          if (--utf8counter == 0)
+          {
+            if (utf8char.at(0) == '\xe2' 
+              || utf8char == "\xc2\xa0")
+            {
+              // punctuation or other funny character detected
+              if (state == state_wordutf8)
+                event.onWord(word, pos - word.size() - utf8char.size());
+              state = state_0;
+            }
+            else
+            {
+              word += utf8char;
+              state = state_word;
+            }
+          }
+        }
+        else
+        {
+          // invalid utf8 encoding - skip it
+          if (state == state_wordutf8)
+            event.onWord(word, pos - word.size() - utf8char.size());
+          state = state_0;
+        }
         break;
     }
 
@@ -308,9 +375,18 @@ namespace zeno
       case state_word:
       case state_wordent:
         {
-          event.onWord(word, pos);
+          event.onWord(word, pos - word.size());
           state = state_0;
         }
+        break;
+
+      case state_utf8:
+        break;
+
+      case state_wordutf8:
+        if (!word.empty())
+          event.onWord(word, pos - word.size());
+        break;
     }
   }
 

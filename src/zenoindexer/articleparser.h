@@ -59,12 +59,16 @@ namespace zeno
         state_ent,
         state_word,
         state_wordent,
+        state_utf8,
+        state_wordutf8,
       } state;
 
       ArticleParseEvent& event;
       std::string word;
       std::string entity;
       unsigned pos;
+      std::string utf8char;
+      unsigned utf8counter;
 
       void parseEntityChar();
 

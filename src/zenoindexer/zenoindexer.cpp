@@ -30,6 +30,8 @@ log_define("zeno.indexer")
 class Zenoindexer : public zeno::ArticleParseEventEx
 {
     tntdb::Connection conn;
+    bool printOnly;
+    unsigned aid;
     tntdb::Statement insWord;
     bool inTitle;
 
@@ -39,7 +41,7 @@ class Zenoindexer : public zeno::ArticleParseEventEx
     void insertWord(unsigned weight, const std::string& word, unsigned pos);
 
   public:
-    explicit Zenoindexer(tntdb::Connection& conn);
+    explicit Zenoindexer(tntdb::Connection& conn, bool printOnly);
     void process(unsigned aid, const std::string& title, const tntdb::Blob& data);
     void onH1(const std::string& word, unsigned pos);
     void onH2(const std::string& word, unsigned pos);
@@ -47,12 +49,14 @@ class Zenoindexer : public zeno::ArticleParseEventEx
     void onP(const std::string& word, unsigned pos);
 };
 
-Zenoindexer::Zenoindexer(tntdb::Connection& conn_)
-  : conn(conn_)
+Zenoindexer::Zenoindexer(tntdb::Connection& conn_, bool printOnly_)
+  : conn(conn_),
+    printOnly(printOnly_)
 {
-  insWord = conn.prepare(
-    "insert into words (word, aid, pos, weight)"
-    " values (:word, :aid, :pos, :weight)");
+  if (!printOnly)
+    insWord = conn.prepare(
+      "insert into words (word, aid, pos, weight)"
+      " values (:word, :aid, :pos, :weight)");
 
   tntdb::Statement selTrivialWords = conn.prepare(
     "select word from trivialwords");
@@ -62,17 +66,26 @@ Zenoindexer::Zenoindexer(tntdb::Connection& conn_)
 
 void Zenoindexer::insertWord(unsigned weight, const std::string& word, unsigned pos)
 {
-  insWord.set("word", word)
-         .set("pos", pos)
-         .set("weight", weight)
-         .execute();
+  if (printOnly)
+  {
+    std::cout << word << '\t' << pos << '\t' << aid << '\t' << weight << '\n';
+  }
+  else
+  {
+    insWord.set("word", word)
+           .set("pos", pos)
+           .set("weight", weight)
+           .execute();
+  }
 }
 
-void Zenoindexer::process(unsigned aid, const std::string& title, const tntdb::Blob& data)
+void Zenoindexer::process(unsigned aid_, const std::string& title, const tntdb::Blob& data)
 {
   tntdb::Transaction trans(conn);
 
-  insWord.set("aid", aid);
+  aid = aid_;
+  if (!printOnly)
+    insWord.set("aid", aid);
 
   zeno::ArticleParser parser(*this);
 
@@ -118,9 +131,10 @@ int main(int argc, char* argv[])
     log_init();
 
     cxxtools::Arg<std::string> dburl(argc, argv, "--db", "postgresql:dbname=zeno");
+    cxxtools::Arg<bool> printOnly(argc, argv, 'p');
     tntdb::Connection conn = tntdb::connect(dburl);
 
-    Zenoindexer zenoindexer(conn);
+    Zenoindexer zenoindexer(conn, printOnly);
 
     tntdb::Statement stmt = conn.prepare(
       "select aid, title, data"
@@ -135,7 +149,7 @@ int main(int argc, char* argv[])
       std::string title = cur->getString(1);
       tntdb::Blob data;
       cur->getBlob(2, data);
-      std::cout << "process " << title << std::endl;
+      log_info("process " << title);
       zenoindexer.process(aid, title, data);
     }
   }

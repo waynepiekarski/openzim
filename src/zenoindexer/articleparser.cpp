@@ -21,6 +21,7 @@
 #include <map>
 #include <cctype>
 #include <cxxtools/log.h>
+#include <zeno/unicode.h>
 
 log_define("zeno.indexer")
 
@@ -28,6 +29,8 @@ namespace zeno
 {
   void ArticleParser::parse(char ch)
   {
+    ++pos;
+
     switch (state)
     {
       case state_0:
@@ -41,18 +44,21 @@ namespace zeno
         {
           utf8counter = 1;
           utf8char = ch;
+          utf8value = static_cast<unsigned char>(ch) & 0x1f;
           state = state_utf8;
         }
         else if (static_cast<unsigned char>(ch) >> 4 == 0xe)
         {
           utf8counter = 2;
           utf8char = ch;
+          utf8value = static_cast<unsigned char>(ch) & 0xf;
           state = state_utf8;
         }
         else if (static_cast<unsigned char>(ch) >> 3 == 0x1e)
         {
           utf8counter = 3;
           utf8char = ch;
+          utf8value = static_cast<unsigned char>(ch) & 0x7;
           state = state_utf8;
         }
         else if (!std::isspace(ch) && !std::ispunct(ch))
@@ -132,18 +138,21 @@ namespace zeno
         {
           utf8counter = 1;
           utf8char = ch;
+          utf8value = static_cast<unsigned char>(ch) & 0x1f;
           state = state_wordutf8;
         }
         else if (static_cast<unsigned char>(ch) >> 4 == 0xe)
         {
           utf8counter = 2;
           utf8char = ch;
+          utf8value = static_cast<unsigned char>(ch) & 0xf;
           state = state_wordutf8;
         }
         else if (static_cast<unsigned char>(ch) >> 3 == 0x1e)
         {
           utf8counter = 3;
           utf8char = ch;
+          utf8value = static_cast<unsigned char>(ch) & 0x7;
           state = state_wordutf8;
         }
         else if (!std::isspace(ch) && !std::ispunct(ch))
@@ -171,20 +180,24 @@ namespace zeno
         if (static_cast<unsigned char>(ch) >> 6 == 2)
         {
           utf8char += ch;
+          utf8value = (utf8value << 6) | static_cast<unsigned char>(ch);
           if (--utf8counter == 0)
           {
-            if (utf8char.at(0) == '\xe2' 
-              || utf8char == "\xc2\xa0")
+            if (zeno::isalnum(utf8value))
             {
-              // punctuation or other funny character detected
-              if (state == state_wordutf8)
-                event.onWord(word, pos - word.size() - utf8char.size());
-              state = state_0;
+              // TODO use zeno::tolower
+              //if (utf8char != zeno::tolower(utf8char))
+                // ;
+              word += utf8char;
+              state = state_word;
             }
             else
             {
-              word += utf8char;
-              state = state_word;
+              if (state == state_wordutf8)
+              {
+                event.onWord(word, pos - word.size() - utf8char.size());
+              }
+              state = state_0;
             }
           }
         }
@@ -197,8 +210,6 @@ namespace zeno
         }
         break;
     }
-
-    ++pos;
 
     //log_debug("ch " << ch << " => " << state);
   }

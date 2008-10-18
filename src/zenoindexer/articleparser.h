@@ -68,6 +68,7 @@ namespace zeno
       std::string entity;
       unsigned pos;
       std::string utf8char;
+      uint32_t utf8value;
       unsigned utf8counter;
 
       void parseEntityChar();

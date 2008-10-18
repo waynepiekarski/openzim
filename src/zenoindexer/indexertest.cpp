@@ -23,8 +23,10 @@
 #include <fstream>
 #include <iostream>
 #include <cxxtools/loginit.h>
+#include <cxxtools/arg.h>
 
-class EventPrinter : public zeno::ArticleParseEventEx
+////////////////////////////////////////////////////////////////////////
+class ParseResultPrinter : public zeno::ArticleParseEventEx
 {
     typedef std::vector<unsigned> PositionsType;
     struct WordType
@@ -47,27 +49,27 @@ class EventPrinter : public zeno::ArticleParseEventEx
     void print(const std::string& cat, const PositionsType& p) const;
 };
 
-void EventPrinter::onH1(const std::string& word, unsigned pos)
+void ParseResultPrinter::onH1(const std::string& word, unsigned pos)
 {
   words[word].h1.push_back(pos);
 }
 
-void EventPrinter::onH2(const std::string& word, unsigned pos)
+void ParseResultPrinter::onH2(const std::string& word, unsigned pos)
 {
   words[word].h2.push_back(pos);
 }
 
-void EventPrinter::onH3(const std::string& word, unsigned pos)
+void ParseResultPrinter::onH3(const std::string& word, unsigned pos)
 {
   words[word].h3.push_back(pos);
 }
 
-void EventPrinter::onP(const std::string& word, unsigned pos)
+void ParseResultPrinter::onP(const std::string& word, unsigned pos)
 {
   words[word].p.push_back(pos);
 }
 
-void EventPrinter::print() const
+void ParseResultPrinter::print() const
 {
   for (WordsMapType::const_iterator w = words.begin(); w != words.end(); ++w)
   {
@@ -80,7 +82,7 @@ void EventPrinter::print() const
   }
 }
 
-void EventPrinter::print(const std::string& cat, const PositionsType& p) const
+void ParseResultPrinter::print(const std::string& cat, const PositionsType& p) const
 {
   if (!p.empty())
   {
@@ -90,15 +92,59 @@ void EventPrinter::print(const std::string& cat, const PositionsType& p) const
   }
 }
 
-void process(std::istream& in)
+////////////////////////////////////////////////////////////////////////
+class EventPrinter : public zeno::ArticleParseEventEx
 {
-  EventPrinter ev;
+  public:
+    void onH1(const std::string& word, unsigned pos);
+    void onH2(const std::string& word, unsigned pos);
+    void onH3(const std::string& word, unsigned pos);
+    void onP(const std::string& word, unsigned pos);
+};
+
+void EventPrinter::onH1(const std::string& word, unsigned pos)
+{
+  std::cout << "H1:" << pos << '\t' << word << '\n';
+}
+
+void EventPrinter::onH2(const std::string& word, unsigned pos)
+{
+  std::cout << "H2:" << pos << '\t' << word << '\n';
+}
+
+void EventPrinter::onH3(const std::string& word, unsigned pos)
+{
+  std::cout << "H3:" << pos << '\t' << word << '\n';
+}
+
+void EventPrinter::onP(const std::string& word, unsigned pos)
+{
+  std::cout << "P:" << pos << '\t' << word << '\n';
+}
+
+////////////////////////////////////////////////////////////////////////
+void process(std::istream& in, zeno::ArticleParseEvent& ev)
+{
   zeno::ArticleParser parser(ev);
   char ch;
   while (in.get(ch))
     parser.parse(ch);
   parser.endparse();
-  ev.print();
+}
+
+void process(std::istream& in, bool printResults)
+{
+  if (printResults)
+  {
+    ParseResultPrinter ev;
+    process(in, ev);
+    ev.print();
+  }
+  else
+  {
+    EventPrinter ev;
+    process(in, ev);
+  }
 }
 
 int main(int argc, char* argv[])
@@ -107,14 +153,16 @@ int main(int argc, char* argv[])
   {
     log_init();
 
+    cxxtools::Arg<bool> printResults(argc, argv, 'r');
+
     if (argc <= 1)
-      process(std::cin);
+      process(std::cin, printResults);
     else
     {
       for (int a = 1; a < argc; ++a)
       {
         std::ifstream in(argv[a]);
-        process(in);
+        process(in, printResults);
       }
     }
   }

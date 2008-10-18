@@ -18,6 +18,7 @@ libzeno_la_SOURCES = \
 	inflatestream.cpp \
 	qunicode.cpp \
 	search.cpp \
+	unicode.cpp \
 	zintstream.cpp
 
 libzeno_la_LDFLAGS=-lcxxtools -lz -lbz2

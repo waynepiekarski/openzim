@@ -17,5 +17,6 @@ nobase_include_HEADERS = \
 	zeno/inflatestream.h \
 	zeno/qunicode.h \
 	zeno/search.h \
+	zeno/unicode.h \
 	zeno/zeno.h \
 	zeno/zintstream.h

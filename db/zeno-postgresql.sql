@@ -21,10 +21,10 @@ create table category
 create table categoryarticles
 (
   cid          integer not null,
-  title        text  not null,
-  article      text  not null,
-  primary key (cid, title),
+  aid          integer not null,
+  primary key (cid, aid),
   foreign key (cid) references category
+  foreign key (aid) references article
 );
 
 create table zenofile

@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
   try
   {
     log_init();
-    if (argc != 3)
+    if (argc <= 3)
     {
       std::cerr << "usage: " << argv[0] << " zeno-directory searchstring" << std::endl;
       return 1;
@@ -50,7 +50,13 @@ int main(int argc, char* argv[])
 
     zeno::Search search(files);
     zeno::Search::Results result;
-    search.search(result, argv[2]);
+    std::string s = argv[2];
+    for (int a = 3; a < argc; ++a)
+    {
+      s += ' ';
+      s += argv[a];
+    }
+    search.search(result, s);
 
     for (zeno::Search::Results::const_iterator it = result.begin(); it != result.end(); ++it)
     {

@@ -107,8 +107,8 @@ void Zenowriter::prepareWordIndex()
 
   tntdb::Statement insIndexArticle = getConnection().prepare(
     "insert into indexarticle"
-    "  (zid, namespace, title, data)"
-    " values (:zid, 'X', :title, :data)");
+    "  (zid, namespace, title)"
+    " values (:zid, 'X', :title)");
   insIndexArticle.set("zid", zid);
 
   tntdb::Transaction transaction(getConnection());

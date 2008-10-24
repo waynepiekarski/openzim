@@ -143,13 +143,14 @@ int main(int argc, char* argv[])
       "   and aid not in (select distinct aid from words)"
       " order by namespace, title");
 
+    log_info("search for articles to process");
     for (tntdb::Statement::const_iterator cur = stmt.begin(); cur != stmt.end(); ++cur)
     {
       unsigned aid = cur->getUnsigned(0);
       std::string title = cur->getString(1);
       tntdb::Blob data;
       cur->getBlob(2, data);
-      log_info("process " << title);
+      log_info("process " << aid << ": " << title);
       zenoindexer.process(aid, title, data);
     }
   }

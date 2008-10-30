@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
   try
   {
     log_init();
-    if (argc <= 3)
+    if (argc <= 2)
     {
       std::cerr << "usage: " << argv[0] << " zeno-directory searchstring" << std::endl;
       return 1;

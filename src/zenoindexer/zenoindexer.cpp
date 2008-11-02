@@ -46,6 +46,7 @@ class Zenoindexer : public zeno::ArticleParseEventEx
     void onH1(const std::string& word, unsigned pos);
     void onH2(const std::string& word, unsigned pos);
     void onH3(const std::string& word, unsigned pos);
+    void onB(const std::string& word, unsigned pos);
     void onP(const std::string& word, unsigned pos);
 };
 
@@ -53,10 +54,16 @@ Zenoindexer::Zenoindexer(tntdb::Connection& conn_, bool printOnly_)
   : conn(conn_),
     printOnly(printOnly_)
 {
-  if (!printOnly)
+  if (printOnly)
+  {
+    std::cout << "COPY words (word, pos, aid, weight) FROM stdin;\n";
+  }
+  else
+  {
     insWord = conn.prepare(
-      "insert into words (word, aid, pos, weight)"
-      " values (:word, :aid, :pos, :weight)");
+      "insert into words (word, pos, aid, weight)"
+      " values (:word, :pos, :aid, :weight)");
+  }
 
   tntdb::Statement selTrivialWords = conn.prepare(
     "select word from trivialwords");
@@ -66,6 +73,7 @@ Zenoindexer::Zenoindexer(tntdb::Connection& conn_, bool printOnly_)
 
 void Zenoindexer::insertWord(unsigned weight, const std::string& word, unsigned pos)
 {
+  log_debug(word << '\t' << pos << '\t' << aid << '\t' << weight);
   if (printOnly)
   {
     std::cout << word << '\t' << pos << '\t' << aid << '\t' << weight << '\n';
@@ -118,6 +126,12 @@ void Zenoindexer::onH3(const std::string& word, unsigned pos)
     insertWord(2, word, pos);
 }
 
+void Zenoindexer::onB(const std::string& word, unsigned pos)
+{
+  if (trivialWords.find(word) == trivialWords.end())
+    insertWord(2, word, pos);
+}
+
 void Zenoindexer::onP(const std::string& word, unsigned pos)
 {
   if (trivialWords.find(word) == trivialWords.end())
@@ -132,18 +146,31 @@ int main(int argc, char* argv[])
 
     cxxtools::Arg<std::string> dburl(argc, argv, "--db", "postgresql:dbname=zeno");
     cxxtools::Arg<bool> printOnly(argc, argv, 'p');
+    cxxtools::Arg<bool> all(argc, argv, 'a');
     tntdb::Connection conn = tntdb::connect(dburl);
 
     Zenoindexer zenoindexer(conn, printOnly);
 
-    tntdb::Statement stmt = conn.prepare(
-      "select aid, title, data"
-      "  from article"
-      " where mimetype = 0"
-      "   and aid not in (select distinct aid from words)"
-      " order by namespace, title");
+    tntdb::Statement stmt;
+    if (all)
+    {
+      log_info("select all articles");
+      stmt = conn.prepare(
+        "select aid, title, data"
+        "  from article"
+        " where mimetype = 0");
+    }
+    else
+    {
+      log_info("search for articles to process");
+      stmt = conn.prepare(
+        "select aid, title, data"
+        "  from article"
+        " where mimetype = 0"
+        "   and aid not in (select distinct aid from words)"
+        " order by namespace, title");
+    }
 
-    log_info("search for articles to process");
     for (tntdb::Statement::const_iterator cur = stmt.begin(); cur != stmt.end(); ++cur)
     {
       unsigned aid = cur->getUnsigned(0);

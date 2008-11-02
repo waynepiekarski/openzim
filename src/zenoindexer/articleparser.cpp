@@ -23,14 +23,12 @@
 #include <cxxtools/log.h>
 #include <zeno/unicode.h>
 
-log_define("zeno.indexer")
+log_define("zeno.indexer.parser")
 
 namespace zeno
 {
   void ArticleParser::parse(char ch)
   {
-    ++pos;
-
     switch (state)
     {
       case state_0:
@@ -45,6 +43,7 @@ namespace zeno
           utf8counter = 1;
           utf8char = ch;
           utf8value = static_cast<unsigned char>(ch) & 0x1f;
+          word.clear();
           state = state_utf8;
         }
         else if (static_cast<unsigned char>(ch) >> 4 == 0xe)
@@ -52,6 +51,7 @@ namespace zeno
           utf8counter = 2;
           utf8char = ch;
           utf8value = static_cast<unsigned char>(ch) & 0xf;
+          word.clear();
           state = state_utf8;
         }
         else if (static_cast<unsigned char>(ch) >> 3 == 0x1e)
@@ -59,9 +59,10 @@ namespace zeno
           utf8counter = 3;
           utf8char = ch;
           utf8value = static_cast<unsigned char>(ch) & 0x7;
+          word.clear();
           state = state_utf8;
         }
-        else if (!std::isspace(ch) && !std::ispunct(ch))
+        else if (std::isalnum(ch))
         {
           word = std::tolower(ch);
           state = state_word;
@@ -155,7 +156,7 @@ namespace zeno
           utf8value = static_cast<unsigned char>(ch) & 0x7;
           state = state_wordutf8;
         }
-        else if (!std::isspace(ch) && !std::ispunct(ch))
+        else if (std::isalnum(ch))
           word += std::tolower(ch);
         else
         {
@@ -180,11 +181,12 @@ namespace zeno
         if (static_cast<unsigned char>(ch) >> 6 == 2)
         {
           utf8char += ch;
-          utf8value = (utf8value << 6) | static_cast<unsigned char>(ch);
+          utf8value = (utf8value << 6) | static_cast<unsigned char>(ch) & 0x3f;
           if (--utf8counter == 0)
           {
             if (zeno::isalnum(utf8value))
             {
+              log_debug("utf8value " << utf8value << " is alphanumeric");
               // TODO use zeno::tolower
               //if (utf8char != zeno::tolower(utf8char))
                 // ;
@@ -193,10 +195,9 @@ namespace zeno
             }
             else
             {
+              log_debug("utf8value " << utf8value << " is not alphanumeric");
               if (state == state_wordutf8)
-              {
-                event.onWord(word, pos - word.size() - utf8char.size());
-              }
+                event.onWord(word, pos - word.size() - utf8char.size() + 1);
               state = state_0;
             }
           }
@@ -211,7 +212,8 @@ namespace zeno
         break;
     }
 
-    //log_debug("ch " << ch << " => " << state);
+    ++pos;
+    log_debug("ch " << ch << " => " << state);
   }
 
   void ArticleParser::parseEntityChar()
@@ -405,7 +407,8 @@ namespace zeno
   {
     if (tag_ == "h1" || tag_ == "H1"
       || tag_ == "h2" || tag_ == "H2"
-      || tag_ == "h3" || tag_ == "H3")
+      || tag_ == "h3" || tag_ == "H3"
+      || tag_ == "b" || tag_ == "B")
       tag = tag_;
   }
 
@@ -413,7 +416,8 @@ namespace zeno
   {
     if (tag_ == "h1" || tag_ == "H1"
       || tag_ == "h2" || tag_ == "H2"
-      || tag_ == "h3" || tag_ == "H3")
+      || tag_ == "h3" || tag_ == "H3"
+      || tag_ == "b" || tag_ == "B")
       tag.clear();
   }
 
@@ -434,6 +438,11 @@ namespace zeno
     {
       log_debug("onH3(\"" << word << "\", " << pos << ')');
       onH3(word, pos);
+    }
+    else if (tag == "b" || tag == "B")
+    {
+      log_debug("onB(\"" << word << "\", " << pos << ')');
+      onB(word, pos);
     }
     else
     {

@@ -34,6 +34,7 @@ class ParseResultPrinter : public zeno::ArticleParseEventEx
       PositionsType h1;
       PositionsType h2;
       PositionsType h3;
+      PositionsType b;
       PositionsType p;
     };
 
@@ -44,6 +45,7 @@ class ParseResultPrinter : public zeno::ArticleParseEventEx
     void onH1(const std::string& word, unsigned pos);
     void onH2(const std::string& word, unsigned pos);
     void onH3(const std::string& word, unsigned pos);
+    void onB(const std::string& word, unsigned pos);
     void onP(const std::string& word, unsigned pos);
     void print() const;
     void print(const std::string& cat, const PositionsType& p) const;
@@ -64,6 +66,11 @@ void ParseResultPrinter::onH3(const std::string& word, unsigned pos)
   words[word].h3.push_back(pos);
 }
 
+void ParseResultPrinter::onB(const std::string& word, unsigned pos)
+{
+  words[word].b.push_back(pos);
+}
+
 void ParseResultPrinter::onP(const std::string& word, unsigned pos)
 {
   words[word].p.push_back(pos);
@@ -77,6 +84,7 @@ void ParseResultPrinter::print() const
     print("h1", w->second.h1);
     print("h2", w->second.h2);
     print("h3", w->second.h3);
+    print("b", w->second.b);
     print("p", w->second.p);
     std::cout << '\n';
   }
@@ -99,6 +107,7 @@ class EventPrinter : public zeno::ArticleParseEventEx
     void onH1(const std::string& word, unsigned pos);
     void onH2(const std::string& word, unsigned pos);
     void onH3(const std::string& word, unsigned pos);
+    void onB(const std::string& word, unsigned pos);
     void onP(const std::string& word, unsigned pos);
 };
 
@@ -115,6 +124,11 @@ void EventPrinter::onH2(const std::string& word, unsigned pos)
 void EventPrinter::onH3(const std::string& word, unsigned pos)
 {
   std::cout << "H3:" << pos << '\t' << word << '\n';
+}
+
+void EventPrinter::onB(const std::string& word, unsigned pos)
+{
+  std::cout << "B:" << pos << '\t' << word << '\n';
 }
 
 void EventPrinter::onP(const std::string& word, unsigned pos)

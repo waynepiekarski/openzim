@@ -48,7 +48,7 @@ namespace zeno
   {
     std::istringstream s(getParameter());
     s.get();  // skip length byte
-    zeno::ZIntStream extra(s);
+    zeno::IZIntStream extra(s);
 
     unsigned flagfield;  // field with one bit (bits 0-3) for each cateogry
     extra.get(flagfield);
@@ -79,10 +79,11 @@ namespace zeno
           throw std::runtime_error("invalid index entry");
 
         log_debug("first index " << entry.index << " pos " << entry.pos);
+        entries[c].push_back(entry);
 
         log_debug("read data from offset " << offset << " len " << len);
         std::istringstream data(getData().substr(offset, len));
-        ZIntStream zdata(data);
+        IZIntStream zdata(data);
 
         unsigned index;
         unsigned indexOffset = 0;

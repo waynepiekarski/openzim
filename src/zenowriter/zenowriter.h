@@ -95,7 +95,8 @@ class Zenowriter
 class ZenoIndexEntry
 {
     friend std::ostream& operator<< (std::ostream& out, const ZenoIndexEntry& entry);
-    char data[2 * sizeof(zeno::size_type)];
+    zeno::size_type index;
+    zeno::size_type pos;
 
   public:
     ZenoIndexEntry() {}
@@ -105,16 +106,19 @@ class ZenoIndexEntry
       setPos(pos_);
     }
 
-    zeno::size_type getIndex() const        { return fromLittleEndian<zeno::size_type>(data); }
-    void        setIndex(zeno::size_type o) { *reinterpret_cast<zeno::size_type*>(&data[0]) = fromLittleEndian<zeno::size_type>(&o); }
+    zeno::size_type getIndex() const        { return index; }
+    void        setIndex(zeno::size_type o) { index = o; }
 
-    zeno::size_type getPos() const        { return fromLittleEndian<zeno::size_type>(&data[sizeof(zeno::size_type)]); }
-    void        setPos(zeno::size_type o) { *reinterpret_cast<zeno::size_type*>(&data[sizeof(zeno::size_type)]) = fromLittleEndian<zeno::size_type>(&o); }
+    zeno::size_type getPos() const        { return pos; }
+    void        setPos(zeno::size_type o) { pos = o; }
 };
 
 inline std::ostream& operator<< (std::ostream& out, const ZenoIndexEntry& entry)
 {
-  out.write(entry.data, 2 * sizeof(zeno::size_type));
+  zeno::size_type data[2];
+  data[0] = fromLittleEndian(&entry.index);
+  data[1] = fromLittleEndian(&entry.pos);
+  out.write(reinterpret_cast<const char*>(&data[0]), 2 * sizeof(zeno::size_type));
   return out;
 }
 

@@ -39,8 +39,8 @@ namespace zeno
         WordAttr() : count(0), addweight(1) { }
       };
 
-      typedef std::map<std::string, WordAttr> WordListType;
-      typedef std::map<uint32_t, std::string> PosListType;
+      typedef std::map<std::string, WordAttr> WordListType; // map word => count and addweight
+      typedef std::map<uint32_t, std::string> PosListType;  // map position => word
       WordListType wordList;
       PosListType posList;
 

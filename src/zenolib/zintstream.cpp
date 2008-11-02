@@ -24,31 +24,72 @@ log_define("cxxtools.zintstream")
 
 namespace zeno
 {
-  bool ZIntStream::get(unsigned &value)
+  IZIntStream& IZIntStream::get(unsigned &value)
   {
-    int ch = source->sbumpc();
-    if (ch == std::streambuf::traits_type::eof())
-      return false;
+    char ch;
+    if (!stream.get(ch))
+      return *this;
 
-    unsigned ret = static_cast<unsigned>(static_cast<unsigned char>(std::streambuf::traits_type::to_char_type(ch)));
+    unsigned ret = static_cast<unsigned>(static_cast<unsigned char>(ch));
     unsigned numb = ret & 0x3;
     ret >>= 2;
     unsigned s = 6;
-    while (numb && (ch = source->sbumpc()) != std::streambuf::traits_type::eof())
+    while (numb && stream.get(ch))
     {
       ret += static_cast<unsigned>(
-               static_cast<unsigned char>(
-                 std::streambuf::traits_type::to_char_type(ch))) + 1 << s;
+               static_cast<unsigned char>(ch)) + 1 << s;
       s += 8;
       --numb;
     }
 
     if (numb)
+    {
       log_error("incomplete bytestream");
+      stream.setstate(std::ios::failbit);
+    }
     else
       value = ret;
 
-    return numb == 0;
+    return *this;
+  }
+
+  OZIntStream& OZIntStream::put(size_type value)
+  {
+    char data[4];
+    unsigned count;
+    if (value < 64)
+    {
+      count = 1;
+      data[0] = (value << 2);
+    }
+    else if (value < 16384 - 64)
+    {
+      value -= 64;
+      count = 2;
+      data[0] = value << 2 | 1;
+      data[1] = value >> 6;
+    }
+    else if (value < 4194304 - 16384 - 64)
+    {
+      value -= 16384 + 64;
+      count = 3;
+      data[0] = value << 2 | 2;
+      data[1] = value >> 6;
+      data[2] = value >> 14;
+    }
+    else
+    {
+      value -= 4194304 + 16384 + 64;
+      count = 4;
+      data[0] = value << 2 | 2;
+      data[1] = value >> 6;
+      data[2] = value >> 14;
+      data[3] = value >> 22;
+    }
+
+    stream.write(reinterpret_cast<char*>(&data[0]), count);
+
+    return *this;
   }
 
 }

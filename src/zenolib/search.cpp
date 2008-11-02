@@ -198,8 +198,8 @@ namespace zeno
     {
       if (it->second.getCountPositions() > 1)
         results.push_back(it->second);
-      //else
-        //log_debug("discard article " << it->first);
+      else
+        log_debug("discard article " << it->first);
     }
 
     if (results.empty())

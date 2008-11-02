@@ -192,9 +192,10 @@ void ZenoDumper::listArticle(const zeno::Article& article, bool extra, bool verb
     if (parameter.size() > 1)
     {
       std::istringstream s(parameter);
-      s.get(); // skip length byte
-      zeno::ZIntStream in(s);
+      unsigned len = s.get(); // read length byte
+      std::cout << "len=" << len;
 
+      zeno::IZIntStream in(s);
       unsigned val;
       while (in.get(val))
         std::cout << '\t' << val;

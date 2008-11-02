@@ -44,6 +44,7 @@ namespace zeno
       virtual void onH1(const std::string& word, unsigned pos) = 0;
       virtual void onH2(const std::string& word, unsigned pos) = 0;
       virtual void onH3(const std::string& word, unsigned pos) = 0;
+      virtual void onB(const std::string& word, unsigned pos) = 0;
       virtual void onP(const std::string& word, unsigned pos) = 0;
   };
 
@@ -97,6 +98,7 @@ namespace zeno
       }
 
       void endparse();
+      void reset()    { pos = 0; }
   };
 }
 

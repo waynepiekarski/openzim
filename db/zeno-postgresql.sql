@@ -23,7 +23,7 @@ create table categoryarticles
   cid          integer not null,
   aid          integer not null,
   primary key (cid, aid),
-  foreign key (cid) references category
+  foreign key (cid) references category,
   foreign key (aid) references article
 );
 
@@ -51,6 +51,7 @@ create table zenoarticles
   dataoffset   bigint,
   datasize     bigint,
   did          bigint,
+  parameter    bytea,
 
   primary key (zid, aid),
   foreign key (zid) references zenofile,
@@ -73,6 +74,7 @@ create table indexarticle
   dataoffset   bigint,
   datasize     bigint,
   did          bigint,
+  parameter    bytea,
 
   primary key (zid, namespace, title),
   foreign key (zid) references zenofile
@@ -84,8 +86,8 @@ create index indexarticle_ix2 on indexarticle(zid, sort);
 create table words
 (
   word     text not null,
-  aid      integer not null,
   pos      integer not null,
+  aid      integer not null,
   weight   integer not null, -- 0: title/header, 1: subheader, 3: paragraph
 
   primary key (word, aid, pos),

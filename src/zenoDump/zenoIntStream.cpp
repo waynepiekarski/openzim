@@ -18,8 +18,36 @@
  */
 
 #include <iostream>
+#include <sstream>
 #include <zeno/zintstream.h>
 #include <cxxtools/loginit.h>
+#include <cxxtools/arg.h>
+
+log_define("zintstream");
+
+void doDecompress(std::istream& in)
+{
+  unsigned col = 0;
+
+  zeno::IZIntStream z(std::cin);
+  unsigned n;
+  while (z.get(n))
+  {
+    std::cout << n;
+    if (col++ >= 10)
+    {
+      std::cout << std::endl;
+      col = 0;
+    }
+    else
+      std::cout << ' ';
+  }
+  std::cout << std::endl;
+}
+
+void doCompress(std::istream& in)
+{
+}
 
 int main(int argc, char* argv[])
 {
@@ -27,22 +55,26 @@ int main(int argc, char* argv[])
   {
     log_init();
 
-    unsigned col = 0;
+    cxxtools::Arg<bool> compress(argc, argv, 'c');
 
-    zeno::ZIntStream z(std::cin);
-    unsigned n;
-    while (z.get(n))
+    if (compress)
     {
-      std::cout << n;
-      if (col++ >= 10)
+      zeno::OZIntStream z(std::cout);
+      for (int a = 1; a < argc; ++a)
       {
-        std::cout << std::endl;
-        col = 0;
+        std::istringstream s(argv[a]);
+        unsigned n;
+        while (s >> n)
+        {
+          log_debug("compress " << n);
+          z.put(n);
+        }
       }
-      else
-        std::cout << ' ';
     }
-    std::cout << std::endl;
+    else
+    {
+      doDecompress(std::cin);
+    }
   }
   catch (const std::exception& e)
   {

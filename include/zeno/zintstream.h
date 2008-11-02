@@ -22,24 +22,35 @@
 
 #include <string>
 #include <iostream>
+#include <zeno/zeno.h>
 
 namespace zeno
 {
-  class ZIntStream
+  class IZIntStream
   {
-      std::streambuf* source;
+      std::istream& stream;
 
     public:
-      explicit ZIntStream(std::streambuf* source_)
-        : source(source_)
-       { }
-      explicit ZIntStream(std::istream& source_)
-        : source(source_.rdbuf())
+      explicit IZIntStream(std::istream& stream_)
+        : stream(stream_)
         { }
 
-      bool get(unsigned &value);
-      bool good() const      { return source->sgetc() != std::streambuf::traits_type::eof(); }
-      operator bool() const  { return source->sgetc() != std::streambuf::traits_type::eof(); }
+      IZIntStream& get(size_type &value);
+      operator void*() const  { return stream; }
   };
+
+  class OZIntStream
+  {
+      std::ostream& stream;
+
+    public:
+      explicit OZIntStream(std::ostream& stream_)
+        : stream(stream_)
+        { }
+
+      OZIntStream& put(size_type value);
+      operator void*() const  { return stream; }
+  };
+
 }
 #endif  //  ZENO_ZINTSTREAM_H

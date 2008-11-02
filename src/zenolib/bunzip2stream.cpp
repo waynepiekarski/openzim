@@ -20,6 +20,7 @@
 #include <zeno/bunzip2stream.h>
 #include <cxxtools/log.h>
 #include <sstream>
+#include <cstring>
 
 log_define("zeno.bzip2.uncompress")
 
@@ -46,7 +47,7 @@ namespace zeno
       bufsize(bufsize_),
       sinksource(sinksource_)
   {
-    memset(&stream, 0, sizeof(bz_stream));
+    std::memset(&stream, 0, sizeof(bz_stream));
 
     checkError(::BZ2_bzDecompressInit(&stream, 0, static_cast<int>(small)), stream);
   }

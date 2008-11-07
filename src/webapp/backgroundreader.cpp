@@ -216,7 +216,7 @@ namespace zeno
 
   zeno::Article Backgroundreader::getArticle(const std::string& fname, char ns, const QUnicodeString& path)
   {
-    return files.getArticle(fname, ns, path);
+    return fname.empty() ? getArticle(ns, path) : files.getArticle(fname, ns, path);
   }
 
 }

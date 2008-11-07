@@ -26,7 +26,7 @@ namespace zeno
 {
   const std::string& Article::getMimeType() const
   {
-    static const std::string textHtml = "text/html";
+    static const std::string textHtml = "text/html; charset=UTF-8";
     static const std::string textPlain = "text/plain";
     static const std::string textXml = "application/xml";
     static const std::string imageJpeg = "image/jpeg";
@@ -98,6 +98,11 @@ namespace zeno
     }
 
     return data;
+  }
+
+  Article Article::getRedirectArticle() const
+  {
+    return const_cast<Article*>(this)->getFile().getArticle(getRedirectIndex());
   }
 
 }

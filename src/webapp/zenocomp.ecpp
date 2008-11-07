@@ -21,8 +21,10 @@ bool lastFoundUtf8(true);
 
   title.clear();
 
-  std::string fname = request.getArg(0);
   char ns = request.getArgDef(1, "A").at(0);
+  std::string fname;
+  if (request.getArgsCount() > 1)
+    fname = request.getArg(1);
 
   static cxxtools::IConverter iso8859_utf8("UTF-8", "ISO-8859-1");
 
@@ -67,9 +69,15 @@ bool lastFoundUtf8(true);
   }
 
   log_debug("article " << pathInfo << " fetched - mime-type "
-    << article.getLibraryMimeType());
+    << article.getLibraryMimeType() << " redirect " << article.getRedirectFlag());
 
-  if (article.getLibraryMimeType() != zeno::Dirent::zenoMimeTextHtml)
+  if (article.getRedirectFlag())
+  {
+    article = article.getRedirectArticle();
+    log_debug("redirect to " << article.getTitle().toUtf8());
+    return reply.redirect(article.getTitle().toUtf8());
+  }
+  else if (article.getLibraryMimeType() != zeno::Dirent::zenoMimeTextHtml)
   {
     log_debug("send non-html data");
     callComp("article", request, reply, qparam);

@@ -27,7 +27,7 @@ fixfile=`getval fixfile Wikipedia2.zeno`
 
 while true
   do
-    echo -n "
+    echo -en "
 
 
     TntReader

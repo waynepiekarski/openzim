@@ -135,7 +135,12 @@ namespace zeno
       Article article = it->second.getArticle(ns, url);
       if (article)
       {
-        if (ret.getData().size() < article.getData().size())
+        if (ret.getRedirectFlag())
+        {
+          log_debug("redirect article found - return it");
+          return ret;
+        }
+        else if (ret.getData().size() <= article.getData().size())
         {
           log_debug("article found in " << it->first);
           ret = article;

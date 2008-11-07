@@ -97,6 +97,8 @@ namespace zeno
       size_type   getRedirectIndex() const      { return dirent.getRedirectIndex(); }
       void        setRedirectIndex(size_type o) { dirent.setRedirectIndex(o); }
 
+      Article     getRedirectArticle() const;
+
       size_type   getArticleOffset() const      { return dirent.getArticleOffset(); }
       void        setArticleOffset(size_type o) { dirent.setArticleOffset(o); }
 

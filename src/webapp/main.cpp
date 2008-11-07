@@ -27,6 +27,8 @@
 #include <cxxtools/inifile.h>
 #include <signal.h>
 
+log_define("zeno.webapp.main")
+
 namespace
 {
   bool isTrue(char ch)
@@ -80,14 +82,14 @@ int main(int argc, char* argv[])
     if (listenIp.empty())
     {
       std::string localonly = settings.getValue("TntReader", "localonly", "0");
-      listenIp = isTrue(localonly) ? "0.0.0.0" : "127.0.0.1";
+      log_debug("localonly=<" << localonly << "> b:" << isTrue(localonly));
+      listenIp = isTrue(localonly) ?  "127.0.0.1" : "0.0.0.0";
     }
 
     unsigned short port = settings.getValueT<unsigned short>("TntReader", "port", 8080);
 
     std::string directory = settings.getValue("TntReader", "directory", ".");
     std::string fixfile = settings.getValue("TntReader", "fixfile", "Wikipedia2.zeno");
-    std::string defaultFile = settings.getValue("TntReader", "defaultfile", "wikipedia.zeno");
 
     tnt::Tntnet app;
     tnt::Worker::setEnableCompression(false);
@@ -103,7 +105,6 @@ int main(int argc, char* argv[])
 
     app.mapUrl("^/(.)/(.+.svg)$", "zenocomp")
        .setPathInfo("$2.png")
-       .pushArg(defaultFile)
        .pushArg("$1");
 
     app.mapUrl("^/(.+)/(.)/(.+.svg)$", "zenocomp")
@@ -113,13 +114,12 @@ int main(int argc, char* argv[])
 
     app.mapUrl("^/(.)/(.+)$", "zenocomp")
        .setPathInfo("$2")
-       .pushArg(defaultFile)
        .pushArg("$1");
 
     app.mapUrl("^/(.+)/(.)/(.+)$", "zenocomp")
        .setPathInfo("$3")
-       .pushArg("$1.zeno")
-       .pushArg("$2");
+       .pushArg("$2")
+       .pushArg("$1.zeno");
 
     app.mapUrl(".*", "notfound");
 

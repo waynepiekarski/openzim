@@ -84,7 +84,12 @@ void ZenoDumper::printInfo()
 {
   std::cout << "count-articles: " << file.getCountArticles() << "\n";
   if (verbose)
-    std::cout << "namespaces: " << file.getNamespaces() << "\n";
+  {
+    std::string ns = file.getNamespaces();
+    std::cout << "namespaces: " << ns << '\n';
+    for (std::string::const_iterator it = ns.begin(); it != ns.end(); ++it)
+      std::cout << "namespace " << *it << " size: " << file.getNamespaceCount(*it) << '\n';
+  }
   std::cout << "index ptr pos: " << file.getFileheader().getIndexPtrPos() << "\n"
                "index ptr len: " << file.getFileheader().getIndexPtrLen() << "\n"
                "index pos: " << file.getFileheader().getIndexPos() << "\n"

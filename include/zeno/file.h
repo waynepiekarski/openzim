@@ -55,6 +55,9 @@ namespace zeno
 
       size_type getNamespaceBeginOffset(char ch);
       size_type getNamespaceEndOffset(char ch);
+      size_type getNamespaceCount(char ns)
+        { return getNamespaceEndOffset(ns) - getNamespaceBeginOffset(ns); }
+
       std::string getNamespaces();
       bool hasNamespace(char ch);
 

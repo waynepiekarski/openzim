@@ -37,26 +37,35 @@ namespace zeno
       if (dir.empty())
         return;
 
-      cxxtools::Dir d(dir.c_str());
-      for (cxxtools::Dir::const_iterator it = d.begin(); it != d.end(); ++it)
+      try
       {
-        std::string fname = *it;
-        if (fname.size() > 4 && fname.compare(fname.size() - 5, 5, ".zeno") == 0)
+        log_trace("addFiles_ " << dir);
+        cxxtools::Dir d(dir.c_str());
+        for (cxxtools::Dir::const_iterator it = d.begin(); it != d.end(); ++it)
         {
-          log_debug("file \"" << fname << "\" found");
-          try
+          std::string fname = *it;
+          log_trace("process " << fname);
+          if (fname.size() > 4 && fname.compare(fname.size() - 5, 5, ".zeno") == 0)
           {
-            files[fname] = File(dir + '/' + fname);
+            log_debug("file \"" << fname << "\" found");
+            try
+            {
+              files[fname] = File(dir + '/' + fname);
+            }
+            catch (const ZenoFileFormatError& e)
+            {
+              log_error('"' << fname << "\" is no zeno file: " << e.what());
+            }
           }
-          catch (const ZenoFileFormatError& e)
+          else if (fname.size() > 0 && fname[0] != '.' && maxdepth > 1)
           {
-            log_error('"' << fname << "\" is no zeno file: " << e.what());
+            addFiles_(files, dir + '/' + *it, maxdepth - 1);
           }
         }
-        else if (fname.size() > 0 && fname[0] != '.' && maxdepth > 1)
-        {
-          addFiles_(files, dir + '/' + *it, maxdepth - 1);
-        }
+      }
+      catch (const cxxtools::DirectoryNotFound&)
+      {
+        log_debug("directory \"" << dir << "\" not found");
       }
     }
   }

@@ -30,13 +30,11 @@ namespace zeno
     : files(files_),
       stopRunning(false)
   {
-    //create();
   }
 
   Backgroundreader::~Backgroundreader()
   {
     stopRunning = true;
-    //join();
   }
 
   zeno::File Backgroundreader::getFile(char ns)

@@ -19,13 +19,13 @@
 
 #include <map>
 #include <set>
-#include <cxxtools/thread.h>
+#include <cxxtools/mutex.h>
 #include <zeno/files.h>
 #include <zeno/article.h>
 
 namespace zeno
 {
-  class Backgroundreader : public cxxtools::AttachedThread
+  class Backgroundreader
   {
       zeno::Files files;
       zeno::Article lastArticle;
@@ -51,6 +51,7 @@ namespace zeno
       ~Backgroundreader();
 
       void run();
+      void stop()  { stopRunning = true; }
 
       zeno::Article getArticle(char ch, const QUnicodeString& path);
       zeno::Article getArticle(const std::string& fname, char ch, const QUnicodeString& path);

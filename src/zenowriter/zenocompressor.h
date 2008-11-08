@@ -24,7 +24,8 @@
 #include <vector>
 #include <map>
 #include <deque>
-#include <cxxtools/mutex.h>
+#include <cxxtools/thread.h>
+#include <cxxtools/noncopyable.h>
 #include <zeno/dirent.h>
 #include <tntdb/connection.h>
 #include <tntdb/statement.h>
@@ -54,13 +55,12 @@ namespace zeno
     zeno::Dirent::CompressionType compression;
   };
 
-  class ZenoCompressorThread;
-  class ZenoCompressorContext;
+  class ZenoCompressorImpl;
 
-  class ZenoCompressor
+  class ZenoCompressor : private cxxtools::NonCopyable
   {
-      std::vector<ZenoCompressorThread*> compressorThreads;
-      ZenoCompressorContext* context;
+      std::vector<cxxtools::Thread*> compressorThreads;
+      ZenoCompressorImpl* impl;
 
     public:
       ZenoCompressor(const std::string& dburl, unsigned zid, unsigned numThreads);

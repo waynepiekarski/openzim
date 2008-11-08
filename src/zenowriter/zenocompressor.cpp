@@ -20,7 +20,7 @@
 // TODO: propagate errors to main thread
 
 #include "zenocompressor.h"
-#include <cxxtools/thread.h>
+#include <cxxtools/mutex.h>
 #include <cxxtools/fork.h>
 #include <cxxtools/pipestream.h>
 #include <cxxtools/log.h>
@@ -33,26 +33,8 @@ log_define("zeno.compressor")
 
 namespace zeno
 {
-  class ZenoCompressorThread : public cxxtools::AttachedThread
+  class ZenoCompressorImpl
   {
-      ZenoCompressorContext& zenoCompressor;
-
-    public:
-      explicit ZenoCompressorThread(ZenoCompressorContext& zenoCompressor_)
-        : zenoCompressor(zenoCompressor_)
-        {
-          log_debug("create compressor thread");
-          create();
-        }
-
-    protected:
-      void run();
-  };
-
-  class ZenoCompressorContext
-  {
-      friend class ZenoCompressorThread;
-
       cxxtools::Mutex dbmutex;
       tntdb::Connection conn;
       tntdb::Statement insData;
@@ -87,53 +69,53 @@ namespace zeno
 
       static const unsigned maxQueueSize = 10;
 
-      void threadFn();
       void doJob(CompressJobX& job);
 
     public:
-      ZenoCompressorContext(const std::string& dburl, unsigned zid);
+      ZenoCompressorImpl(const std::string& dburl, unsigned zid);
+      void run();
       void put(const CompressJob& job);
       void end();
       const std::string& getErrorMessage() const   { return errorMessage; }
   };
 
-  void ZenoCompressorThread::run()
-  {
-    log_debug("compressor thread started");
-    zenoCompressor.threadFn();
-  }
-
   ZenoCompressor::ZenoCompressor(const std::string& dburl, unsigned zid, unsigned numThreads)
-    : context(new ZenoCompressorContext(dburl, zid))
+    : impl(new ZenoCompressorImpl(dburl, zid))
   {
+    cxxtools::AttachedThread* t;
     while (numThreads > compressorThreads.size())
-      compressorThreads.push_back(new ZenoCompressorThread(*context));
+    {
+      compressorThreads.push_back(
+        t = new cxxtools::AttachedThread(
+            cxxtools::callable(*impl, &ZenoCompressorImpl::run)));
+      t->start();
+    }
   }
 
   ZenoCompressor::~ZenoCompressor()
   {
-    context->end();
+    impl->end();
     for (unsigned n = 0; n < compressorThreads.size(); ++n)
     {
       log_debug("join thread " << n);
-      compressorThreads[n]->join();
+      delete compressorThreads[n];
       log_debug("thread " << n << " joined");
     }
-    log_debug("all threads joined - delete context object");
-    delete context;
+    log_debug("all threads joined - delete impl object");
+    delete impl;
   }
 
   void ZenoCompressor::put(const CompressJob& job)
   {
-    context->put(job);
+    impl->put(job);
   }
 
   const std::string& ZenoCompressor::getErrorMessage() const
   {
-    return context->getErrorMessage();
+    return impl->getErrorMessage();
   }
 
-  ZenoCompressorContext::ZenoCompressorContext(const std::string& dburl, unsigned zid)
+  ZenoCompressorImpl::ZenoCompressorImpl(const std::string& dburl, unsigned zid)
     : conn(tntdb::connect(dburl)),
       insData(conn.prepare(
         "insert into zenodata"
@@ -167,7 +149,7 @@ namespace zeno
     updIndexarticle.set("zid", zid);
   }
 
-  void ZenoCompressorContext::end()
+  void ZenoCompressorImpl::end()
   {
     log_debug("end processing");
     stop = true;
@@ -175,7 +157,7 @@ namespace zeno
     notEmpty.signal();
   }
 
-  void ZenoCompressorContext::put(const CompressJob& job)
+  void ZenoCompressorImpl::put(const CompressJob& job)
   {
     cxxtools::MutexLock lock(mutex);
 
@@ -186,9 +168,9 @@ namespace zeno
     notEmpty.signal();
   }
 
-  void ZenoCompressorContext::threadFn()
+  void ZenoCompressorImpl::run()
   {
-    log_trace("threadFn");
+    log_trace("run zeno compressor thread");
     CompressJobX job;
     while (true)
     {
@@ -238,7 +220,7 @@ namespace zeno
     }
   }
 
-  void ZenoCompressorContext::doJob(CompressJobX& job)
+  void ZenoCompressorImpl::doJob(CompressJobX& job)
   {
     if (job.compression == zeno::Dirent::zenocompZip)
     {

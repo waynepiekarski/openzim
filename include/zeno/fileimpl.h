@@ -20,7 +20,7 @@
 #ifndef ZENO_FILEIMPL_H
 #define ZENO_FILEIMPL_H
 
-#include <cxxtools/thread.h>
+#include <cxxtools/mutex.h>
 #include <fstream>
 #include <string>
 #include <vector>

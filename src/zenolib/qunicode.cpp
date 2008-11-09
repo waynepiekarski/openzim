@@ -53,17 +53,24 @@ namespace zeno
         uvalue = ((uvalue << 6) | ch & 0x3f);
         if (--bytes == 0)
         {
-          if (uvalue & 0xff)
+          if (uvalue <= 0xff)
           {
+            // unicode value fits one byte; no qunicode escape character
+            ret.value += static_cast<char>(uvalue);
+          }
+          else if (uvalue & 0xff)
+          {
+            // lower byte value is not 0 - use qunicode escape 1
             ret.value += '\1';
-            ret.value += uvalue & 0xff;
-            ret.value += uvalue >> 8;
+            ret.value += static_cast<char>(uvalue & 0xff);
+            ret.value += static_cast<char>(uvalue >> 8);
           }
           else
           {
+            // lower byte value is 0 - use qunicode escape 2 and replace lower byte with 1
             ret.value += '\2';
             ret.value += '\1';
-            ret.value += uvalue >> 8;
+            ret.value += static_cast<char>(uvalue >> 8);
           }
         }
       }

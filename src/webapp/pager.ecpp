@@ -25,22 +25,22 @@ if (t > rs)
  <tr>
   <td>
 % for (unsigned pp = 0; pp < p; ++pp) {
-    <a href="<$link$>p=<$ pp $>"><$ (pp + 1) * n $></a>
+    <a href="<$$link$>p=<$ pp $>"><$ (pp + 1) * n $></a>
 % }
    <span class="z_azact">
     <$ s + 1 $> - <$ t $>
    </span>
 % if (t < rs) {
-    <a href="<$link$>p=<$ p + 1 $>"><$ (p + 2) * n $></a> ...
+    <a href="<$$link$>p=<$ p + 1 $>"><$ (p + 2) * n $></a> ...
 % }
   </td>
 
   <td align="right">
 % if (p > 0) {
-   <a href="<$link$>p=<$ p - 1 $>">&lt; Zur&uuml;ck</a>
+   <a href="<$$link$>p=<$ p - 1 $>">&lt; Zur&uuml;ck</a>
 % }
 % if (t < rs) {
-   <a href="<$link$>p=<$ p + 1 $>">Vor &gt;</a>
+   <a href="<$$link$>p=<$ p + 1 $>">Vor &gt;</a>
 % }
   </td>
  </tr>

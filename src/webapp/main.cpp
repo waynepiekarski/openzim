@@ -20,6 +20,7 @@
 #include <iostream>
 #include <fstream>
 #include <tnt/tntnet.h>
+#include <tnt/httpreply.h>
 #include <tnt/worker.h>
 #include <tnt/tntconfig.h>
 #include <cxxtools/loginit.h>
@@ -93,6 +94,7 @@ int main(int argc, char* argv[])
 
     tnt::Tntnet app;
     tnt::Worker::setEnableCompression(false);
+    tnt::HttpReply::setDefaultContentType("text/html; charset=UTF-8");
 
     std::cout << "IP " << listenIp << " port " << port << std::endl;
     app.listen(listenIp, port);

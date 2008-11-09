@@ -559,7 +559,7 @@ void Zenowriter::prepareFile()
 
       log_debug("process article " << aid << ": \"" << title << '"');
 
-      unsigned direntlen = zeno::Dirent::headerSize + title.size();
+      unsigned direntlen = zeno::Dirent::headerSize + zeno::QUnicodeString::fromUtf8(title).getValue().size();
       if (parameter.size() > 0)
         direntlen += 1 + parameter.size();
       tntdb::Blob articledata;
@@ -786,7 +786,7 @@ void Zenowriter::writeDirectory(std::ostream& ofile)
     dirent.setMimeType(mimetype);
     dirent.setRedirectFlag(!redirect.empty());
     dirent.setNamespace(ns);
-    dirent.setTitle(title);
+    dirent.setTitle(zeno::QUnicodeString::fromUtf8(title).getValue());
     dirent.setParameter(std::string(parameter.data(), parameter.size()));
     log_debug("write dirent for \"" << title << "\" redirect is " << dirent.getRedirectFlag());
 

@@ -180,7 +180,13 @@ namespace zeno
           break;
 
         default:
-          ret << value[n];
+          if (value[n] >= 0)
+            ret << value[n];
+          else
+          {
+            ret << static_cast<char>(('\xc0' | (static_cast<unsigned char>(value[n]) >> 6)))
+                << static_cast<char>(('\x80' | value[n] & '\x3f'));
+          }
       }
     }
     return ret.str();
@@ -238,7 +244,13 @@ namespace zeno
         }
 
         default:
-          ret += value[n];
+          if (value[n] >= 0)
+            ret += value[n];
+          else
+          {
+            ret += ('\xc0' | (static_cast<unsigned char>(value[n]) >> 6));
+            ret += ('\x80' | value[n] & '\x3f');
+          }
       }
     }
     return ret;

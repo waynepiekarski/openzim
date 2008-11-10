@@ -123,7 +123,13 @@ namespace zeno
     : file(file_),
       idx(idx_)
   {
-    article = file->getArticle(idx);
+    if (idx_ < file->getCountArticles())
+      article = file->getArticle(idx);
+    else
+    {
+      file = 0;
+      idx = 0;
+    }
   }
 
 }

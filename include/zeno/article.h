@@ -131,6 +131,9 @@ namespace zeno
       void        setIndex(size_type i)       { idx = i; }
 
       QUnicodeString getUrl() const           { return QUnicodeString(std::string(1, getNamespace()) + '/' + getDirent().getTitle()); }
+
+      offset_type getIndexOffset() const      { return getFile().getFileheader().getIndexPos() + idx * 4; }
+      offset_type getDirentOffset() const     { return getFile().getDirentOffset(idx); }
   };
 
 }

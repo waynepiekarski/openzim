@@ -66,6 +66,7 @@ namespace zeno
       std::pair<bool, size_type> findArticle(char ns, const QUnicodeString& url, bool collate);
       Dirent getDirent(size_type idx);
       size_type getCountArticles() const  { return indexOffsets.size(); }
+      offset_type getDirentOffset(size_type idx) const  { return indexOffsets[idx]; }
 
       size_type getNamespaceBeginOffset(char ch);
       size_type getNamespaceEndOffset(char ch);

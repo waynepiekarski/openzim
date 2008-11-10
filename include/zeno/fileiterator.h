@@ -40,7 +40,8 @@ namespace zeno
           { }
       const_iterator(File* file_, size_type idx_);
 
-      size_type getIndex() const  { return idx; }
+      size_type getIndex() const   { return idx; }
+      const File& getFile() const  { return *file; }
 
       bool operator== (const const_iterator& it) const
         { return is_end() && it.is_end()

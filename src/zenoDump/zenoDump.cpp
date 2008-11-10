@@ -169,6 +169,8 @@ void ZenoDumper::listArticle(const zeno::Article& article, bool extra, bool verb
       "\tmime-type:       " << article.getLibraryMimeType() << "\n"
       "\tarticle-size:    " << article.getArticleSize() << "\n"
       "\tarticle-offset:  " << article.getArticleOffset() << "\n"
+      "\tindex-offset:    " << article.getIndexOffset() << "\n"
+      "\tdirent-offset:   " << article.getDirentOffset() << "\n"
       "\tcompression:     " << static_cast<unsigned>(article.getCompression()) << "\n";
 
     if (verbose && article.getCompression())

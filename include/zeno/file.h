@@ -51,6 +51,7 @@ namespace zeno
       Article getArticle(char ns, const QUnicodeString& url, bool collate = false);
       Article getArticle(size_type idx);
       Dirent getDirent(size_type idx);
+      offset_type getDirentOffset(size_type idx) const  { return impl->getDirentOffset(idx); }
       size_type getCountArticles() const;
 
       size_type getNamespaceBeginOffset(char ch);

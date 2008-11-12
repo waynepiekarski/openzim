@@ -358,7 +358,7 @@ void Zenowriter::prepareSort()
     int aid = row[0].getInt();
     char ns = row[1].getChar();
     std::string title = row[2].getString();
-    articles.insert(ArticlesType::value_type(KeyType(ns, zeno::QUnicodeString(title)), aid));
+    articles.insert(ArticlesType::value_type(KeyType(ns, zeno::QUnicodeString::fromUtf8((title))), aid));
 
     ++count;
     while (process < count * 50 / countArticles + 1)

@@ -8,7 +8,7 @@ if MAKE_TNTREADER
   	src/webapp
 endif
 
-if MAKE_TNTWRITER
+if MAKE_ZENOWRITER
   SUBDIRS += \
   	src/wikidownloader \
   	src/zenowriter \

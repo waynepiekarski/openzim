@@ -1,11 +1,19 @@
 SUBDIRS = \
 	src/zenolib \
 	src/zenoDump \
-	src/webapp \
-	src/wikidownloader \
-	src/zenowriter \
-	src/zenoindexer \
 	include
+
+if MAKE_TNTREADER
+  SUBDIRS += \
+  	src/webapp
+endif
+
+if MAKE_TNTWRITER
+  SUBDIRS += \
+  	src/wikidownloader \
+  	src/zenowriter \
+  	src/zenoindexer
+endif
 
 dist_bin_SCRIPTS = TntReaderConfig
 EXTRA_DIST = tntnet.conf

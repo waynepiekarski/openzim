@@ -20,6 +20,54 @@ AC_CHECK_HEADER([bzlib.h], , AC_MSG_ERROR([bzip2 header files not found]))
 AC_LANG(C++)
 AC_SUBST(tntnetdir, [${libdir}/tntnet])
 
+AC_MSG_CHECKING([for cxxtools usability])
+AC_COMPILE_IFELSE(
+  [#include <cxxtools/net.h>
+   #include <cxxtools/pipe.h>
+   void t() { cxxtools::net::Socket s;
+              struct sockaddr_storage t = s.getSockAddr(); }
+  ],
+  AC_MSG_RESULT(yes),
+  [
+    AC_MSG_RESULT(no)
+    AC_MSG_ERROR(please check your cxxtools-installation - maybe you need an upgrade)
+  ]
+  )
+
+AC_ARG_WITH([reader],
+    AS_HELP_STRING([--with-reader=yes|no], [compile TntReader application (default is yes)]),
+    [with_reader=$withval],
+    [with_reader=yes])
+
+case "$with_reader" in
+    yes|no)
+        ;;
+    *)
+        AC_MSG_ERROR([unknown value "$with_reader" for --with-reader])
+        ;;
+esac
+
+AC_ARG_WITH([writer],
+    AS_HELP_STRING([--with-writer=yes|no], [compile applications to create zeno files (default is yes)]),
+    [with_writer=$withval],
+    [with_writer=yes])
+
+case "$with_writer" in
+    yes|no)
+        ;;
+    *)
+        AC_MSG_ERROR([unknown value "$with_writer" for --with-writer])
+        ;;
+esac
+
+AM_CONDITIONAL(MAKE_TNTREADER, test "$with_reader" = "yes")
+AM_CONDITIONAL(MAKE_ZENOWRITER, test "$with_writer" = "yes")
+
+if test "$with_reader" = "yes"
+then
+    AC_CHECK_HEADER([tnt/tntnet.h], , AC_MSG_ERROR([tntnet not found]))
+fi
+
 # output
 AC_CONFIG_FILES([
   Makefile

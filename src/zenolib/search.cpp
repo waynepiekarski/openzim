@@ -26,6 +26,7 @@
 #include <map>
 #include <math.h>
 #include <cctype>
+#include <stdexcept>
 
 log_define("zeno.search")
 

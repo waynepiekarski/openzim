@@ -27,7 +27,7 @@
 #include <zeno/indexarticle.h>
 #include <cxxtools/arg.h>
 #include <cxxtools/loginit.h>
-#include <cxxtools/hirestime.h>
+#include <cxxtools/timespan.h>
 #include <stdexcept>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -175,9 +175,9 @@ void ZenoDumper::listArticle(const zeno::Article& article, bool extra, bool verb
 
     if (verbose && article.getCompression())
     {
-      cxxtools::HiresTime t0 = cxxtools::HiresTime::gettimeofday();
+      cxxtools::Timespan t0 = cxxtools::Timespan::gettimeofday();
       zeno::size_type len = article.getUncompressedLen();
-      cxxtools::HiresTime t1 = cxxtools::HiresTime::gettimeofday();
+      cxxtools::Timespan t1 = cxxtools::Timespan::gettimeofday();
       std::cout <<
       "\tuncompressedlen: " << len << "\n"
       "\tuncompress time: " << (t1 - t0) << " s\n";

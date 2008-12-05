@@ -21,6 +21,7 @@
 
 #include "zenocompressor.h"
 #include <cxxtools/mutex.h>
+#include <cxxtools/condition.h>
 #include <cxxtools/fork.h>
 #include <cxxtools/pipestream.h>
 #include <cxxtools/log.h>

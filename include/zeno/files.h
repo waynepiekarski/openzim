@@ -22,14 +22,14 @@
 
 #include <zeno/file.h>
 #include <map>
-#include <tnt/stringlessignorecase.h>
+#include <zeno/stringlessignorecase.h>
 
 namespace zeno
 {
   class Files
   {
     public:
-      typedef std::map<std::string, File, tnt::StringLessIgnoreCase<std::string> > FilesType;
+      typedef std::map<std::string, File, zeno::StringLessIgnoreCase<std::string> > FilesType;
 
     private:
       FilesType files;

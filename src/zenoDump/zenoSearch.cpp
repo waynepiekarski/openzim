@@ -20,6 +20,7 @@
 #include <iostream>
 #include <cxxtools/loginit.h>
 #include <cxxtools/log.h>
+#include <cxxtools/syserror.h>
 #include <zeno/search.h>
 #include <zeno/files.h>
 #include <sys/types.h> 

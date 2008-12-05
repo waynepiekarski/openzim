@@ -20,6 +20,7 @@
 #include <map>
 #include <set>
 #include <cxxtools/mutex.h>
+#include <cxxtools/condition.h>
 #include <zeno/files.h>
 #include <zeno/article.h>
 

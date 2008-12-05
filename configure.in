@@ -18,21 +18,10 @@ AC_CHECK_HEADER([zlib.h], , AC_MSG_ERROR([zlib header not found]))
 AC_CHECK_HEADER([bzlib.h], , AC_MSG_ERROR([bzip2 header files not found]))
 
 AC_LANG(C++)
-AC_SUBST(tntnetdir, [${libdir}/tntnet])
 
-AC_MSG_CHECKING([for cxxtools usability])
-AC_COMPILE_IFELSE(
-  [#include <cxxtools/net.h>
-   #include <cxxtools/pipe.h>
-   void t() { cxxtools::net::Socket s;
-              struct sockaddr_storage t = s.getSockAddr(); }
-  ],
-  AC_MSG_RESULT(yes),
-  [
-    AC_MSG_RESULT(no)
-    AC_MSG_ERROR(please check your cxxtools-installation - maybe you need an upgrade)
-  ]
-  )
+AC_CHECK_HEADER([cxxtools/condition.h], , AC_MSG_ERROR([cxxtools headers not found]))
+
+AC_SUBST(tntnetdir, [${libdir}/tntnet])
 
 AC_ARG_WITH([reader],
     AS_HELP_STRING([--with-reader=yes|no], [compile TntReader application (default is yes)]),
@@ -65,7 +54,12 @@ AM_CONDITIONAL(MAKE_ZENOWRITER, test "$with_writer" = "yes")
 
 if test "$with_reader" = "yes"
 then
-    AC_CHECK_HEADER([tnt/tntnet.h], , AC_MSG_ERROR([tntnet not found]))
+    AC_CHECK_HEADER([tnt/tntnet.h], , AC_MSG_ERROR([tntnet header not found]))
+fi
+
+if test "$with_writer" = "yes"
+then
+    AC_CHECK_HEADER([tntdb/connect.h], , AC_MSG_ERROR([tntdb headers not found]))
 fi
 
 # output

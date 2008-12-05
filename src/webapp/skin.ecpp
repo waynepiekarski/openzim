@@ -128,7 +128,7 @@ ns = "A";
 			</div>
 		  </div>
 		  <div class="portlet"><h5>Powered by...</h5><a href="http://www.tntnet.org/"><img src="/-/tntnet.png" alt="powered by tntnet" title="powered by tntnet"/></a></div>
-          <div class="portlet"><h5><$ cxxtools::HiresTime::gettimeofday() - t0 $>s</h5></div>
+          <div class="portlet"><h5><$ cxxtools::Timespan::gettimeofday() - t0 $>s</h5></div>
       </div>
       <div class="visualClear"></div>
       <div id="footer">

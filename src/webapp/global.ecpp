@@ -6,7 +6,7 @@
 #include <zeno/articlesearch.h>
 #include <zeno/search.h>
 #include <zeno/qunicode.h>
-#include <cxxtools/hirestime.h>
+#include <cxxtools/timespan.h>
 
 static const int typeSpecial = -1;
 static const int typeArticle = 0;
@@ -37,7 +37,7 @@ zeno::ArticleSearch::Results articles;
 
 </%session>
 <%request scope="global">
-cxxtools::HiresTime t0(cxxtools::HiresTime::gettimeofday());
+cxxtools::Timespan t0(cxxtools::Timespan::gettimeofday());
 zeno::QUnicodeString title;
 unsigned s;
 unsigned t;

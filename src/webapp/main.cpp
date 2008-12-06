@@ -19,6 +19,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 #include <tnt/tntnet.h>
 #include <tnt/httpreply.h>
 #include <tnt/worker.h>
@@ -34,7 +35,9 @@ namespace
 {
   bool isTrue(char ch)
   {
-    return ch == 't' || ch == 'T' || ch == 'y' || ch == 'Y' || ch == '1';
+    const char trueValues[] = "tTyY1xX";
+    return std::find(trueValues, trueValues + sizeof(trueValues), ch)
+                != trueValues + sizeof(trueValues);
   }
 
   bool isTrue(const std::string& s)

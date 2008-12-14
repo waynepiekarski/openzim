@@ -1,12 +1,4 @@
-insert into trivialwords (word)
-  select word
+  select word, count(*)
     from (select distinct aid, word from words) words
     group by word
-    having count(*) > (select count(distinct aid) * 0.7 from words);
-
-delete from words where word in (
-  select word
-    from (select distinct aid, word from words) words
-    group by word
-    having count(*) > (select count(distinct aid) * 0.7 from words));
-
+  order by 2, 1

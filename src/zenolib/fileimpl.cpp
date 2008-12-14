@@ -262,6 +262,9 @@ namespace zeno
 
   std::string FileImpl::uncompressData(const Dirent& dirent, const std::string& data)
   {
+    if (dirent.getArticleSize() == 0)
+      return std::string();
+
     if (!dirent.isCompressed())
       return data;
 

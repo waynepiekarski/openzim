@@ -20,7 +20,7 @@
 #ifndef ZENOWRITER2_H
 #define ZENOWRITER2_H
 
-#include <map>
+#include <set>
 #include <iosfwd>
 #include <tntdb/connection.h>
 #include <zeno/qunicode.h>
@@ -40,6 +40,9 @@ class Zenowriter
     zeno::Dirent::CompressionType compression;
     unsigned numThreads;
     bool createIndex;
+
+    typedef std::set<unsigned> ArticleIdsType;
+    ArticleIdsType articleIds;
 
     tntdb::Connection& getConnection();
 
@@ -62,7 +65,7 @@ class Zenowriter
   public:
     explicit Zenowriter(const char* basename);
 
-    void init();
+    void init(bool withIndexarticle);
     void cleanup();
     void prepareFile();
     void prepareWordIndex();

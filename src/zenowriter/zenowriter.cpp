@@ -21,6 +21,7 @@
 #include <iostream>
 #include <fstream>
 #include <limits>
+#include <map>
 #include <cxxtools/log.h>
 #include <cxxtools/loginit.h>
 #include <cxxtools/arg.h>
@@ -94,33 +95,64 @@ void Zenowriter::prepareWordIndex()
   //     article index (integer)
   //     position of word in article (integer)
   //
-  // In contrast the the previous format (directmedia format) we don't use
-  // integer compression since the article data is compressed, which leads to
-  // much better compression at the cost of slower access.
-  //
-  tntdb::Statement stmt = getConnection().prepare(
-    "select distinct w.word"
-    "  from words w"
-    "  join zenoarticles z"
-    "    on w.aid = z.aid"
-    " where z.zid = :zid"
-    " order by 1");
-  stmt.set("zid", zid);
 
+  // collect all article-ids from zenoarticle
+  //
+  log_info("collect articles");
+  tntdb::Statement stmt = conn.prepare(
+    "select aid"
+    "  from zenoarticles"
+    " where zid = :zid");
+  stmt.set("zid", zid);
+  for (tntdb::Statement::const_iterator it = stmt.begin(); it != stmt.end(); ++it)
+  {
+    unsigned aid = it->getUnsigned(0);
+    articleIds.insert(aid);
+  }
+
+  log_debug(articleIds.size() << " articles found");
+
+  // select words and for each word, which belongs to this zeno file and
+  // not processed so far create entry in indexarticle
+  //
   tntdb::Statement insIndexArticle = getConnection().prepare(
     "insert into indexarticle"
     "  (zid, namespace, title)"
     " values (:zid, 'X', :title)");
   insIndexArticle.set("zid", zid);
 
+  typedef std::set<std::string> WordsType;
+  WordsType words;
+
   tntdb::Transaction transaction(getConnection());
   unsigned count = 0;
-  char currentChar = '\0';
+  unsigned process = 0;
 
+  log_info("read words table");
+
+  tntdb::Statement countWordsStmt = getConnection().prepare(
+    "select count(*) from zenodata where zid = :zid");
+  tntdb::Value countWordsValue = countWordsStmt.set("zid", zid).selectValue();
+  unsigned countWords = countWordsValue.getUnsigned();
+  log_info(countWords << " words");
+
+  stmt = conn.prepare("select aid, word from words");
   for (tntdb::Statement::const_iterator cur = stmt.begin(); cur != stmt.end(); ++cur)
   {
-    tntdb::Row row = *cur;
-    std::string word = row[0].getString();
+    unsigned aid = cur->getUnsigned(0);
+    std::string word = cur->getString(1);
+
+    if (articleIds.find(aid) == articleIds.end())
+    {
+      log_debug("word \"" << word << "\": aid " << aid << " not in zeno file");
+      continue;  // article do not belong to zeno file
+    }
+
+    if (!words.insert(word).second)
+    {
+      log_debug("word \"" << word << "\" already processed");
+      continue;  // word already processed
+    }
 
     log_debug("word: \"" << word << '"');
     insIndexArticle.set("title", word)
@@ -133,12 +165,13 @@ void Zenowriter::prepareWordIndex()
       transaction.begin();
     }
 
-    if (!word.empty() && currentChar < word.at(0))
+    while (process < count * 100 / countWords + 1)
     {
-      currentChar = word.at(0);
-      log_info(currentChar);
-      std::cout << currentChar << std::flush;
+      log_info("read words table " << process << '%');
+      std::cout << ' ' << process << '%' << std::flush;
+      process += 10;
     }
+
   }
 
   transaction.commit();
@@ -166,10 +199,6 @@ void Zenowriter::createWordIndex()
   //   each entry:
   //     article index (integer)
   //     position of word in article (integer)
-  //
-  // In contrast the the previous format (directmedia format) we don't use
-  // integer compression since the article data is compressed, which leads to
-  // much better compression at the cost of slower access.
   //
   tntdb::Statement stmt = getConnection().prepare(
     "select w.word, w.weight, z.sort, w.pos"
@@ -342,7 +371,7 @@ void Zenowriter::prepareSort()
     "   and rz.aid = r.aid"
     " where z.zid = :zid"
     "   and (a.redirect is null or rz.aid is not null)"
-    " union "
+    " union all "
     "select -(1 + xid), namespace, title"
     "  from indexarticle"
     " where zid = :zid");
@@ -427,7 +456,7 @@ void Zenowriter::prepareSort()
   std::cout << ' ' << count/2 << std::endl;
 }
 
-void Zenowriter::init()
+void Zenowriter::init(bool withIndexarticles)
 {
   tntdb::Statement stmt = getConnection().prepare(
     "select count(*)"
@@ -446,6 +475,17 @@ void Zenowriter::init()
   countArticles = stmt.set("zid", zid)
                       .selectValue()
                       .getUnsigned();
+
+  if (withIndexarticles)
+  {
+    stmt = getConnection().prepare(
+      "select count(*)"
+      "  from indexarticle"
+      " where zid = :zid");
+    countArticles += stmt.set("zid", zid)
+                         .selectValue()
+                         .getUnsigned();
+  }
 
   log_info(countArticles << " articles");
   std::cout << countArticles << " articles" << std::endl;
@@ -512,7 +552,7 @@ void Zenowriter::prepareFile()
     updRedirect.set("zid", zid);
 
     tntdb::Statement stmt = getConnection().prepare(
-      "select a.aid, a.title, z.parameter, a.mimetype, a.redirect, rz.sort, 'A'"
+      "select a.aid, a.title, z.parameter, a.mimetype, a.redirect, z.sort, 'A'"
       "  from zenoarticles z"
       "  join article a"
       "    on a.aid = z.aid"
@@ -524,7 +564,7 @@ void Zenowriter::prepareFile()
       "   and rz.aid = r.aid"
       " where z.zid = :zid"
       "   and (a.redirect is null or rz.aid is not null)"
-      " union "
+      " union all "
       "select -(1 + xid), title, parameter, 7, null, sort, 'X'"
       "  from indexarticle"
       " where zid = :zid"
@@ -555,7 +595,7 @@ void Zenowriter::prepareFile()
       std::string title = row[1].getString();
       tntdb::Blob parameter;
       row[2].getBlob(parameter);
-      zeno::Dirent::MimeType mimetype(static_cast<zeno::Dirent::MimeType>(row[3].getUnsigned()));
+      zeno::Dirent::MimeType mimetype(static_cast<zeno::Dirent::MimeType>(row[3].isNull() ? -1 : row[3].getUnsigned()));
 
       log_debug("process article " << aid << ": \"" << title << '"');
 
@@ -693,6 +733,7 @@ void Zenowriter::writeIndexPtr(std::ostream& ofile)
     "select sort, direntlen"
     "  from indexarticle"
     " where zid = :zid"
+    "   and direntlen is not null"
     " order by sort");
   stmt.set("zid", zid);
 
@@ -743,7 +784,7 @@ void Zenowriter::writeDirectory(std::ostream& ofile)
     "   and d.did = z.did"
     " where z.zid = :zid"
     "   and (a.redirect is null or rz.zid is not null)"
-    " union "
+    " union all "
     "select a.namespace, a.title, null, 7, a.datapos,"
     "       a.dataoffset, a.datasize, length(d.data), a.parameter, a.sort"
     "  from indexarticle a"
@@ -751,6 +792,7 @@ void Zenowriter::writeDirectory(std::ostream& ofile)
     "    on d.zid = a.zid"
     "   and d.did = a.did"
     " where a.zid = :zid"
+    "   and a.direntlen is not null"
     " order by 10");
   stmt.set("zid", zid);
 
@@ -769,9 +811,9 @@ void Zenowriter::writeDirectory(std::ostream& ofile)
     if (!row[2].isNull())
       redirect = row[2].getString();
     zeno::Dirent::MimeType mimetype = static_cast<zeno::Dirent::MimeType>(row[3].isNull() ? 0 : row[3].getUnsigned());
-    zeno::offset_type datapos = row[4].getUnsigned64();
-    unsigned dataoffset = row[5].getUnsigned();
-    unsigned datasize = row[6].getUnsigned();
+    zeno::offset_type datapos = row[4].isNull() ? 0 : row[4].getUnsigned64();
+    unsigned dataoffset = row[5].isNull() ? 0 : row[5].getUnsigned();
+    unsigned datasize = row[6].isNull() ? 0 : row[6].getUnsigned();
     unsigned datalen = row[7].isNull() ? 0 : row[7].getUnsigned();
     tntdb::Blob parameter;
     if (!row[8].isNull())
@@ -915,7 +957,7 @@ int main(int argc, char* argv[])
     app.setNumThreads(numThreads);
     app.setCreateIndex(createIndex);
 
-    app.init();
+    app.init(generateOnly);
 
     if (!generateOnly)
       app.prepareFile();

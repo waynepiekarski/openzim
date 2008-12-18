@@ -36,7 +36,7 @@ namespace zeno
 {
   class ZenoCompressorImpl
   {
-      cxxtools::Mutex dbmutex;
+      cxxtools::Mutex& dbmutex;
       tntdb::Connection conn;
       tntdb::Statement insData;
       tntdb::Statement updArticle;
@@ -73,15 +73,15 @@ namespace zeno
       void doJob(CompressJobX& job);
 
     public:
-      ZenoCompressorImpl(const std::string& dburl, unsigned zid);
+      ZenoCompressorImpl(const tntdb::Connection& conn, cxxtools::Mutex& dbmutex, unsigned zid);
       void run();
       void put(const CompressJob& job);
       void end();
       const std::string& getErrorMessage() const   { return errorMessage; }
   };
 
-  ZenoCompressor::ZenoCompressor(const std::string& dburl, unsigned zid, unsigned numThreads)
-    : impl(new ZenoCompressorImpl(dburl, zid))
+  ZenoCompressor::ZenoCompressor(const tntdb::Connection& conn, cxxtools::Mutex& dbmutex, unsigned zid, unsigned numThreads)
+    : impl(new ZenoCompressorImpl(conn, dbmutex, zid))
   {
     cxxtools::AttachedThread* t;
     while (numThreads > compressorThreads.size())
@@ -116,35 +116,41 @@ namespace zeno
     return impl->getErrorMessage();
   }
 
-  ZenoCompressorImpl::ZenoCompressorImpl(const std::string& dburl, unsigned zid)
-    : conn(tntdb::connect(dburl)),
-      insData(conn.prepare(
-        "insert into zenodata"
-        "  (zid, did, data)"
-        " values (:zid, :did, :data)")),
-      updArticle(conn.prepare(
-        "update zenoarticles"
-        "   set direntlen  = :direntlen,"
-        "       dataoffset = :dataoffset,"
-        "       datasize   = :datasize,"
-        "       datapos    = :datapos,"
-        "       did        = :did"
-        " where zid = :zid"
-        "   and aid = :aid")),
-      updIndexarticle(conn.prepare(
-        "update indexarticle"
-        "   set direntlen  = :direntlen,"
-        "       dataoffset = :dataoffset,"
-        "       datasize   = :datasize,"
-        "       datapos    = :datapos,"
-        "       did        = :did"
-        " where zid = :zid"
-        "   and xid = :xid")),
+  ZenoCompressorImpl::ZenoCompressorImpl(const tntdb::Connection& conn_, cxxtools::Mutex& dbmutex_, unsigned zid)
+    : conn(conn_),
+      dbmutex(dbmutex_),
       stop(false),
       datapos(0),
       nextDid(0),
       insDid(0)
   {
+    cxxtools::MutexLock lock(dbmutex);
+
+    insData = conn.prepare(
+      "insert into zenodata"
+      "  (zid, did, data)"
+      " values (:zid, :did, :data)");
+
+    updArticle = conn.prepare(
+      "update zenoarticles"
+      "   set direntlen  = :direntlen,"
+      "       dataoffset = :dataoffset,"
+      "       datasize   = :datasize,"
+      "       datapos    = :datapos,"
+      "       did        = :did"
+      " where zid = :zid"
+      "   and aid = :aid");
+
+    updIndexarticle = conn.prepare(
+      "update indexarticle"
+      "   set direntlen  = :direntlen,"
+      "       dataoffset = :dataoffset,"
+      "       datasize   = :datasize,"
+      "       datapos    = :datapos,"
+      "       did        = :did"
+      " where zid = :zid"
+      "   and xid = :xid");
+
     insData.set("zid", zid);
     updArticle.set("zid", zid);
     updIndexarticle.set("zid", zid);

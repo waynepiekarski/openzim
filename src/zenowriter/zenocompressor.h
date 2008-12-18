@@ -2,6 +2,7 @@
  * Copyright (C) 2008 Tommi Maekitalo
  *
  * This program is free software; you can redistribute it and/or
+ *
  * modify it under the terms of the GNU General Public License as
  * published by the Free Software Foundation; either version 2 of the
  * License, or (at your option) any later version.
@@ -26,6 +27,7 @@
 #include <deque>
 #include <cxxtools/thread.h>
 #include <cxxtools/noncopyable.h>
+#include <cxxtools/mutex.h>
 #include <zeno/dirent.h>
 #include <tntdb/connection.h>
 #include <tntdb/statement.h>
@@ -63,7 +65,7 @@ namespace zeno
       ZenoCompressorImpl* impl;
 
     public:
-      ZenoCompressor(const std::string& dburl, unsigned zid, unsigned numThreads);
+      ZenoCompressor(const tntdb::Connection& conn, cxxtools::Mutex& dbmutex, unsigned zid, unsigned numThreads);
       ~ZenoCompressor();
       void put(const CompressJob& job);
       const std::string& getErrorMessage() const;

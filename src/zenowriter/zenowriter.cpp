@@ -585,8 +585,9 @@ void Zenowriter::prepareFile()
     unsigned count = 0;
     unsigned process = 0;
 
-    zeno::ZenoCompressor compressor(dburl, zid, numThreads);
+    zeno::ZenoCompressor compressor(conn, dbmutex, zid, numThreads);
     zeno::CompressJob job;
+    cxxtools::MutexLock dblock(dbmutex);
     for (tntdb::Statement::const_iterator cur = stmt.begin();
          cur != stmt.end(); ++cur)
     {
@@ -666,6 +667,8 @@ void Zenowriter::prepareFile()
         throw std::runtime_error(compressor.getErrorMessage());
       }
 
+      dbmutex.unlock();
+
       ++count;
       while (process < count * 100 / countArticles + 1)
       {
@@ -673,6 +676,8 @@ void Zenowriter::prepareFile()
         std::cout << ' ' << process << '%' << std::flush;
         process += 10;
       }
+
+      dbmutex.lock();
     }
 
     if (!job.data.empty())

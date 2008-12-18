@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef ZENOWRITER2_H
-#define ZENOWRITER2_H
+#ifndef ZENOWRITER_H
+#define ZENOWRITER_H
 
 #include <set>
 #include <iosfwd>
@@ -26,10 +26,12 @@
 #include <zeno/qunicode.h>
 #include <zeno/fileheader.h>
 #include <zeno/dirent.h>
+#include <cxxtools/mutex.h>
 
 class Zenowriter
 {
     tntdb::Connection conn;
+    cxxtools::Mutex dbmutex;
     std::string basename;
     unsigned zid;
     unsigned commitRate;

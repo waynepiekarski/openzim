@@ -18,59 +18,87 @@
  *
  */
 
-#ifndef ZENO_COMPRESSOR_H
-#define ZENO_COMPRESSOR_H
+#ifndef ZENOCOMPRESSOR_H
+#define ZENOCOMPRESSOR_H
 
 #include <string>
 #include <vector>
 #include <map>
-#include <deque>
-#include <cxxtools/thread.h>
-#include <cxxtools/noncopyable.h>
 #include <cxxtools/mutex.h>
-#include <zeno/dirent.h>
+#include <cxxtools/condition.h>
 #include <tntdb/connection.h>
 #include <tntdb/statement.h>
+#include <compressor.h>
 
-namespace zeno
+class ZenoCompressor;
+
+struct ZenoCompressJob : public CompressJob
 {
-  struct CompressJob
+  struct Article
   {
-    struct Article
-    {
-      int aid;
-      unsigned direntlen;
-      unsigned dataoffset;
-      unsigned datasize;
-      Article() { }
-      Article(int aid_, unsigned direntlen_, unsigned dataoffset_, unsigned datasize_)
-        : aid(aid_),
-          direntlen(direntlen_),
-          dataoffset(dataoffset_),
-          datasize(datasize_)
-        { }
-    };
-
-    typedef std::vector<Article> ArticlesType;
-    ArticlesType articles;
-    std::string data;
-    zeno::Dirent::CompressionType compression;
+    int aid;
+    unsigned direntlen;
+    unsigned dataoffset;
+    unsigned datasize;
+    Article() { }
+    Article(int aid_, unsigned direntlen_, unsigned dataoffset_, unsigned datasize_)
+      : aid(aid_),
+        direntlen(direntlen_),
+        dataoffset(dataoffset_),
+        datasize(datasize_)
+      { }
   };
 
-  class ZenoCompressorImpl;
+  ZenoCompressor& compressor;
 
-  class ZenoCompressor : private cxxtools::NonCopyable
-  {
-      std::vector<cxxtools::Thread*> compressorThreads;
-      ZenoCompressorImpl* impl;
+  ZenoCompressJob(ZenoCompressor& compressor_)
+    : compressor(compressor_)
+    { }
 
-    public:
-      ZenoCompressor(const tntdb::Connection& conn, cxxtools::Mutex& dbmutex, unsigned zid, unsigned numThreads);
-      ~ZenoCompressor();
-      void put(const CompressJob& job);
-      const std::string& getErrorMessage() const;
-  };
+  typedef std::vector<Article> ArticlesType;
+  ArticlesType articles;
 
-}
+  unsigned did;
 
-#endif // ZENO_COMPRESSOR_H
+  typedef cxxtools::SmartPtr<ZenoCompressJob> Ptr;
+
+  // override from CompressJob:
+  void ready();
+};
+
+class ZenoCompressor
+{
+    Compressor compressor;
+
+    tntdb::Connection conn;
+    tntdb::Statement insData;
+    tntdb::Statement updArticle;
+    tntdb::Statement updIndexarticle;
+    unsigned zid;
+
+    typedef std::map<unsigned, ZenoCompressJob::Ptr> ReadyJobsMap;  // map did=>job
+    cxxtools::Mutex readyJobsMutex;
+    ReadyJobsMap readyJobs;  // map did to job
+
+    zeno::offset_type datapos;
+    unsigned processDid;  // next data-id to process after compression
+
+    friend class ZenoCompressJob;
+    // called by compress thread to indicate that compression is done
+    void ready(ZenoCompressJob* job);
+    void processReadyJob(ZenoCompressJob::Ptr job);
+
+  public:
+    ZenoCompressor(tntdb::Connection conn, unsigned zid, unsigned numThreads);
+    ~ZenoCompressor();
+
+    // called by main thread to add a compress job
+    void compress(ZenoCompressJob::Ptr job);
+
+    // called by main thread to write compressed data to database
+    void processReadyJobs(bool flush = false);
+
+    const std::string& getErrorMessage() const  { return compressor.getErrorMessage(); }
+};
+
+#endif // ZENOCOMPRESSOR_H

@@ -31,7 +31,6 @@
 class Zenowriter
 {
     tntdb::Connection conn;
-    cxxtools::Mutex dbmutex;
     std::string basename;
     unsigned zid;
     unsigned commitRate;

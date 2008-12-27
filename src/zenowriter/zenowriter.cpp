@@ -131,20 +131,27 @@ void Zenowriter::prepareWordIndex()
   log_info("read words table");
 
   tntdb::Statement countWordsStmt = getConnection().prepare(
-    "select count(*) from zenodata where zid = :zid");
-  tntdb::Value countWordsValue = countWordsStmt.set("zid", zid).selectValue();
+    "select count(*) from words");
+  tntdb::Value countWordsValue = countWordsStmt.selectValue();
   unsigned countWords = countWordsValue.getUnsigned();
   log_info(countWords << " words");
 
   stmt = conn.prepare("select aid, word from words");
   for (tntdb::Statement::const_iterator cur = stmt.begin(); cur != stmt.end(); ++cur)
   {
+    while (process < count * 100 / countWords + 1)
+    {
+      log_info("read words table " << process << '%');
+      std::cout << ' ' << process << '%' << std::flush;
+      process += 10;
+    }
+
     unsigned aid = cur->getUnsigned(0);
     std::string word = cur->getString(1);
 
     if (articleIds.find(aid) == articleIds.end())
     {
-      log_debug("word \"" << word << "\": aid " << aid << " not in zeno file");
+      //log_debug("word \"" << word << "\": aid " << aid << " not in zeno file");
       continue;  // article do not belong to zeno file
     }
 
@@ -163,13 +170,6 @@ void Zenowriter::prepareWordIndex()
     {
       transaction.commit();
       transaction.begin();
-    }
-
-    while (process < count * 100 / countWords + 1)
-    {
-      log_info("read words table " << process << '%');
-      std::cout << ' ' << process << '%' << std::flush;
-      process += 10;
     }
 
   }
@@ -458,6 +458,8 @@ void Zenowriter::prepareSort()
 
 void Zenowriter::init(bool withIndexarticles)
 {
+  log_info("count articles");
+
   tntdb::Statement stmt = getConnection().prepare(
     "select count(*)"
     "  from zenoarticles z"
@@ -584,19 +586,22 @@ void Zenowriter::prepareFile()
 
     unsigned count = 0;
     unsigned process = 0;
+    unsigned did = 0;
 
-    zeno::ZenoCompressor compressor(conn, dbmutex, zid, numThreads);
-    zeno::CompressJob job;
-    cxxtools::MutexLock dblock(dbmutex);
+    ZenoCompressor compressor(conn, zid, numThreads);
+    ZenoCompressJob::Ptr job = new ZenoCompressJob(compressor);
     for (tntdb::Statement::const_iterator cur = stmt.begin();
          cur != stmt.end(); ++cur)
     {
       tntdb::Row row = *cur;
+
       int aid = row[0].getInt();
       std::string title = row[1].getString();
+
       tntdb::Blob parameter;
       row[2].getBlob(parameter);
-      zeno::Dirent::MimeType mimetype(static_cast<zeno::Dirent::MimeType>(row[3].isNull() ? -1 : row[3].getUnsigned()));
+
+      zeno::Dirent::MimeType mimetype = static_cast<zeno::Dirent::MimeType>(row[3].isNull() ? -1 : row[3].getUnsigned());
 
       log_debug("process article " << aid << ": \"" << title << '"');
 
@@ -605,9 +610,9 @@ void Zenowriter::prepareFile()
         direntlen += 1 + parameter.size();
       tntdb::Blob articledata;
       unsigned redirect = std::numeric_limits<unsigned>::max();
-      unsigned dataoffset = job.data.size();
+      unsigned dataoffset = job->data.size();
 
-      if (row[4].isNull())
+      if (row[4].isNull())  // check for redirect
       {
         // article
         tntdb::Value v;
@@ -619,34 +624,38 @@ void Zenowriter::prepareFile()
                           .selectValue();
         v.getBlob(articledata);
 
-        if (!job.data.empty() && (compression == zeno::Dirent::zenocompNone
+        if (!job->data.empty() && (compression == zeno::Dirent::zenocompNone
                            || !mimeDoCompress(mimetype)
-                           || job.data.size() + articledata.size() / 2 >= minChunkSize))
+                           || job->data.size() + articledata.size() / 2 >= minChunkSize))
         {
           log_debug("insert data chunk");
-          job.compression = compression;
-          compressor.put(job);
-          job.articles.clear();
+          job->compression = compression;
+          job->did = did++;
+          compressor.compress(job);
+          compressor.processReadyJobs();
+          job = new ZenoCompressJob(compressor);
           dataoffset = 0;
-          job.data.clear();
+          job->data.clear();
         }
 
         log_debug("add article " << aid << ": \"" << title << '"');
 
-        job.articles.push_back(
-            zeno::CompressJob::Article(
+        job->articles.push_back(
+            ZenoCompressJob::Article(
                 aid, direntlen, dataoffset, articledata.size()));
 
-        job.data.append(articledata.data(), articledata.size());
+        job->data.append(articledata.data(), articledata.size());
 
-        if (!mimeDoCompress(mimetype) && !job.data.empty())
+        if (!mimeDoCompress(mimetype) && !job->data.empty())
         {
           log_debug("insert non compression data");
-          job.compression = zeno::Dirent::zenocompNone;
-          compressor.put(job);
-          job.articles.clear();
+          job->compression = zeno::Dirent::zenocompNone;
+          job->did = did++;
+          compressor.compress(job);
+          compressor.processReadyJobs();
+          job = new ZenoCompressJob(compressor);
           dataoffset = 0;
-          job.data.clear();
+          job->data.clear();
         }
       }
       else
@@ -667,8 +676,6 @@ void Zenowriter::prepareFile()
         throw std::runtime_error(compressor.getErrorMessage());
       }
 
-      dbmutex.unlock();
-
       ++count;
       while (process < count * 100 / countArticles + 1)
       {
@@ -677,15 +684,16 @@ void Zenowriter::prepareFile()
         process += 10;
       }
 
-      dbmutex.lock();
     }
 
-    if (!job.data.empty())
+    if (!job->data.empty())
     {
-      job.compression = compression;
-      compressor.put(job);
+      job->did = did++;
+      job->compression = compression;
+      compressor.compress(job);
     }
 
+    compressor.processReadyJobs(true);
     std::cout << ' ' << count << std::endl;
   }
 

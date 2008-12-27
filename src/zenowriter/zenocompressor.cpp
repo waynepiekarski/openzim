@@ -17,350 +17,131 @@
  *
  */
 
-// TODO: propagate errors to main thread
-
 #include "zenocompressor.h"
 #include <cxxtools/mutex.h>
 #include <cxxtools/condition.h>
 #include <cxxtools/fork.h>
 #include <cxxtools/pipestream.h>
 #include <cxxtools/log.h>
-#include <tntdb/connect.h>
+#include <tntdb/blob.h>
 #include <zeno/deflatestream.h>
 #include <zeno/bzip2stream.h>
 #include <unistd.h>
 
-log_define("zeno.compressor")
+log_define("zeno.compressor.zeno")
 
-namespace zeno
+void ZenoCompressJob::ready()
 {
-  class ZenoCompressorImpl
+  compressor.ready(this);
+}
+
+ZenoCompressor::ZenoCompressor(tntdb::Connection conn, unsigned zid, unsigned numThreads)
+  : compressor(numThreads, numThreads * 2),
+    datapos(0),
+    processDid(0)
+{
+  insData = conn.prepare(
+    "insert into zenodata"
+    "  (zid, did, data)"
+    " values (:zid, :did, :data)");
+
+  updArticle = conn.prepare(
+    "update zenoarticles"
+    "   set direntlen  = :direntlen,"
+    "       dataoffset = :dataoffset,"
+    "       datasize   = :datasize,"
+    "       datapos    = :datapos,"
+    "       did        = :did"
+    " where zid = :zid"
+    "   and aid = :aid");
+
+  updIndexarticle = conn.prepare(
+    "update indexarticle"
+    "   set direntlen  = :direntlen,"
+    "       dataoffset = :dataoffset,"
+    "       datasize   = :datasize,"
+    "       datapos    = :datapos,"
+    "       did        = :did"
+    " where zid = :zid"
+    "   and xid = :xid");
+
+  insData.set("zid", zid);
+  updArticle.set("zid", zid);
+  updIndexarticle.set("zid", zid);
+}
+
+ZenoCompressor::~ZenoCompressor()
+{
+  unsigned n = readyJobs.size();
+  if (n)
+    log_warn(n << " ready jobs left");
+}
+
+void ZenoCompressor::compress(ZenoCompressJob::Ptr job)
+{
+  log_debug("compress did=" << job->did);
+  compressor.compress(job.getPointer());
+}
+
+void ZenoCompressor::ready(ZenoCompressJob* job)
+{
+  log_debug("job did=" << job->did << " ready");
+  cxxtools::MutexLock lock(readyJobsMutex);
+  readyJobs[job->did] = job;
+}
+
+void ZenoCompressor::processReadyJobs(bool flush)
+{
+  log_trace("process ready jobs");
+
+  if (flush)
+    compressor.waitReady();
+
+  cxxtools::MutexLock lock(readyJobsMutex);
+
+  ReadyJobsMap::iterator it;
+  while ( it = readyJobs.begin(),
+    (it != readyJobs.end() && it->first == processDid) )
   {
-      cxxtools::Mutex& dbmutex;
-      tntdb::Connection conn;
-      tntdb::Statement insData;
-      tntdb::Statement updArticle;
-      tntdb::Statement updIndexarticle;
-
-      cxxtools::Mutex mutex;
-      cxxtools::Condition notEmpty;
-      cxxtools::Condition notFull;
-
-      struct CompressJobX : public CompressJob
-      {
-        CompressJobX() { }
-        CompressJobX(const CompressJob& j, unsigned did_)
-          : CompressJob(j),
-            did(did_)
-          { }
-
-        unsigned did;
-        std::string zdata;
-      };
-
-      std::deque<CompressJobX> queue;
-      std::string errorMessage;
-      bool stop;
-
-      zeno::offset_type datapos;
-      unsigned nextDid; // next data id to assign
-      unsigned insDid;  // next data id to insert
-      typedef std::map<unsigned, CompressJobX> ReadyJobsMap;  // map did to job
-      ReadyJobsMap readyJobs;  // map did to job
-
-      static const unsigned maxQueueSize = 10;
-
-      void doJob(CompressJobX& job);
-
-    public:
-      ZenoCompressorImpl(const tntdb::Connection& conn, cxxtools::Mutex& dbmutex, unsigned zid);
-      void run();
-      void put(const CompressJob& job);
-      void end();
-      const std::string& getErrorMessage() const   { return errorMessage; }
-  };
-
-  ZenoCompressor::ZenoCompressor(const tntdb::Connection& conn, cxxtools::Mutex& dbmutex, unsigned zid, unsigned numThreads)
-    : impl(new ZenoCompressorImpl(conn, dbmutex, zid))
-  {
-    cxxtools::AttachedThread* t;
-    while (numThreads > compressorThreads.size())
-    {
-      compressorThreads.push_back(
-        t = new cxxtools::AttachedThread(
-            cxxtools::callable(*impl, &ZenoCompressorImpl::run)));
-      t->start();
-    }
+    processReadyJob(it->second);
+    readyJobs.erase(it);
+    ++processDid;
   }
+}
 
-  ZenoCompressor::~ZenoCompressor()
+void ZenoCompressor::processReadyJob(ZenoCompressJob::Ptr j)
+{
+  log_debug("insert datachunk " << j->did << " with " << j->zdata.size() << " bytes");
+  tntdb::Blob bdata(j->zdata.data(), j->zdata.size());
+  insData.set("did", j->did)
+         .set("data", bdata)
+         .execute();
+
+  log_debug("update " << j->articles.size() << " articles of did " << j->did);
+  for (ZenoCompressJob::ArticlesType::const_iterator it = j->articles.begin();
+    it != j->articles.end(); ++it)
   {
-    impl->end();
-    for (unsigned n = 0; n < compressorThreads.size(); ++n)
-    {
-      log_debug("join thread " << n);
-      delete compressorThreads[n];
-      log_debug("thread " << n << " joined");
-    }
-    log_debug("all threads joined - delete impl object");
-    delete impl;
-  }
+    log_debug("update article " << it->aid << " direntlen=" << it->direntlen << " dataoffset=" << it->dataoffset
+        << " datasize=" << it->datasize << " did=" << j->did);
 
-  void ZenoCompressor::put(const CompressJob& job)
-  {
-    impl->put(job);
-  }
-
-  const std::string& ZenoCompressor::getErrorMessage() const
-  {
-    return impl->getErrorMessage();
-  }
-
-  ZenoCompressorImpl::ZenoCompressorImpl(const tntdb::Connection& conn_, cxxtools::Mutex& dbmutex_, unsigned zid)
-    : conn(conn_),
-      dbmutex(dbmutex_),
-      stop(false),
-      datapos(0),
-      nextDid(0),
-      insDid(0)
-  {
-    cxxtools::MutexLock lock(dbmutex);
-
-    insData = conn.prepare(
-      "insert into zenodata"
-      "  (zid, did, data)"
-      " values (:zid, :did, :data)");
-
-    updArticle = conn.prepare(
-      "update zenoarticles"
-      "   set direntlen  = :direntlen,"
-      "       dataoffset = :dataoffset,"
-      "       datasize   = :datasize,"
-      "       datapos    = :datapos,"
-      "       did        = :did"
-      " where zid = :zid"
-      "   and aid = :aid");
-
-    updIndexarticle = conn.prepare(
-      "update indexarticle"
-      "   set direntlen  = :direntlen,"
-      "       dataoffset = :dataoffset,"
-      "       datasize   = :datasize,"
-      "       datapos    = :datapos,"
-      "       did        = :did"
-      " where zid = :zid"
-      "   and xid = :xid");
-
-    insData.set("zid", zid);
-    updArticle.set("zid", zid);
-    updIndexarticle.set("zid", zid);
-  }
-
-  void ZenoCompressorImpl::end()
-  {
-    log_debug("end processing");
-    stop = true;
-    notFull.signal();
-    notEmpty.signal();
-  }
-
-  void ZenoCompressorImpl::put(const CompressJob& job)
-  {
-    cxxtools::MutexLock lock(mutex);
-
-    while (!stop && queue.size() >= maxQueueSize)
-      notFull.wait(lock);
-
-    queue.push_back(CompressJobX(job, nextDid++));
-    notEmpty.signal();
-  }
-
-  void ZenoCompressorImpl::run()
-  {
-    log_trace("run zeno compressor thread");
-    CompressJobX job;
-    while (true)
-    {
-      {
-        log_debug("wait for compress job");
-        cxxtools::MutexLock lock(mutex);
-        while (!stop && queue.empty())
-        {
-          log_debug("wait");
-          notEmpty.wait(lock);
-        }
-
-        if (queue.empty())
-        {
-          // the stop flag is set, so we wake up the next thread and terminate
-          log_debug("stop signal received - end thread");
-          notEmpty.signal();
-          log_debug("signaled not empty");
-          return;
-        }
-
-        log_debug("got job");
-
-        job = queue.front();
-        queue.pop_front();
-
-        notFull.signal();
-
-        if (!queue.empty())
-          notEmpty.signal();
-      }
-
-      try
-      {
-        doJob(job);
-      }
-      catch (const std::exception& e)
-      {
-        std::ostringstream msg;
-        msg << "error in compress job: " << e.what();
-        log_error(msg.str());
-        errorMessage = msg.str();
-        stop = true;
-      }
-
-      log_debug("job ready");
-    }
-  }
-
-  void ZenoCompressorImpl::doJob(CompressJobX& job)
-  {
-    if (job.compression == zeno::Dirent::zenocompZip)
-    {
-      log_debug("zlib compress " << job.data.size() << " bytes");
-
-      std::ostringstream u;
-      zeno::DeflateStream ds(u);
-      ds << job.data << std::flush;
-      ds.end();
-      job.zdata = u.str();
-      log_debug("after zlib compression " << job.zdata.size() << " bytes");
-    }
-    else if (job.compression == zeno::Dirent::zenocompBzip2)
-    {
-      log_debug("bzip2 compress " << job.data.size() << " bytes");
-
-      std::ostringstream u;
-      zeno::Bzip2Stream ds(u);
-      ds << job.data << std::flush;
-      ds.end();
-      job.zdata = u.str();
-      log_debug("after bzip2 compression " << job.zdata.size() << " bytes");
-    }
-    else if (job.compression == zeno::Dirent::zenocompLzma)
-    {
-      log_debug("lzma compress " << job.data.size() << " bytes");
-      cxxtools::Pipestream compressedDataPipe;
-      cxxtools::Fork senderProcess;
-      if (senderProcess.parent())
-      {
-        // receive the compressed data from compressedDataPipe
-        compressedDataPipe.closeWriteFd();
-        std::ostringstream u;
-        log_debug("read compressed data from pipe");
-        u << compressedDataPipe.rdbuf();
-        int ret = senderProcess.wait();
-        if (WEXITSTATUS(ret) != 0)
-          throw std::runtime_error("error in lzma compressor");
-        job.zdata = u.str();
-        log_debug("after lzma compression " << job.zdata.size() << " bytes");
-      }
-      else
-      {
-        // another fork for the lzma process
-        compressedDataPipe.closeReadFd();
-
-        cxxtools::Pipestream uncompressedDataPipe;
-        cxxtools::Fork lzmaProcess;
-        if (lzmaProcess.parent())
-        {
-          // send the data to the lzma process
-          uncompressedDataPipe.closeReadFd();
-          log_debug("sending uncompressed data to lzma process");
-          uncompressedDataPipe << job.data << std::flush;
-          uncompressedDataPipe.closeWriteFd();
-          log_debug("wait lzma process to end");
-          int ret = lzmaProcess.wait();
-          log_debug("lzma process ended with return code " << WEXITSTATUS(ret) << " (" << ret << ')');
-          exit ((WEXITSTATUS(ret) != 0 || uncompressedDataPipe.fail()) ? -1 : 0);
-        }
-        else
-        {
-          // redirect stdin and out and exec lzma
-
-          uncompressedDataPipe.closeWriteFd();
-
-          // redirect stdin to uncompressedDataPipe
-          close(STDIN_FILENO);
-          dup(uncompressedDataPipe.getReadFd());
-
-          // redirect stdout to compressedDataPipe
-          close(STDOUT_FILENO);
-          dup(compressedDataPipe.getWriteFd());
-
-          // execute
-          const char* argv[] = { "lzma", "-c", "-z", "-q", 0 };
-          log_debug("exec lzma process");
-          execvp("/usr/bin/lzma", const_cast<char* const*>(argv));
-          cxxtools::SysError e("execvp");
-          log_fatal("error running lzma process: " << e.what());
-          exit(-1);
-        }
-      }
-    }
+    if (it->aid >= 0)
+      updArticle.setUnsigned64("datapos", datapos)
+                .set("aid", it->aid)
+                .set("direntlen", it->direntlen)
+                .set("dataoffset", it->dataoffset)
+                .set("datasize", it->datasize)
+                .set("did", j->did)
+                .execute();
     else
-    {
-      log_debug("don't compress " << job.data.size() << " bytes");
-      job.zdata = job.data;
-    }
-
-    cxxtools::MutexLock lock(dbmutex);
-
-    log_debug("insert datachunk " << job.did << " with " << job.zdata.size() << " bytes");
-    tntdb::Blob bdata(job.zdata.data(), job.zdata.size());
-    insData.set("did", job.did)
-           .set("data", bdata)
-           .execute();
-
-    readyJobs[job.did] = job;
-
-    log_debug(readyJobs.size() << " ready jobs to update");
-
-    ReadyJobsMap::iterator j;
-    while ((j = readyJobs.find(insDid)) != readyJobs.end())
-    {
-      log_debug("update " << j->second.articles.size() << " articles of did " << insDid);
-      for (CompressJob::ArticlesType::const_iterator it = j->second.articles.begin();
-        it != j->second.articles.end(); ++it)
-      {
-        log_debug("update article " << it->aid << " direntlen=" << it->direntlen << " dataoffset=" << it->dataoffset
-            << " datasize=" << it->datasize << " did=" << insDid);
-
-        if (it->aid >= 0)
-          updArticle.setUnsigned64("datapos", datapos)
-                    .set("aid", it->aid)
-                    .set("direntlen", it->direntlen)
-                    .set("dataoffset", it->dataoffset)
-                    .set("datasize", it->datasize)
-                    .set("did", insDid)
-                    .execute();
-        else
-          updIndexarticle.setUnsigned64("datapos", datapos)
-                         .set("xid", -(1+it->aid))
-                         .set("direntlen", it->direntlen)
-                         .set("dataoffset", it->dataoffset)
-                         .set("datasize", it->datasize)
-                         .set("did", insDid)
-                         .execute();
-      }
-
-      ++insDid;
-      datapos += j->second.zdata.size();
-      readyJobs.erase(j);
-    }
+      updIndexarticle.setUnsigned64("datapos", datapos)
+                     .set("xid", -(1+it->aid))
+                     .set("direntlen", it->direntlen)
+                     .set("dataoffset", it->dataoffset)
+                     .set("datasize", it->datasize)
+                     .set("did", j->did)
+                     .execute();
   }
+
+  datapos += j->zdata.size();
+
 }

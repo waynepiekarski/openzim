@@ -21,7 +21,7 @@ bool lastFoundUtf8(true);
 
   title.clear();
 
-  char ns = request.getArgDef(1, "A").at(0);
+  char ns = request.getArgDef(0, "A").at(0);
   std::string fname;
   if (request.getArgsCount() > 1)
     fname = request.getArg(1);

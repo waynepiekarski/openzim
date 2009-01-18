@@ -554,7 +554,7 @@ void Zenowriter::prepareFile()
     updRedirect.set("zid", zid);
 
     tntdb::Statement stmt = getConnection().prepare(
-      "select a.aid, a.title, z.parameter, a.mimetype, a.redirect, z.sort, 'A'"
+      "select a.aid, a.title, z.parameter, a.mimetype, a.redirect, rz.sort, 'A'"
       "  from zenoarticles z"
       "  join article a"
       "    on a.aid = z.aid"
@@ -567,7 +567,7 @@ void Zenowriter::prepareFile()
       " where z.zid = :zid"
       "   and (a.redirect is null or rz.aid is not null)"
       " union all "
-      "select -(1 + xid), title, parameter, 7, null, sort, 'X'"
+      "select -(1 + xid), title, parameter, 7, null, null, 'X'"
       "  from indexarticle"
       " where zid = :zid"
       " order by 6, 1");

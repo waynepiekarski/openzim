@@ -21,6 +21,7 @@
 #include <zeno/fileiterator.h>
 #include <zeno/fileimpl.h>
 #include <cxxtools/log.h>
+#include <limits>
 
 log_define("zeno.file")
 
@@ -119,6 +120,13 @@ namespace zeno
     return const_iterator(this, impl->findArticle(ns, url, collate).second);
   }
 
+  File::const_iterator::const_iterator(File* file_)
+    : file(file_),
+      idx(0)
+  {
+    article.setIndex(std::numeric_limits<zeno::size_type>::max());
+  }
+
   File::const_iterator::const_iterator(File* file_, size_type idx_)
     : file(file_),
       idx(idx_)
@@ -130,6 +138,17 @@ namespace zeno
       file = 0;
       idx = 0;
     }
+  }
+
+  Article File::const_iterator::operator*() const
+  {
+    log_debug("dereference File::const_iterator; articleindex=" << article.getIndex() << " idx=" << idx);
+    if (article.getIndex() != idx)
+    {
+      log_debug("fetch article with index " << idx);
+      article = file->getArticle(idx);
+    }
+    return article;
   }
 
 }

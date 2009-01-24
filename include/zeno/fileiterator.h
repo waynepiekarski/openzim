@@ -34,10 +34,7 @@ namespace zeno
       bool is_end() const  { return file == 0 || idx >= file->getCountArticles(); }
 
     public:
-      explicit const_iterator(File* file_ = 0)
-        : file(file_),
-          idx(0)
-          { }
+      explicit const_iterator(File* file_ = 0);
       const_iterator(File* file_, size_type idx_);
 
       size_type getIndex() const   { return idx; }
@@ -75,12 +72,7 @@ namespace zeno
         return *this;
       }
 
-      Article operator*() const
-      {
-        if (article.getIndex() != idx)
-          article = file->getArticle(idx);
-        return article;
-      }
+      Article operator*() const;
 
       pointer operator->() const
       {

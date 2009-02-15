@@ -23,7 +23,7 @@
 #include <tntdb/error.h>
 #include <tntdb/statement.h>
 #include <tntdb/blob.h>
-#include <tnt/regex.h>
+#include <cxxtools/regex.h>
 #include <cxxtools/arg.h>
 #include <cxxtools/httprequest.h>
 #include <cxxtools/httpreply.h>
@@ -57,9 +57,9 @@ Article::Article(const std::string& url_, const std::string& title)
   std::ostringstream contentStream;
   contentStream << rep.rdbuf();
   std::string allContent = contentStream.str();
-  //static tnt::Regex reg("<h1 class=\"firstHeading\">([^<]+)</h1>(.*)<!--\\s*NewPP limit report");
-  static tnt::Regex reg("<h1 class=\"firstHeading\">([^<]+)</h1>.*<!--\\s*start\\s+content\\s*-->(.*)<!--\\send\\s+content\\s*-->");
-  tnt::RegexSMatch match;
+  //static cxxtools::Regex reg("<h1 class=\"firstHeading\">([^<]+)</h1>(.*)<!--\\s*NewPP limit report");
+  static cxxtools::Regex reg("<h1 class=\"firstHeading\">([^<]+)</h1>.*<!--\\s*start\\s+content\\s*-->(.*)<!--\\send\\s+content\\s*-->");
+  cxxtools::RegexSMatch match;
   if (reg.match(allContent, match))
   {
     heading = match.get(1);
@@ -125,8 +125,8 @@ int GetArticles::run()
     contentStream << rep.rdbuf();
     std::string content = contentStream.str();
 
-    static tnt::Regex reg("(<div class=\"allpagesredirect\">)?<a href=\"/wiki/([^\":]+)\" title=\"([^\":]+)\">\\2</a>(</div>)?");
-    tnt::RegexSMatch match;
+    static cxxtools::Regex reg("(<div class=\"allpagesredirect\">)?<a href=\"/wiki/([^\":]+)\" title=\"([^\":]+)\">\\2</a>(</div>)?");
+    cxxtools::RegexSMatch match;
     while (reg.match(content, match))
     {
       bool redirect = match.offsetBegin(1) >= 0;

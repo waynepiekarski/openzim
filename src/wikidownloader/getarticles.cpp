@@ -28,11 +28,11 @@
 #include <cxxtools/httprequest.h>
 #include <cxxtools/httpreply.h>
 #include <cxxtools/loginit.h>
-#include <zeno/article.h>
+#include <zim/article.h>
 
 log_define("wikicrawler")
 
-class Article : public zeno::Article
+class Article : public zim::Article
 {
     std::string url;
     std::string heading;
@@ -47,7 +47,7 @@ class Article : public zeno::Article
 Article::Article(const std::string& url_, const std::string& title)
   : url(url_)
 {
-  setTitle(zeno::QUnicodeString(title));
+  setTitle(zim::QUnicodeString(title));
 
   cxxtools::HttpRequest req("http://de.wikipedia.org/wiki/" + url);
   req.addHeader("User-Agent:", "TntReader/1.0.2");
@@ -93,7 +93,7 @@ GetArticles::GetArticles(int& argc, char* argv[])
   : from(cxxtools::Arg<std::string>(argc, argv, 'f', "%20%")),
     count(0)
 {
-  cxxtools::Arg<std::string> dburl(argc, argv, "--db", "postgresql:dbname=zeno");
+  cxxtools::Arg<std::string> dburl(argc, argv, "--db", "postgresql:dbname=zim");
   conn = tntdb::connect(dburl);
 
   selArticle = conn.prepare(
@@ -167,7 +167,7 @@ void GetArticles::processArticle(const Article& article)
 {
   tntdb::Transaction trans(conn);
   insArticle.set("namespace", 'A')
-            .set("mimetype", zeno::Dirent::zenoMimeTextHtml)
+            .set("mimetype", zim::Dirent::zimMimeTextHtml)
             .set("title", article.getTitle().toUtf8())
             .set("url", article.getUrl())
             .set("data", tntdb::Blob(article.getRawData().data(), article.getRawData().size()))

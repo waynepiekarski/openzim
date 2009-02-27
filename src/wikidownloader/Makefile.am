@@ -6,5 +6,5 @@ getarticles_SOURCES = getarticles.cpp
 putarticle_SOURCES = putarticle.cpp
 
 AM_LDFLAGS = -ltntnet -ltntdb
-LDADD = $(top_builddir)/src/zenolib/libzeno.la
+LDADD = $(top_builddir)/src/zimlib/libzim.la
 

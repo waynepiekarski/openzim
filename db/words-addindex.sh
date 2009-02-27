@@ -1,6 +1,6 @@
 #!/bin/sh
 
-DB=${1:-zeno}
+DB=${1:-zim}
 
 date
 echo "create primary key in DB $DB"

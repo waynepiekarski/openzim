@@ -1,6 +1,6 @@
 SUBDIRS = \
-	src/zenolib \
-	src/zenoDump \
+	src/zimlib \
+	src/zimDump \
 	include
 
 if MAKE_TNTREADER
@@ -8,11 +8,11 @@ if MAKE_TNTREADER
   	src/webapp
 endif
 
-if MAKE_ZENOWRITER
+if MAKE_ZIMWRITER
   SUBDIRS += \
   	src/wikidownloader \
-  	src/zenowriter \
-  	src/zenoindexer
+  	src/zimwriter \
+  	src/zimindexer
 endif
 
 dist_bin_SCRIPTS = TntReaderConfig

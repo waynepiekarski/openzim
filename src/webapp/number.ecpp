@@ -1,9 +1,9 @@
 <%include>global.ecpp</%include>
 <%cpp>
 
-  zeno::size_type idx = tnt::stringTo<zeno::size_type>(request.getPathInfo());
+  zim::size_type idx = tnt::stringTo<zim::size_type>(request.getPathInfo());
 
-  zeno::File articlesFile = files.getFirstFile('A');
+  zim::File articlesFile = files.getFirstFile('A');
   if (!articlesFile)
     throw std::runtime_error("articlefile not found");
 
@@ -13,7 +13,7 @@
   if (!RedirectNumeric)
     reply.redirect('/' + article.getUrl().toUtf8());
 
-  if (article.getLibraryMimeType() != zeno::Dirent::zenoMimeTextHtml)
+  if (article.getLibraryMimeType() != zim::Dirent::zimMimeTextHtml)
   {
     log_debug("send non-html data");
     callComp("article", request, reply, qparam);

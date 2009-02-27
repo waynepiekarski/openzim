@@ -1,11 +1,11 @@
 <%pre>
 #include <map>
 #include <vector>
-#include <zeno/files.h>
-#include <zeno/article.h>
-#include <zeno/articlesearch.h>
-#include <zeno/search.h>
-#include <zeno/qunicode.h>
+#include <zim/files.h>
+#include <zim/article.h>
+#include <zim/articlesearch.h>
+#include <zim/search.h>
+#include <zim/qunicode.h>
 #include <cxxtools/timespan.h>
 
 static const int typeSpecial = -1;
@@ -22,23 +22,23 @@ bool RedirectNumeric = false;
 </%config>
 <%application scope="global">
 
-zeno::Files files(ZenoPath, ZenoFixFile);
+zim::Files files(ZenoPath, ZenoFixFile);
 
 </%application>
 <%session scope="global">
 
-zeno::Article article;
+zim::Article article;
 std::string searchExpression;
-zeno::Search::Results result;
-zeno::Search::Results bresult;
+zim::Search::Results result;
+zim::Search::Results bresult;
 std::string browse_a("~~~~~~~~~~");
 char ns_a('\0');
-zeno::ArticleSearch::Results articles;
+zim::ArticleSearch::Results articles;
 
 </%session>
 <%request scope="global">
 cxxtools::Timespan t0(cxxtools::Timespan::gettimeofday());
-zeno::QUnicodeString title;
+zim::QUnicodeString title;
 unsigned s;
 unsigned t;
 </%request>

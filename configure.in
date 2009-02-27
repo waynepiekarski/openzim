@@ -8,7 +8,7 @@ sonumber=${abi_current}:${abi_revision}:${abi_age}
 AC_SUBST(sonumber)
 
 AC_CONFIG_HEADERS([src/config.h])
-AC_CONFIG_SRCDIR([src/zenolib/file.cpp])
+AC_CONFIG_SRCDIR([src/zimlib/file.cpp])
 
 AC_PROG_CC
 AM_PROG_CC_C_O
@@ -37,7 +37,7 @@ case "$with_reader" in
 esac
 
 AC_ARG_WITH([writer],
-    AS_HELP_STRING([--with-writer=yes|no], [compile applications to create zeno files (default is yes)]),
+    AS_HELP_STRING([--with-writer=yes|no], [compile applications to create zim files (default is yes)]),
     [with_writer=$withval],
     [with_writer=yes])
 
@@ -50,7 +50,7 @@ case "$with_writer" in
 esac
 
 AM_CONDITIONAL(MAKE_TNTREADER, test "$with_reader" = "yes")
-AM_CONDITIONAL(MAKE_ZENOWRITER, test "$with_writer" = "yes")
+AM_CONDITIONAL(MAKE_ZIMWRITER, test "$with_writer" = "yes")
 
 if test "$with_reader" = "yes"
 then
@@ -65,12 +65,12 @@ fi
 # output
 AC_CONFIG_FILES([
   Makefile
-  src/zenolib/Makefile
-  src/zenoDump/Makefile
+  src/zimlib/Makefile
+  src/zimDump/Makefile
   src/webapp/Makefile
   src/wikidownloader/Makefile
-  src/zenowriter/Makefile
-  src/zenoindexer/Makefile
+  src/zimwriter/Makefile
+  src/zimindexer/Makefile
   include/Makefile
   ])
 

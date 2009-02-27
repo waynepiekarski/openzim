@@ -12,14 +12,14 @@ Charset = "iso-8859-1";
   if (host.empty())
     host = "localhost";
 
-  zeno::File file;
+  zim::File file;
 
-  std::string zenoFileName = request.getArg(0);
-  zenoFilesType::const_iterator it = zenoFiles.find(zenoFileName);
-  if (it == zenoFiles.end())
+  std::string zimFileName = request.getArg(0);
+  zimFilesType::const_iterator it = zimFiles.find(zimFileName);
+  if (it == zimFiles.end())
   {
-    file = zeno::File(zenoFileName);
-    zenoFiles[zenoFileName] = file;
+    file = zim::File(zimFileName);
+    zimFiles[zimFileName] = file;
   }
   else
   {
@@ -43,7 +43,7 @@ Charset = "iso-8859-1";
     log_debug("article " << request.getPathInfo() << " fetched - mime-type "
       << article.getLibraryMimeType());
 
-    if (article.getLibraryMimeType() != zeno::Dirent::zenoMimeTextHtml)
+    if (article.getLibraryMimeType() != zim::Dirent::zimMimeTextHtml)
     {
       log_debug("send non-html data");
       callComp("article", request, reply);

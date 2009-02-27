@@ -26,9 +26,9 @@
 #include <cxxtools/log.h>
 #include <cxxtools/loginit.h>
 #include <cxxtools/regex.h>
-#include <zeno/dirent.h>
+#include <zim/dirent.h>
 
-log_define("zeno.putarticle")
+log_define("zim.putarticle")
 
 class UrlRewriter
 {
@@ -36,14 +36,14 @@ private:
 	tntdb::Connection conn;
     tntdb::Statement selectUrl;
 	std::map<std::string, std::string> cache;
-	std::string zenoname;
+	std::string zimname;
 
 public:
 	UrlRewriter(tntdb::Connection& c, const std::string& name = "Wikipedia")
         : conn(c),
           selectUrl(conn.prepare(
             "select title,redirect,namespace from article where url = :url")),
-          zenoname(name)
+          zimname(name)
           { }
 
 	std::string getUrl(const std::string& filename);
@@ -68,11 +68,11 @@ std::string UrlRewriter::getUrl(const std::string& filename)
     tntdb::Row row = selectUrl.set("url", encodedurl).selectRow();
     if (row[1].isNull())
     {
-      out << " href=\"/" << zenoname << "/" << row[2].getString() << "/" << row[0].getString() << "\"";
+      out << " href=\"/" << zimname << "/" << row[2].getString() << "/" << row[0].getString() << "\"";
     }
     else
     {
-      out << " href=\"/" << zenoname << "/" << row[2].getString() << "/" << row[1].getString() << "\"";
+      out << " href=\"/" << zimname << "/" << row[2].getString() << "/" << row[1].getString() << "\"";
     }
     cache[filename] = out.str();
   }
@@ -89,7 +89,7 @@ void UrlRewriter::add(const char * filename, const std::string& url, char ns)
   std::ostringstream out;
   std::string baseurl = encode(filename);
 
-  out << " href=\"/" << zenoname << "/" << ns << "/" << url << "\"";
+  out << " href=\"/" << zimname << "/" << ns << "/" << url << "\"";
   cache[baseurl] = out.str();
 
   std::ostringstream likeurlstream;
@@ -112,13 +112,13 @@ void UrlRewriter::add(const char * filename, const std::string& url, char ns)
     row[1].getBlob(contentBlob);
     std::string content(contentBlob.data(), contentBlob.size());
 
-    std::ostringstream zenourl;
-    zenourl << "/" << zenoname << "/A/" << url;
+    std::ostringstream zimurl;
+    zimurl << "/" << zimname << "/A/" << url;
 
     int pos = content.find(fullurl);
     while(pos != -1)
     {
-      content = content.replace(pos, fullurl.size(), zenourl.str());
+      content = content.replace(pos, fullurl.size(), zimurl.str());
 
       pos = content.find(fullurl, pos + fullurl.size());
     }
@@ -203,9 +203,9 @@ int main(int argc, char* argv[])
   {
     log_init();
 
-    cxxtools::Arg<std::string> dburl(argc, argv, "--db", "postgresql:dbname=zeno");
+    cxxtools::Arg<std::string> dburl(argc, argv, "--db", "postgresql:dbname=zim");
     cxxtools::Arg<char> ns(argc, argv, 'n', 'A');
-    cxxtools::Arg<std::string> zenoname(argc, argv, "--zenoname", "Wikipedia");
+    cxxtools::Arg<std::string> zimname(argc, argv, "--zimname", "Wikipedia");
     tntdb::Connection conn = tntdb::connect(dburl);
 
     tntdb::Statement insArticle = conn.prepare(
@@ -215,7 +215,7 @@ int main(int argc, char* argv[])
       "insert into article (namespace, title, url, redirect)"
       " values (:namespace, :title, :url, :redirect)");
 
-    UrlRewriter rewriter(conn, zenoname);
+    UrlRewriter rewriter(conn, zimname);
 
     for (int a = 1; a < argc; ++a)
     {
@@ -262,7 +262,7 @@ int main(int argc, char* argv[])
         // insert article
         tntdb::Blob data(content.data(), content.size());
         insArticle.set("namespace", ns)
-                  .set("mimetype", zeno::Dirent::zenoMimeTextHtml)
+                  .set("mimetype", zim::Dirent::zimMimeTextHtml)
                   .set("title", title)
                   .set("url", argv[a])
                   .set("data", data)

@@ -4,26 +4,26 @@ go; // Artikel
 ft; // Volltext
 </%args>
 <%pre>
-#include <zeno/search.h>
+#include <zim/search.h>
 </%pre>
 <%config>
-double weightTitle = zeno::Search::getWeightTitle();
-double weightOcc = zeno::Search::getWeightOcc();
-double weightOccOff = zeno::Search::getWeightOccOff();
-double weightPlus = zeno::Search::getWeightPlus();
-double weightDist = zeno::Search::getWeightDist();
-double weightPos = zeno::Search::getWeightPos();
-double weightDistinctWords = zeno::Search::getWeightDistinctWords();
+double weightTitle = zim::Search::getWeightTitle();
+double weightOcc = zim::Search::getWeightOcc();
+double weightOccOff = zim::Search::getWeightOccOff();
+double weightPlus = zim::Search::getWeightPlus();
+double weightDist = zim::Search::getWeightDist();
+double weightPos = zim::Search::getWeightPos();
+double weightDistinctWords = zim::Search::getWeightDistinctWords();
 </%config>
 <%cpp>
 
-  zeno::Search::setWeightTitle(weightTitle);
-  zeno::Search::setWeightOcc(weightOcc);
-  zeno::Search::setWeightOccOff(weightOccOff);
-  zeno::Search::setWeightPlus(weightPlus);
-  zeno::Search::setWeightDist(weightDist);
-  zeno::Search::setWeightPos(weightPos);
-  zeno::Search::setWeightDistinctWords(weightDistinctWords);
+  zim::Search::setWeightTitle(weightTitle);
+  zim::Search::setWeightOcc(weightOcc);
+  zim::Search::setWeightOccOff(weightOccOff);
+  zim::Search::setWeightPlus(weightPlus);
+  zim::Search::setWeightDist(weightDist);
+  zim::Search::setWeightPos(weightPos);
+  zim::Search::setWeightDistinctWords(weightDistinctWords);
 
   if (!ft.empty())
     return fulltext(request, reply, qparam);
@@ -36,7 +36,7 @@ double weightDistinctWords = zeno::Search::getWeightDistinctWords();
   }
   else
   {
-    title = zeno::QUnicodeString("Suche nach: " + result.getExpression());
+    title = zim::QUnicodeString("Suche nach: " + result.getExpression());
 </%cpp>
 <& skin qparam nextComp="searchresults" type=(typeSpecial) >
 <%cpp>
@@ -57,13 +57,13 @@ e;  // Begriff
 
   log_debug("search expression \"" << e << '"');
   static cxxtools::IConverter iso8859_utf8("UTF-8", "ISO-8859-1");
-  zeno::Search search(files);
+  zim::Search search(files);
   result.clear();
   search.search(result, iso8859_utf8(e));
 
   log_debug(result.size() << " articles found");
 
-  title = zeno::QUnicodeString("Suche nach: " + e);
+  title = zim::QUnicodeString("Suche nach: " + e);
 
 </%cpp>
 <& skin qparam nextComp="searchresults" type=(typeSpecial) >

@@ -29,7 +29,7 @@
 #include <cxxtools/inifile.h>
 #include <signal.h>
 
-log_define("zeno.webapp.main")
+log_define("zim.webapp.main")
 
 namespace
 {
@@ -93,7 +93,7 @@ int main(int argc, char* argv[])
     unsigned short port = settings.getValueT<unsigned short>("TntReader", "port", 8080);
 
     std::string directory = settings.getValue("TntReader", "directory", ".");
-    std::string fixfile = settings.getValue("TntReader", "fixfile", "Wikipedia2.zeno");
+    std::string fixfile = settings.getValue("TntReader", "fixfile", "Wikipedia2.zim");
 
     tnt::Tntnet app;
     tnt::Worker::setEnableCompression(false);
@@ -108,23 +108,23 @@ int main(int argc, char* argv[])
     app.mapUrl("^/~/([^.]+)$",                 "$1");
     app.mapUrl("^/~/([^.]+)\\.([^.]*)$",       "$1_$2");
 
-    app.mapUrl("^/(.)/(.+.svg)$", "zenocomp")
+    app.mapUrl("^/(.)/(.+.svg)$", "zimcomp")
        .setPathInfo("$2.png")
        .pushArg("$1");
 
-    app.mapUrl("^/(.+)/(.)/(.+.svg)$", "zenocomp")
+    app.mapUrl("^/(.+)/(.)/(.+.svg)$", "zimcomp")
        .setPathInfo("$3.png")
-       .pushArg("$1.zeno")
+       .pushArg("$1.zim")
        .pushArg("$2");
 
-    app.mapUrl("^/(.)/(.+)$", "zenocomp")
+    app.mapUrl("^/(.)/(.+)$", "zimcomp")
        .setPathInfo("$2")
        .pushArg("$1");
 
-    app.mapUrl("^/(.+)/(.)/(.+)$", "zenocomp")
+    app.mapUrl("^/(.+)/(.)/(.+)$", "zimcomp")
        .setPathInfo("$3")
        .pushArg("$2")
-       .pushArg("$1.zeno");
+       .pushArg("$1.zim");
 
     app.mapUrl(".*", "notfound");
 

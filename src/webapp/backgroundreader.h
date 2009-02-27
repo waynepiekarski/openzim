@@ -21,19 +21,19 @@
 #include <set>
 #include <cxxtools/mutex.h>
 #include <cxxtools/condition.h>
-#include <zeno/files.h>
-#include <zeno/article.h>
+#include <zim/files.h>
+#include <zim/article.h>
 
-namespace zeno
+namespace zim
 {
   class Backgroundreader
   {
-      zeno::Files files;
-      zeno::Article lastArticle;
-      zeno::Article currentArticle;
+      zim::Files files;
+      zim::Article lastArticle;
+      zim::Article currentArticle;
       bool stopRunning;
 
-      typedef std::map<std::pair<char, QUnicodeString>, zeno::Article> CachedArticlesType;
+      typedef std::map<std::pair<char, QUnicodeString>, zim::Article> CachedArticlesType;
       CachedArticlesType cachedArticles;
       CachedArticlesType prevCachedArticles;
 
@@ -41,20 +41,20 @@ namespace zeno
       cxxtools::Condition newArticle;
 
       typedef std::set<std::pair<char, QUnicodeString> > UrlsType;
-      void readUrls(UrlsType& urls, zeno::File file);
+      void readUrls(UrlsType& urls, zim::File file);
       void readImages();
       void readLinks();
 
-      zeno::File getFile(char ns);
+      zim::File getFile(char ns);
 
     public:
-      explicit Backgroundreader(zeno::Files files);
+      explicit Backgroundreader(zim::Files files);
       ~Backgroundreader();
 
       void run();
       void stop()  { stopRunning = true; }
 
-      zeno::Article getArticle(char ch, const QUnicodeString& path);
-      zeno::Article getArticle(const std::string& fname, char ch, const QUnicodeString& path);
+      zim::Article getArticle(char ch, const QUnicodeString& path);
+      zim::Article getArticle(const std::string& fname, char ch, const QUnicodeString& path);
   };
 };

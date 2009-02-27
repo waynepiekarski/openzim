@@ -22,11 +22,11 @@
 #include <cxxtools/log.h>
 #include <unistd.h>
 
-log_define("zeno.backgroundreader")
+log_define("zim.backgroundreader")
 
-namespace zeno
+namespace zim
 {
-  Backgroundreader::Backgroundreader(zeno::Files files_)
+  Backgroundreader::Backgroundreader(zim::Files files_)
     : files(files_),
       stopRunning(false)
   {
@@ -37,15 +37,15 @@ namespace zeno
     stopRunning = true;
   }
 
-  zeno::File Backgroundreader::getFile(char ns)
+  zim::File Backgroundreader::getFile(char ns)
   {
     for (Files::iterator it = files.begin(); it != files.end(); ++it)
       if (it->second.hasNamespace(ns))
         return it->second;
-    return zeno::File();
+    return zim::File();
   }
 
-  void Backgroundreader::readUrls(UrlsType& urls, zeno::File file)
+  void Backgroundreader::readUrls(UrlsType& urls, zim::File file)
   {
     cxxtools::MutexLock lock(mutex);
 
@@ -180,13 +180,13 @@ namespace zeno
     }
   }
 
-  zeno::Article Backgroundreader::getArticle(char ns, const QUnicodeString& path)
+  zim::Article Backgroundreader::getArticle(char ns, const QUnicodeString& path)
   {
     cxxtools::MutexLock lock(mutex);
 
     CachedArticlesType::const_iterator it = cachedArticles.find(std::make_pair(ns, path));
 
-    zeno::Article article;
+    zim::Article article;
 
     if (it != cachedArticles.end())
     {
@@ -199,7 +199,7 @@ namespace zeno
       article = files.getArticle(ns, path);
     }
 
-    if (article && article.getLibraryMimeType() == zeno::Dirent::zenoMimeTextHtml)
+    if (article && article.getLibraryMimeType() == zim::Dirent::zimMimeTextHtml)
     {
       log_debug("html article read - replace current file");
 
@@ -212,7 +212,7 @@ namespace zeno
     return article;
   }
 
-  zeno::Article Backgroundreader::getArticle(const std::string& fname, char ns, const QUnicodeString& path)
+  zim::Article Backgroundreader::getArticle(const std::string& fname, char ns, const QUnicodeString& path)
   {
     return fname.empty() ? getArticle(ns, path) : files.getArticle(fname, ns, path);
   }

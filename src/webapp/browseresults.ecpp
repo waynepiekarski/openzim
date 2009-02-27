@@ -6,7 +6,7 @@ unsigned n = 20; // items per page
 </%args>
 <%include>global.ecpp</%include>
 <%pre>
-#include <zeno/search.h>
+#include <zim/search.h>
 #include <cxxtools/iconverter.h>
 </%pre>
 <%cpp>
@@ -16,9 +16,9 @@ unsigned n = 20; // items per page
   if (browse_a != a || ns_a != ns)
   {
     bresult.clear();
-    zeno::Search search(files);
+    zim::Search search(files);
     log_debug("find \"" << a << '"');
-    search.find(bresult, ns, zeno::QUnicodeString::fromUtf8(a));
+    search.find(bresult, ns, zim::QUnicodeString::fromUtf8(a));
     browse_a = a;
     ns_a = ns;
   }

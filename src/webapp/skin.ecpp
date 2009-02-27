@@ -42,7 +42,7 @@ ns = "A";
 @import "/-/common.css";
 @import "/-/monobookde.css";
 @import "/-/user.css";
-@import "/-/zenowp.css";
+@import "/-/zimwp.css";
 /*]]>*/</style>
   </head>
   <body  class="mediawiki ns-1 ltr">

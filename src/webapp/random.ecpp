@@ -11,19 +11,19 @@ unsigned int seed = static_cast<unsigned int>(time(0));
 </%pre>
 <%cpp>
 
-  zeno::File articlesFile = files.getFirstFile('A');
+  zim::File articlesFile = files.getFirstFile('A');
   if (!articlesFile)
     throw std::runtime_error("articlefile not found");
 
   do
   {
-    zeno::size_type idx = static_cast<zeno::size_type>(static_cast<double>(articlesFile.getCountArticles()) * rand_r(&seed) / RAND_MAX);
+    zim::size_type idx = static_cast<zim::size_type>(static_cast<double>(articlesFile.getCountArticles()) * rand_r(&seed) / RAND_MAX);
 
     article = articlesFile.getArticle(idx);
     log_debug("consider article " << article.getIndex() << ": " << article.getTitle());
     log_debug("mime-type: " << article.getLibraryMimeType() << " namespace: " << article.getNamespace());
 
-  } while (article.getLibraryMimeType() != zeno::Dirent::zenoMimeTextHtml
+  } while (article.getLibraryMimeType() != zim::Dirent::zimMimeTextHtml
         || article.getNamespace() != 'A');
 
   log_info("choose article " << article.getIndex() << ": " << article.getTitle());
@@ -35,7 +35,7 @@ unsigned int seed = static_cast<unsigned int>(time(0));
   url << "/!/" << article.getIndex();
   reply.redirect(url.str());
 
-  if (article.getLibraryMimeType() != zeno::Dirent::zenoMimeTextHtml)
+  if (article.getLibraryMimeType() != zim::Dirent::zimMimeTextHtml)
   {
     log_debug("send non-html data");
     callComp("article", request, reply, qparam);

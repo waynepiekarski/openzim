@@ -22,7 +22,7 @@
 #include <tntdb/row.h>
 #include <tntdb/blob.h>
 #include <tntdb/statement.h>
-#include <zeno/article.h>
+#include <zim/article.h>
 #include <cxxtools/loginit.h>
 #include <cxxtools/arg.h>
 
@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
   {
     log_init();
 
-    cxxtools::Arg<std::string> dburl(argc, argv, "--db", "postgresql:dbname=zeno");
+    cxxtools::Arg<std::string> dburl(argc, argv, "--db", "postgresql:dbname=zim");
     tntdb::Connection conn = tntdb::connect(dburl);
 
     tntdb::Statement selArticle = conn.prepare(
@@ -56,9 +56,9 @@ int main(int argc, char* argv[])
       std::string title = row[1].getString();
       tntdb::Blob data  = row[2].getBlob();
 
-      zeno::Article article;
+      zim::Article article;
       article.setRawData(std::string(data.data(), data.size()));
-      article.setCompression(zeno::Dirent::zenocompNone);
+      article.setCompression(zim::Dirent::zimcompNone);
       article.tryCompress();
       std::cout << "article " << aid << ": " << title << "\t=> compression " << article.getCompression() << std::endl;
       updArticle.set("aid", aid)

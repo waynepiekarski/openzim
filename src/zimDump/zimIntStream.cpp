@@ -19,7 +19,7 @@
 
 #include <iostream>
 #include <sstream>
-#include <zeno/zintstream.h>
+#include <zim/zintstream.h>
 #include <cxxtools/loginit.h>
 #include <cxxtools/arg.h>
 
@@ -29,7 +29,7 @@ void doDecompress(std::istream& in)
 {
   unsigned col = 0;
 
-  zeno::IZIntStream z(std::cin);
+  zim::IZIntStream z(std::cin);
   unsigned n;
   while (z.get(n))
   {
@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
 
     if (compress)
     {
-      zeno::OZIntStream z(std::cout);
+      zim::OZIntStream z(std::cout);
       for (int a = 1; a < argc; ++a)
       {
         std::istringstream s(argv[a]);

@@ -25,16 +25,16 @@ log_define("zim.file.header")
 
 namespace zim
 {
-  const size_type Fileheader::MAGIC = 1439867043;
-  const size_type Fileheader::VERSION = 3;
+  const size_type Fileheader::magic = 1439867043;
+  const size_type Fileheader::version = 4;
   const size_type Fileheader::headerSize;
 
   Fileheader::Fileheader()
   {
     std::fill(header, header + headerSize, '\0');
 
-    *reinterpret_cast<size_type*>(header + 0) = fromLittleEndian<size_type>(&MAGIC);
-    *reinterpret_cast<size_type*>(header + 4) = fromLittleEndian<size_type>(&VERSION);
+    *reinterpret_cast<size_type*>(header + 0) = fromLittleEndian<size_type>(&magic);
+    *reinterpret_cast<size_type*>(header + 4) = fromLittleEndian<size_type>(&version);
   }
 
   std::ostream& operator<< (std::ostream& out, const Fileheader& fh)
@@ -54,16 +54,16 @@ namespace zim
     {
       in.ignore(57);
 
-      if (fh.getMagicNumber() != Fileheader::MAGIC)
+      if (fh.getMagicNumber() != Fileheader::magic)
       {
         log_error("invalid magic number " << fh.getMagicNumber() << " found - "
-            << Fileheader::MAGIC << " expected");
+            << Fileheader::magic << " expected");
         in.setstate(std::ios::failbit);
       }
-      else if (fh.getVersion() != Fileheader::VERSION)
+      else if (fh.getVersion() != Fileheader::version)
       {
         log_error("invalid zimfile version " << fh.getVersion() << " found - "
-            << Fileheader::VERSION << " expected");
+            << Fileheader::version << " expected");
         in.setstate(std::ios::failbit);
       }
     }

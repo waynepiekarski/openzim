@@ -32,8 +32,8 @@ namespace zim
       friend std::istream& operator>> (std::istream& in, Fileheader& fh);
 
     public:
-      static const size_type MAGIC;
-      static const size_type VERSION;
+      static const size_type magic;
+      static const size_type version;
       static const unsigned headerSize = 60;
       static const unsigned headerFill = 58;
 

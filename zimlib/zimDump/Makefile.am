@@ -4,4 +4,4 @@ zimDump_SOURCES = zimDump.cpp
 zimSearch_SOURCES = zimSearch.cpp
 zimIntStream_SOURCES = zimIntStream.cpp
 zimQUnicode_SOURCES = zimQUnicode.cpp
-LDADD = $(top_builddir)/src/zimlib/libzim.la
+LDADD = $(top_builddir)/src/libzim.la

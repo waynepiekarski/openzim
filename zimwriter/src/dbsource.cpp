@@ -23,6 +23,7 @@
 #include <tntdb/error.h>
 #include <cxxtools/arg.h>
 #include <cxxtools/log.h>
+#include <limits>
 
 log_define("zim.writer.dbsource")
 

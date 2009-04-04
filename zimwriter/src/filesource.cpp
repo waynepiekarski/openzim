@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <iterator>
+#include <limits>
 
 namespace zim
 {

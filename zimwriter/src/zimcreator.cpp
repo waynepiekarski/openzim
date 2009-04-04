@@ -37,28 +37,28 @@ namespace zim
     ZimCreator::ZimCreator(int& argc, char* argv[], ArticleSource& src_)
       : src(src_)
     {
-      minChunkSize = cxxtools::Arg<unsigned>(argc, argv, 's', 512);
+      minChunkSize = cxxtools::Arg<unsigned>(argc, argv, 's', 1024);
     }
 
     void ZimCreator::create(const std::string& fname)
     {
-      log_debug("create directory entries");
+      log_info("create directory entries");
       createDirents();
-      log_debug(dirents.size() << " directory entries created");
+      log_info(dirents.size() << " directory entries created");
 
-      log_debug("create clusters");
+      log_info("create clusters");
       createClusters(fname + ".tmp");
-      log_debug(clusterOffsets.size() << " clusters created");
+      log_info(clusterOffsets.size() << " clusters created");
 
-      log_debug("fill header");
+      log_info("fill header");
       fillHeader();
 
-      log_debug("write zimfile");
+      log_info("write zimfile");
       write(fname + ".zim", fname + ".tmp");
 
       ::unlink((fname + ".tmp").c_str());
 
-      log_debug("ready");
+      log_info("ready");
     }
 
     void ZimCreator::createDirents()
@@ -156,6 +156,7 @@ namespace zim
           clusterOffsets.push_back(out.tellp());
           out << cluster;
           cluster.clear();
+          cluster.setCompression(zimcompBzip2);
         }
       }
 

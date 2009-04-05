@@ -74,6 +74,7 @@ namespace zim
 
         if (article->isRedirect())
         {
+          dirent.setRedirect(0);
           dirent.setRedirectAid(article->getRedirectAid());
           log_debug("is redirect to " << dirent.getRedirectAid());
         }
@@ -127,6 +128,7 @@ namespace zim
           {
             if (ddi->getAid() == di->getRedirectAid())
             {
+              log_debug("redirect aid=" << ddi->getAid() << " redirect index=" << ddi->getIdx());
               di->setRedirect(ddi->getIdx());
               break;
             }

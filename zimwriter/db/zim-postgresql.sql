@@ -32,7 +32,7 @@ create table zimfile
   filename     text    not null,
   mainpage     integer,
   layoutpage   integer,
-  foreign key (mainpage) references article
+  foreign key (mainpage) references article,
   foreign key (layoutpage) references article
 );
 

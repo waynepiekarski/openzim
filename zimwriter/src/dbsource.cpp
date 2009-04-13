@@ -23,6 +23,8 @@
 #include <tntdb/error.h>
 #include <cxxtools/arg.h>
 #include <cxxtools/log.h>
+#include <stdexcept>
+#include <sstream>
 #include <limits>
 
 log_define("zim.writer.dbsource")
@@ -58,6 +60,13 @@ namespace zim
     MimeType DbArticle::getMimeType() const
     {
       log_debug("getMimeType");
+      if (row[3].isNull())
+      {
+        std::ostringstream msg;
+        msg << "article " << getNamespace() << '/' << getTitle() << " has no mime type";
+        throw std::runtime_error(msg.str());
+      }
+
       return static_cast<MimeType>(row[3].getInt());
     }
 
@@ -80,8 +89,17 @@ namespace zim
     void DbSource::setFilename(const std::string& fname)
     {
       tntdb::Statement s = conn.prepare("select zid from zimfile where filename = :filename");
-      tntdb::Value v = s.set("filename", fname).selectValue();
-      unsigned zid = v.getUnsigned();
+      try
+      {
+        tntdb::Value v = s.set("filename", fname).selectValue();
+        zid = v.getUnsigned();
+      }
+      catch (const tntdb::NotFound&)
+      {
+        std::ostringstream msg;
+        msg << "file \"" << fname << "\" not defined in database table zimfile";
+        throw std::runtime_error(msg.str());
+      }
 
       stmt = conn.prepare(
         "select a.aid, a.namespace, a.title, a.mimetype, r.aid"
@@ -138,14 +156,17 @@ namespace zim
       return Uuid::generate();
     }
 
-    unsigned DbSource::getMainPage()
+    std::string DbSource::getMainPage()
     {
-      return std::numeric_limits<unsigned>::max();
+      tntdb::Statement stmt = conn.prepare("select mainpage from zimfile where zid = :zid");
+      stmt.set("zid", zid);
+      tntdb::Value v = stmt.selectValue();
+      return v.isNull() ? std::string() : v.getString();
     }
 
-    unsigned DbSource::getLayoutPage()
+    std::string DbSource::getLayoutPage()
     {
-      return std::numeric_limits<unsigned>::max();
+      return std::string();
     }
 
   }

@@ -30,7 +30,7 @@ namespace zim
     {
         std::string aid;
         std::string redirectAid;
-        unsigned idx;
+        size_type idx;
 
       public:
         void setAid(const std::string&  aid_)      { aid = aid_; }
@@ -39,8 +39,8 @@ namespace zim
         void setRedirectAid(const std::string&  aid_)     { redirectAid = aid_; }
         const std::string& getRedirectAid() const         { return redirectAid; }
 
-        void setIdx(unsigned idx_)      { idx = idx_; }
-        unsigned getIdx() const         { return idx; }
+        void setIdx(size_type idx_)      { idx = idx_; }
+        size_type getIdx() const         { return idx; }
 
     };
 

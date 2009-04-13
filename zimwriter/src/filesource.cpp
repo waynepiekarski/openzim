@@ -26,7 +26,6 @@
 #include <unistd.h>
 #include <errno.h>
 #include <iterator>
-#include <limits>
 
 namespace zim
 {
@@ -103,14 +102,14 @@ namespace zim
       return Uuid();
     }
 
-    unsigned FileSource::getMainPage()
+    std::string FileSource::getMainPage()
     {
-      return std::numeric_limits<unsigned>::max();
+      return std::string();
     }
 
-    unsigned FileSource::getLayoutPage()
+    std::string FileSource::getLayoutPage()
     {
-      return std::numeric_limits<unsigned>::max();
+      return std::string();
     }
 
   }

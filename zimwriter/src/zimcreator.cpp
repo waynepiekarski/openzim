@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <fstream>
 #include <unistd.h>
+#include <limits>
 
 log_define("zim.writer.creator")
 
@@ -171,13 +172,25 @@ namespace zim
 
     void ZimCreator::fillHeader()
     {
+      std::string mainAid = src.getMainPage();
+      std::string layoutAid = src.getLayoutPage();
+
+      header.setMainPage(std::numeric_limits<size_type>::max());
+      header.setLayoutPage(std::numeric_limits<size_type>::max());
+
+      for (DirentsType::const_iterator di = dirents.begin(); di != dirents.end(); ++di)
+      {
+        if (mainAid == di->getAid())
+          header.setMainPage(di->getIdx());
+        if (layoutAid == di->getAid())
+          header.setLayoutPage(di->getIdx());
+      }
+
       header.setUuid( src.getUuid() );
       header.setArticleCount( dirents.size() );
       header.setIndexPtrPos( indexPtrPos() );
       header.setClusterCount( clusterOffsets.size() );
       header.setClusterPtrPos( clusterPtrPos() );
-      header.setMainPage( src.getMainPage() );
-      header.setLayoutPage( src.getLayoutPage() );
 
       log_debug("indexPtrSize=" << indexPtrSize()
         << " indexPtrPos=" << indexPtrPos()

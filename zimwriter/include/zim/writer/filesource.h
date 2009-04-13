@@ -65,8 +65,8 @@ namespace zim
         virtual const Article* getNextArticle();
         virtual Blob getData(const std::string& aid);
         virtual Uuid getUuid();
-        virtual unsigned getMainPage();
-        virtual unsigned getLayoutPage();
+        virtual std::string getMainPage();
+        virtual std::string getLayoutPage();
     };
 
   }

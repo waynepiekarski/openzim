@@ -29,7 +29,11 @@ create table categoryarticles
 create table zimfile
 (
   zid          serial  not null primary key,
-  filename     text    not null
+  filename     text    not null,
+  mainpage     integer,
+  layoutpage   integer,
+  foreign key (mainpage) references article
+  foreign key (layoutpage) references article
 );
 
 create table zimarticles

@@ -58,6 +58,7 @@ namespace zim
         tntdb::Statement selData;
         tntdb::Blob dataBlob;
         tntdb::Value dataValue;
+        unsigned zid;
 
       public:
         DbSource(int& argc, char* argv[]);
@@ -66,8 +67,8 @@ namespace zim
         virtual const Article* getNextArticle();
         virtual Blob getData(const std::string& aid);
         virtual Uuid getUuid();
-        virtual unsigned getMainPage();
-        virtual unsigned getLayoutPage();
+        virtual std::string getMainPage();
+        virtual std::string getLayoutPage();
     };
 
   }

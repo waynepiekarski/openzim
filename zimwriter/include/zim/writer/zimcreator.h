@@ -60,6 +60,13 @@ namespace zim
         ZimCreator(int& argc, char* argv[], ArticleSource& src_);
 
         void create(const std::string& fname);
+
+        static bool mimeDoCompress(zim::MimeType t)
+        { return t == zimMimeTextHtml
+              || t == zimMimeTextPlain
+              || t == zimMimeTextCss
+              || t == zimMimeIndex
+              || t == zimMimeApplicationJavaScript; }
     };
 
   }

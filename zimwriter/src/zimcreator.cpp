@@ -150,22 +150,44 @@ namespace zim
         if (di->isRedirect())
           continue;
 
-        di->setCluster(clusterOffsets.size(), cluster.count());
-
         Blob blob = src.getData(di->getAid());
-        cluster.addBlob(blob);
-        if (cluster.size() >= minChunkSize * 1024)
+
+        if (mimeDoCompress(di->getMimeType()))
         {
+          di->setCluster(clusterOffsets.size(), cluster.count());
+          cluster.addBlob(blob);
+          if (cluster.size() >= minChunkSize * 1024)
+          {
+            clusterOffsets.push_back(out.tellp());
+            out << cluster;
+            cluster.clear();
+            cluster.setCompression(zimcompBzip2);
+          }
+        }
+        else
+        {
+          if (cluster.count() > 0)
+          {
+            clusterOffsets.push_back(out.tellp());
+            cluster.setCompression(zimcompBzip2);
+            out << cluster;
+            cluster.clear();
+            cluster.setCompression(zimcompBzip2);
+          }
+
+          di->setCluster(clusterOffsets.size(), cluster.count());
           clusterOffsets.push_back(out.tellp());
-          out << cluster;
-          cluster.clear();
-          cluster.setCompression(zimcompBzip2);
+          Cluster c;
+          c.addBlob(blob);
+          c.setCompression(zimcompNone);
+          out << c;
         }
       }
 
       if (cluster.count() > 0)
       {
         clusterOffsets.push_back(out.tellp());
+        cluster.setCompression(zimcompBzip2);
         out << cluster;
       }
     }

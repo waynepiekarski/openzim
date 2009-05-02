@@ -70,6 +70,7 @@ namespace zim
         Dirent dirent;
         dirent.setAid(article->getAid());
         dirent.setTitle(article->getNamespace(), QUnicodeString::fromUtf8(article->getTitle()));
+        dirent.setParameter(article->getParameter());
 
         log_debug("article " << dirent.getNamespace() << '/' << dirent.getTitle().toUtf8() << " fetched");
 
@@ -197,15 +198,27 @@ namespace zim
       std::string mainAid = src.getMainPage();
       std::string layoutAid = src.getLayoutPage();
 
+      log_debug("main aid=" << mainAid << " layout aid=" << layoutAid);
+
       header.setMainPage(std::numeric_limits<size_type>::max());
       header.setLayoutPage(std::numeric_limits<size_type>::max());
 
-      for (DirentsType::const_iterator di = dirents.begin(); di != dirents.end(); ++di)
+      if (!mainAid.empty() || !layoutAid.empty())
       {
-        if (mainAid == di->getAid())
-          header.setMainPage(di->getIdx());
-        if (layoutAid == di->getAid())
-          header.setLayoutPage(di->getIdx());
+        for (DirentsType::const_iterator di = dirents.begin(); di != dirents.end(); ++di)
+        {
+          if (mainAid == di->getAid())
+          {
+            log_debug("main idx=" << di->getIdx());
+            header.setMainPage(di->getIdx());
+          }
+
+          if (layoutAid == di->getAid())
+          {
+            log_debug("layout idx=" << di->getIdx());
+            header.setLayoutPage(di->getIdx());
+          }
+        }
       }
 
       header.setUuid( src.getUuid() );

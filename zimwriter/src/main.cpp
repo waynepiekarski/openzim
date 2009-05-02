@@ -19,7 +19,9 @@
 
 #include <iostream>
 #include <cxxtools/loginit.h>
+#include <cxxtools/arg.h>
 #include <zim/writer/dbsource.h>
+#include <zim/writer/indexersource.h>
 #include <zim/writer/filesource.h>
 #include <zim/writer/zimcreator.h>
 
@@ -44,12 +46,14 @@ int main(int argc, char* argv[])
   {
     log_init();
 
-    try
+    cxxtools::Arg<const char*> fulltextIndex(argc, argv, 'Z'); // get zimfile for fulltext index
+
+    if (fulltextIndex.isSet())
     {
-      zim::writer::FileSource fileSource(argc, argv);
-      return create(argc, argv, fileSource);
+      zim::writer::Indexer source(fulltextIndex, argc, argv);
+      return create(argc, argv, source);
     }
-    catch (const cxxtools::IOError&)
+    else
     {
       zim::writer::DbSource dbSource(argc, argv);
       return create(argc, argv, dbSource);

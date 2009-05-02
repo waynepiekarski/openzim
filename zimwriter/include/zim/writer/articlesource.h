@@ -39,6 +39,7 @@ namespace zim
         virtual bool isRedirect() const = 0;
         virtual MimeType getMimeType() const = 0;
         virtual std::string getRedirectAid() const = 0;
+        virtual std::string getParameter() const;
     };
 
     class ArticleSource
@@ -47,9 +48,9 @@ namespace zim
         virtual void setFilename(const std::string& fname) { }
         virtual const Article* getNextArticle() = 0;
         virtual Blob getData(const std::string& aid) = 0;
-        virtual Uuid getUuid() = 0;
-        virtual std::string getMainPage() = 0;
-        virtual std::string getLayoutPage() = 0;
+        virtual Uuid getUuid();
+        virtual std::string getMainPage();
+        virtual std::string getLayoutPage();
     };
 
   }

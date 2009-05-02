@@ -66,7 +66,6 @@ namespace zim
         virtual void setFilename(const std::string& fname);
         virtual const Article* getNextArticle();
         virtual Blob getData(const std::string& aid);
-        virtual Uuid getUuid();
         virtual std::string getMainPage();
         virtual std::string getLayoutPage();
     };

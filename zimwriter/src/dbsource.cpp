@@ -151,11 +151,6 @@ namespace zim
       return Blob(dataBlob.data(), dataBlob.size());
     }
 
-    Uuid DbSource::getUuid()
-    {
-      return Uuid::generate();
-    }
-
     std::string DbSource::getMainPage()
     {
       tntdb::Statement stmt = conn.prepare("select mainpage from zimfile where zid = :zid");
@@ -166,7 +161,10 @@ namespace zim
 
     std::string DbSource::getLayoutPage()
     {
-      return std::string();
+      tntdb::Statement stmt = conn.prepare("select layoutpage from zimfile where zid = :zid");
+      stmt.set("zid", zid);
+      tntdb::Value v = stmt.selectValue();
+      return v.isNull() ? std::string() : v.getString();
     }
 
   }

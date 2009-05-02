@@ -27,22 +27,22 @@
 
 log_define("zim.indexer")
 
-class Zenoindexer : public zim::ArticleParseEventEx
+class Zimindexer : public zim::ArticleParseEventEx
 {
-    tntdb::Connection conn;
-    bool printOnly;
-    unsigned aid;
-    tntdb::Statement insWord;
+    zim::MStream ostream;
     bool inTitle;
+    zim::size_type aid
 
     typedef std::set<std::string> TrivialWordsType;
     TrivialWordsType trivialWords;
 
-    void insertWord(unsigned weight, const std::string& word, unsigned pos);
+    void insertWord(const std::string& word, unsigned char weight, unsigned pos);
 
   public:
-    explicit Zenoindexer(tntdb::Connection& conn, bool printOnly);
-    void process(unsigned aid, const std::string& title, const tntdb::Blob& data);
+    Zimindexer();
+
+    void process(unsigned aid_, const std::string& title, const tntdb::Blob& data)
+
     void onH1(const std::string& word, unsigned pos);
     void onH2(const std::string& word, unsigned pos);
     void onH3(const std::string& word, unsigned pos);
@@ -50,50 +50,29 @@ class Zenoindexer : public zim::ArticleParseEventEx
     void onP(const std::string& word, unsigned pos);
 };
 
-Zenoindexer::Zenoindexer(tntdb::Connection& conn_, bool printOnly_)
-  : conn(conn_),
-    printOnly(printOnly_)
+Zimindexer::Zimindexer()
 {
-  if (printOnly)
-  {
-    std::cout << "COPY words (word, pos, aid, weight) FROM stdin;\n";
-  }
-  else
-  {
-    insWord = conn.prepare(
-      "insert into words (word, pos, aid, weight)"
-      " values (:word, :pos, :aid, :weight)");
-  }
-
-  tntdb::Statement selTrivialWords = conn.prepare(
-    "select word from trivialwords");
-  for (tntdb::Statement::const_iterator cur = selTrivialWords.begin(); cur != selTrivialWords.end(); ++cur)
-    trivialWords.insert(cur->getString(0));
 }
 
-void Zenoindexer::insertWord(unsigned weight, const std::string& word, unsigned pos)
+void Zimindexer::insertWord(const std::string& word, unsigned char weight, unsigned pos)
 {
-  log_debug(word << '\t' << pos << '\t' << aid << '\t' << weight);
-  if (printOnly)
+  log_debug(word << '\t' << pos << '\t' << aid << '\t' << static_cast<unsinged>(weight));
+
+  struct W
   {
-    std::cout << word << '\t' << pos << '\t' << aid << '\t' << weight << '\n';
-  }
-  else
-  {
-    insWord.set("word", word)
-           .set("pos", pos)
-           .set("weight", weight)
-           .execute();
-  }
+    uint32_t aid;
+    uint32_t pos;
+    unsigned char weight;
+  } w;
+  w.aid = aid;
+  w.pos = pos;
+  w.weight = weight;
+  ostream.write(word, reinterpret_cast<char*>(&w), sizeof(W));
 }
 
-void Zenoindexer::process(unsigned aid_, const std::string& title, const tntdb::Blob& data)
+void Zimindexer::process(zim::size_type aid_, const std::string& title, const tntdb::Blob& data)
 {
-  tntdb::Transaction trans(conn);
-
   aid = aid_;
-  if (!printOnly)
-    insWord.set("aid", aid);
 
   zim::ArticleParser parser(*this);
 
@@ -104,38 +83,36 @@ void Zenoindexer::process(unsigned aid_, const std::string& title, const tntdb::
   inTitle = false;
   parser.parse(data.data(), data.size());
   parser.endparse();
-
-  trans.commit();
 }
 
-void Zenoindexer::onH1(const std::string& word, unsigned pos)
+void Zimindexer::onH1(const std::string& word, unsigned pos)
 {
   if (trivialWords.find(word) == trivialWords.end())
-    insertWord(0, word, pos);
+    insertWord(word, 0, pos);
 }
 
-void Zenoindexer::onH2(const std::string& word, unsigned pos)
+void Zimindexer::onH2(const std::string& word, unsigned pos)
 {
   if (trivialWords.find(word) == trivialWords.end())
-    insertWord(1, word, pos);
+    insertWord(word, 1, pos);
 }
 
-void Zenoindexer::onH3(const std::string& word, unsigned pos)
+void Zimindexer::onH3(const std::string& word, unsigned pos)
 {
   if (trivialWords.find(word) == trivialWords.end())
-    insertWord(2, word, pos);
+    insertWord(word, 2, pos);
 }
 
-void Zenoindexer::onB(const std::string& word, unsigned pos)
+void Zimindexer::onB(const std::string& word, unsigned pos)
 {
   if (trivialWords.find(word) == trivialWords.end())
-    insertWord(2, word, pos);
+    insertWord(word, 2, pos);
 }
 
-void Zenoindexer::onP(const std::string& word, unsigned pos)
+void Zimindexer::onP(const std::string& word, unsigned pos)
 {
   if (trivialWords.find(word) == trivialWords.end())
-    insertWord(inTitle ? 0 : 3, word, pos);
+    insertWord(word, inTitle ? 0 : 3, word, pos, pos);
 }
 
 int main(int argc, char* argv[])
@@ -149,7 +126,7 @@ int main(int argc, char* argv[])
     cxxtools::Arg<bool> all(argc, argv, 'a');
     tntdb::Connection conn = tntdb::connect(dburl);
 
-    Zenoindexer zimindexer(conn, printOnly);
+    Zimindexer zimindexer(conn, printOnly);
 
     tntdb::Statement stmt;
     if (all)

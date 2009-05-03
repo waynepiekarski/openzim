@@ -167,8 +167,7 @@ namespace zim
         }
       }
 
-      _currentParameter = static_cast<char>(parameter.str().size());
-      _currentParameter += parameter.str();
+      _currentParameter = parameter.str();
 
       _currentZData.clear();
 

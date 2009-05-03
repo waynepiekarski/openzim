@@ -146,8 +146,15 @@ namespace zim
       Cluster cluster;
       cluster.setCompression(zimcompBzip2);
 
-      for (DirentsType::iterator di = dirents.begin(); di != dirents.end(); ++di)
+      DirentsType::size_type count = 0, progress = 0;
+      for (DirentsType::iterator di = dirents.begin(); di != dirents.end(); ++di, ++count)
       {
+        while (progress < count * 100 / dirents.size() + 1)
+        {
+          log_info(progress << "% ready");
+          progress += 10;
+        }
+
         if (di->isRedirect())
           continue;
 

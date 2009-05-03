@@ -36,14 +36,15 @@ namespace zim
     //////////////////////////////////////////////////////////////////////
     // Indexer
 
-    Indexer::Indexer(const char* infile, int argc, char* argv[])
+    Indexer::Indexer(const char* infile, int& argc, char* argv[])
       : _mstream(cxxtools::Arg<const char*>(argc, argv, 't', "zimwriter.tmp")),
         _currentArticle(_mstream)
     {
-      createIndex(infile);
+      cxxtools::Arg<const char*> trivialWordsFile(argc, argv, 'T');
+      createIndex(infile, trivialWordsFile);
     }
 
-    void Indexer::createIndex(const char* infile)
+    void Indexer::createIndex(const char* infile, const char* trivialWordsFile)
     {
       log_trace("create index for file " << infile);
 
@@ -51,7 +52,21 @@ namespace zim
 
       Zimindexer zimindexer(_mstream);
 
-      for (zim::File::const_iterator it = zimfile.begin(); it != zimfile.end(); ++it)
+      if (trivialWordsFile)
+      {
+        log_debug("read trivial words from " << trivialWordsFile);
+        std::ifstream tw(trivialWordsFile);
+        if (!tw)
+          throw std::runtime_error(std::string("cannot open trivial words file ") + trivialWordsFile);
+        std::string word;
+        while (tw >> word)
+          zimindexer.addTrivialWord(word);
+        log_info("ignore " << zimindexer.countTrivialWords() << " trivial words");
+      }
+
+      size_type count = 0;
+      size_type progress = 0;
+      for (zim::File::const_iterator it = zimfile.begin(); it != zimfile.end(); ++it, ++count)
       {
         zim::Article article = *it;
 
@@ -74,6 +89,12 @@ namespace zim
         zim::Blob data = article.getData();
 
         zimindexer.process(article.getIndex(), article.getTitle().toUtf8(), data.data(), data.size());
+
+        while (progress < count * 100 / zimfile.getCountArticles() + 1)
+        {
+          log_info(progress << "% ready");
+          progress += 10;
+        }
       }
 
       _currentStream = _mstream.end();
@@ -184,7 +205,11 @@ namespace zim
     const Article* Indexer::getNextArticle()
     {
       if (_currentStream == _mstream.end())
+      {
+        _countArticles = _mstream.size();
+        _progress = _count = 0;
         _currentStream = _mstream.begin();
+      }
 
       if (_currentStream == _mstream.end()
         || ++_currentStream == _mstream.end())
@@ -199,6 +224,12 @@ namespace zim
       fetchData(_currentStream->first);
       _currentArticle.setWord(_currentStream->first);
       _currentArticle.setParameter(_currentParameter);
+
+      while (_progress < ++_count * 100 / _countArticles + 1)
+      {
+        log_info(_progress << "% ready");
+        _progress += 10;
+      }
 
       return &_currentArticle;
     }

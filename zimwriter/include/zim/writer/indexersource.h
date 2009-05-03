@@ -79,12 +79,16 @@ namespace zim
         std::string _currentZData;
         std::string _currentParameter;
 
-        void createIndex(const char* infile);
+        MStream::size_type _countArticles;
+        MStream::size_type _count;
+        MStream::size_type _progress;
+
+        void createIndex(const char* infile, const char* trivialWordsFile);
         void transformData(const char* srcdata, unsigned srcsize);
         void fetchData(const std::string& aid);
 
       public:
-        Indexer(const char* infile, int argc, char* argv[]);
+        Indexer(const char* infile, int& argc, char* argv[]);
         const Article* getNextArticle();
         Blob getData(const std::string& aid);
     };

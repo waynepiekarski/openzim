@@ -25,7 +25,7 @@ namespace zim
   namespace writer
   {
     const std::streampos MStream::Stream::npos = -1;
-    const unsigned MStream::Stream::buffersize;
+    const unsigned short MStream::Stream::buffersize;
 
     void MStream::Stream::overflow()
     {

@@ -56,6 +56,11 @@ namespace zim
           : ostream(mstream)
           { }
 
+        void addTrivialWord(const std::string& word)
+          { trivialWords.insert(word); }
+        TrivialWordsType::size_type countTrivialWords() const
+          { return trivialWords.size(); }
+
         void process(unsigned aid_, const std::string& title, const char* data, unsigned size);
 
         void onH1(const std::string& word, unsigned pos);

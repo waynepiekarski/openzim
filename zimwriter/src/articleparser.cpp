@@ -381,6 +381,7 @@ namespace zim
       switch (state)
       {
         case state_0:
+        case state_ent:
         case state_tag0:
         case state_tag:
         case state_endtag:

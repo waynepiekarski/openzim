@@ -38,14 +38,14 @@ namespace zim
             std::fstream* backfile;
 
             static const std::streampos npos;
-            static const unsigned buffersize = 120;
+            static const unsigned short buffersize = 128-8;
 
             std::streampos first;
             std::streampos last;  // when reading pointer to last offset written to backfile
                                   // when writing pointer to next offset to read from backfile
             char data[buffersize];
-            unsigned putpos;
-            unsigned getpos;
+            unsigned short putpos;
+            unsigned short getpos;
 
             void overflow();
             bool underflow();   // return false on eof
@@ -108,12 +108,15 @@ namespace zim
         typedef StreamMap::iterator iterator;
 
         typedef StreamMap::value_type value_type;
+        typedef StreamMap::size_type size_type;
 
         const_iterator begin() const   { return streams.begin(); }
         const_iterator end() const     { return streams.end(); }
 
         iterator begin()         { return streams.begin(); }
         iterator end()           { return streams.end(); }
+
+        size_type size() const   { return streams.size(); }
 
         void write(const std::string& streamname, const char* ptr, unsigned size);
         void write(const std::string& streamname, const std::string& str)

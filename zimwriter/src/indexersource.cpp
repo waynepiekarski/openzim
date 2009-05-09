@@ -98,9 +98,6 @@ namespace zim
       }
 
       _currentStream = _mstream.end();
-
-      log_debug("switch to read mode");
-      _mstream.setRead();
     }
 
     void Indexer::fetchData(const std::string& aid)
@@ -214,10 +211,7 @@ namespace zim
       if (_currentStream == _mstream.end()
         || ++_currentStream == _mstream.end())
       {
-        log_debug("last article found - set read mode");
-
-        _mstream.setRead();
-
+        log_debug("last article found");
         return 0;
       }
 

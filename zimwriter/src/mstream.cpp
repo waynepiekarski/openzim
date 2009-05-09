@@ -19,82 +19,149 @@
 
 #include "zim/writer/mstream.h"
 #include <stdexcept>
+#include <algorithm>
+#include <cxxtools/log.h>
+#include <string.h>
+
+log_define("zim.writer.mstream")
 
 namespace zim
 {
   namespace writer
   {
-    const std::streampos MStream::Stream::npos = -1;
-    const unsigned short MStream::Stream::buffersize;
+    ////////////////////////////////////////////////////////////////////
+    // Pagefile
+
+    Pagefile::PageNumber Pagefile::getNewPage()
+    {
+      PageNumber newPage = nextPage;
+      nextPage += PageSize;
+      log_debug("new page=" << newPage);
+      return newPage;
+    }
+
+    void Pagefile::getPage(PageNumber num, Page& page)
+    {
+      log_debug("get page " << num);
+
+      backfile.seekg(static_cast<std::streampos>(num) * PageSize, std::ios::beg);
+      backfile.read(reinterpret_cast<char*>(&page), sizeof(Page));
+
+      if (backfile.fail())
+        throw std::runtime_error("file operation failed");
+    }
+
+    void Pagefile::putPage(PageNumber num, const Page& page, unsigned size)
+    {
+      log_debug("put page " << num << " (" << size << ", " << page.ppos << ')');
+
+      backfile.seekp(static_cast<std::streampos>(num) * PageSize, std::ios::beg);
+      backfile.write(reinterpret_cast<const char*>(&page), size);
+
+      if (backfile.fail())
+        throw std::runtime_error("file operation failed");
+    }
+
+    const Pagefile::PageNumber Pagefile::noPage;
+    const unsigned Pagefile::Page::dataSize;
+    const unsigned MStream::Stream::buffersize;
 
     void MStream::Stream::overflow()
     {
-      if (!backfile)
-        throw std::logic_error("no backfile");
+      log_trace("overflow");
 
-      backfile->seekp(0, std::ios::end);
-      std::streampos next = backfile->tellp();
+      if (!pagefile)
+        throw std::logic_error("no pagefile");
 
-      if (last != npos)
+      if (ppos == 0)
+        return;
+
+      Pagefile::Page page;
+
+      uint16_t off = 0;
+
+      if (currentPage != Pagefile::noPage)
       {
-        backfile->seekp(last);
-        backfile->write(reinterpret_cast<const char*>(&next), sizeof(next));
-        backfile->seekp(0, std::ios::end);
+        log_debug("read current page " << currentPage);
+
+        // read current page
+        //
+        pagefile->getPage(currentPage, page);
+
+        log_debug("page.nextPage=" << page.nextPage << " page.ppos=" << page.ppos << " page.free=" << page.free());
+
+        if (page.free())
+        {
+          // write as much data as possible
+          size_t count = std::min(ppos, page.free());
+          log_debug("current page free: " << page.free() << " write " << count << " bytes");
+
+          memcpy(page.data + page.ppos, data, count);
+          page.ppos += count;
+
+          memmove(data, data + count, ppos - count);
+          ppos -= count;
+
+          log_debug("ppos=" << ppos);
+
+          //off += count;
+
+          // write current page back to disk
+          pagefile->putPage(currentPage, page, sizeof(page) - page.free());
+
+          return;
+        } 
+
+        log_debug("no page left on current page");
       }
 
-      backfile->write(reinterpret_cast<const char*>(&npos), sizeof(npos));
-      backfile->write(data, buffersize);
+      if (off < ppos)
+      {
+        // we have data left to write - allocate new page from pagefile
+        Pagefile::PageNumber newPage = pagefile->getNewPage();
+        log_debug("new page " << newPage);
+        page.nextPage = Pagefile::noPage;
+        memcpy(page.data, data + off, ppos - off);
+        page.ppos = ppos - off;
+        pagefile->putPage(newPage, page);
 
-      last = next;
+        if (firstPage == Pagefile::noPage)
+        {
+          log_debug("firstPage=" << newPage);
+          firstPage = newPage;
+        }
+        else
+        {
+          log_debug("link " << currentPage << " with " << newPage);
+          page.nextPage = newPage;
+          pagefile->putPage(currentPage, page, sizeof(Pagefile::PageNumber));
+        }
 
-      if (first == npos)
-        first = last;
+        log_debug("currentPage=" << newPage);
+        currentPage = newPage;
+        ppos = 0;
+      }
     }
 
-    bool MStream::Stream::underflow()
+    void MStream::Stream::read(std::string& s)
     {
-      backfile->seekg(last);
-      backfile->read(reinterpret_cast<char*>(&last), sizeof(last));
-      backfile->read(data, buffersize);
-      getpos = 0;
-      return *backfile;
-    }
+      log_trace("read");
+      log_debug("ppos=" << ppos);
 
-    void MStream::Stream::setRead()
-    {
-      if (first != npos)
+      s.clear();
+
+      Pagefile::PageNumber p = firstPage;
+      while (p != Pagefile::noPage)
       {
-        if (putpos > 0)
-          overflow();
-
-        last = first;
-        underflow();
+        Pagefile::Page page;
+        pagefile->getPage(p, page);
+        log_debug("page " << p << " " << page.ppos << " bytes");
+        s.append(page.data, page.ppos);
+        p = page.nextPage;
       }
 
-      getpos = 0;
-    }
-
-    bool MStream::Stream::get(char& ch)
-    {
-      if (last == npos)
-      {
-        // we are in the last block
-        if (getpos >= putpos)
-          return false;
-        ch = data[getpos++];
-        return true;
-      }
-      else
-      {
-        if (getpos >= buffersize && !underflow())
-          return false;
-
-        if (last == npos && getpos >= putpos)
-          return false;
-
-        ch = data[getpos++];
-        return true;
-      }
+      log_debug("append " << ppos << " bytes");
+      s.append(data, ppos);
     }
 
     //////////////////////////////////////////////////////////////////////
@@ -102,17 +169,11 @@ namespace zim
     //
     void MStream::write(const std::string& streamname, const char* ptr, unsigned size)
     {
+      log_debug("write " << size << " bytes to stream \"" << streamname << '"');
       StreamMap::iterator it = streams.find(streamname);
       if (it == streams.end())
-        it = streams.insert(StreamMap::value_type(streamname, Stream(backfile))).first;
+        it = streams.insert(StreamMap::value_type(streamname, Stream(pagefile))).first;
       it->second.write(ptr, size);
     }
-
-    void MStream::setRead()
-    {
-      for (StreamMap::iterator it = streams.begin(); it != streams.end(); ++it)
-        it->second.setRead();
-    }
-
   }
 }

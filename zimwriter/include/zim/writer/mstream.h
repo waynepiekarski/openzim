@@ -24,49 +24,82 @@
 #include <fstream>
 #include <map>
 #include <string>
+#include <stdint.h>
+
+#ifndef MSTREAM_PAGESIZE
+#define MSTREAM_PAGESIZE 8192
+#endif
 
 namespace zim
 {
   namespace writer
   {
+    class Pagefile
+    {
+      public:
+        typedef uint32_t PageNumber;
+        static const PageNumber noPage = static_cast<PageNumber>(-1);
+        static const unsigned PageSize = MSTREAM_PAGESIZE;
+
+      private:
+        std::fstream backfile;
+        PageNumber nextPage;
+
+      public:
+        explicit Pagefile(const char* fname)
+          : backfile(fname, std::ios::in | std::ios::out | std::ios::trunc),
+            nextPage(0)
+          { }
+
+        struct Page
+        {
+          static const unsigned dataSize = PageSize - sizeof(uint16_t) - sizeof(PageNumber);
+
+          PageNumber nextPage;
+          uint16_t ppos;
+          char data[dataSize];
+
+          uint16_t free() const  { return dataSize - ppos; }
+        };
+
+        PageNumber getNewPage();
+        void getPage(PageNumber num, Page& page);
+        void putPage(PageNumber num, const Page& page, unsigned size = sizeof(Page));
+
+    };
+
     class MStream
     {
-        std::fstream tmpfile;
+        friend class Stream;
 
         class Stream
         {
-            std::fstream* backfile;
+            Pagefile* pagefile;
 
-            static const std::streampos npos;
-            static const unsigned short buffersize = 128-8;
+            Pagefile::PageNumber firstPage;
+            Pagefile::PageNumber currentPage;
+            uint16_t ppos;
 
-            std::streampos first;
-            std::streampos last;  // when reading pointer to last offset written to backfile
-                                  // when writing pointer to next offset to read from backfile
+            static const unsigned buffersize = 128 - 2 * sizeof(Pagefile::PageNumber) - sizeof(uint16_t);
+
             char data[buffersize];
-            unsigned short putpos;
-            unsigned short getpos;
 
             void overflow();
-            bool underflow();   // return false on eof
 
           public:
             Stream() {}
-            explicit Stream(std::fstream& backfile_)
-              : backfile(&backfile_),
-                first(npos),
-                last(npos),
-                putpos(0)
+            explicit Stream(Pagefile& pagefile_)
+              : pagefile(&pagefile_),
+                firstPage(Pagefile::noPage),
+                currentPage(Pagefile::noPage),
+                ppos(0)
               { }
 
             void put(char ch)
             {
-              if (putpos >= buffersize)
-              {
+              if (ppos >= buffersize)
                 overflow();
-                putpos = 0;
-              }
-              data[putpos++] = ch;
+              data[ppos++] = ch;
             }
 
             void write(const char* data, unsigned size)
@@ -75,33 +108,16 @@ namespace zim
                 put(data[n]);
             }
 
-            void setRead();
-
-            bool get(char& ch);   // return false on eof
-
-            void read(std::string& s)
-            {
-              char ch;
-              while (get(ch))
-                s += ch;
-            }
-
-            bool read(char* data, unsigned size)
-            {
-              for (unsigned n = 0; n < size; ++n)
-                if (!get(data[n]))
-                  return false;
-              return true;
-            }
+            void read(std::string& s);
         };
 
         typedef std::map<std::string, Stream> StreamMap;
         StreamMap streams;
-        std::fstream backfile;
+        Pagefile pagefile;
 
       public:
-        explicit MStream(const char* backfilename)
-          : backfile(backfilename, std::ios::in | std::ios::out | std::ios::trunc)
+        explicit MStream(const char* pagefilename)
+          : pagefile(pagefilename)
           { }
 
         typedef StreamMap::const_iterator const_iterator;
@@ -122,10 +138,22 @@ namespace zim
         void write(const std::string& streamname, const std::string& str)
           { write(streamname, str.data(), str.size()); }
 
-        void setRead();
-
         iterator find(const std::string& streamname)
           { return streams.find(streamname); }
+
+        void read(const std::string& streamname, std::string& s)
+        {
+          iterator it = find(streamname);
+          if (it != end())
+            it->second.read(s);
+        }
+
+        std::string read(const std::string& streamname)
+        {
+          std::string s;
+          read(streamname, s);
+          return s;
+        }
     };
 
   }

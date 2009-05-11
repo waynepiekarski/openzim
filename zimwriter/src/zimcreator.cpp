@@ -28,6 +28,7 @@
 #include <fstream>
 #include <unistd.h>
 #include <limits>
+#include <stdexcept>
 
 log_define("zim.writer.creator")
 
@@ -64,6 +65,8 @@ namespace zim
 
     void ZimCreator::createDirents()
     {
+      log_info("collect articles");
+
       const Article* article;
       while ((article = src.getNextArticle()) != 0)
       {
@@ -89,54 +92,70 @@ namespace zim
         dirents.push_back(dirent);
       }
 
-      // remove invalid redirects
-      DirentsType::iterator di = dirents.begin();
-      while (di != dirents.end())
-      {
-        if (di->isRedirect())
-        {
-          // check, if redirect article is found
-          DirentsType::const_iterator ddi;
-          for (ddi = dirents.begin(); ddi != dirents.end(); ++ddi)
-            if (ddi->getAid() == di->getRedirectAid())
-              break;
+      // sort
+      log_info("sort " << dirents.size() << " directory entries (aid)");
+      std::sort(dirents.begin(), dirents.end(), compareAid);
 
-          if (ddi == dirents.end())
+      // remove invalid redirects
+      log_info("remove invalid redirects from " << dirents.size() << " directory entries");
+      DirentsType::size_type di = 0;
+      while (di < dirents.size())
+      {
+        if (dirents[di].isRedirect())
+        {
+          log_debug("check " << dirents[di].getTitle() << " redirect to " << dirents[di].getRedirectAid() << " (" << di << '/' << dirents.size() << ')');
+
+          if (!std::binary_search(dirents.begin(), dirents.end(), Dirent(dirents[di].getRedirectAid()), compareAid))
           {
-            dirents.erase(di);
-            di = dirents.begin();
+            log_debug("remove invalid redirection " << dirents[di].getTitle());
+            dirents.erase(dirents.begin() + di);
+            continue;
           }
-          else
-            ++di;
         }
-        else
-          ++di;
+
+        ++di;
       }
 
       // sort
-      std::sort(dirents.begin(), dirents.end());
+      log_info("sort " << dirents.size() << " directory entries (title)");
+      std::sort(dirents.begin(), dirents.end(), compareTitle);
 
-      // fill index
+      // set index
+      log_info("set index");
       unsigned idx = 0;
       for (DirentsType::iterator di = dirents.begin(); di != dirents.end(); ++di)
         di->setIdx(idx++);
 
+      // sort
+      log_debug("sort " << dirents.size() << " directory entries (aid)");
+      std::sort(dirents.begin(), dirents.end(), compareAid);
+
       // translate redirect aid to index
+      log_info("translate redirect aid to index");
       for (DirentsType::iterator di = dirents.begin(); di != dirents.end(); ++di)
       {
         if (di->isRedirect())
         {
-          for (DirentsType::const_iterator ddi = dirents.begin(); ddi != dirents.end(); ++ddi)
+          DirentsType::iterator ddi = std::lower_bound(dirents.begin(), dirents.end(), di->getRedirectAid(), compareAid);
+          if (ddi != dirents.end() && ddi->getAid() == di->getRedirectAid())
           {
-            if (ddi->getAid() == di->getRedirectAid())
-            {
-              log_debug("redirect aid=" << ddi->getAid() << " redirect index=" << ddi->getIdx());
-              di->setRedirect(ddi->getIdx());
-              break;
-            }
+            log_debug("redirect aid=" << ddi->getAid() << " redirect index=" << ddi->getIdx());
+            di->setRedirect(ddi->getIdx());
+          }
+          else
+          {
+            std::ostringstream msg;
+            msg << "internal error: redirect aid " << di->getRedirectAid() << " not found";
+            log_fatal(msg.str());
+            throw std::runtime_error(msg.str());
           }
         }
       }
+
+      // sort
+      log_debug("sort " << dirents.size() << " directory entries (title)");
+      std::sort(dirents.begin(), dirents.end(), compareTitle);
+
     }
 
     void ZimCreator::createClusters(const std::string& tmpfname)
@@ -293,11 +312,10 @@ namespace zim
     offset_type ZimCreator::indexSize() const
     {
       offset_type s = 0;
+
       for (DirentsType::const_iterator it = dirents.begin(); it != dirents.end(); ++it)
-      {
         s += it->getDirentSize();
-        log_debug("title=" << it->getTitle() << " size=" << s << " dirent.size=" << it->getDirentSize());
-      }
+
       return s;
     }
 

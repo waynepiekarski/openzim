@@ -33,6 +33,15 @@ namespace zim
         size_type idx;
 
       public:
+        Dirent() {}
+
+        Dirent(const std::string& aid_)
+          : aid(aid_)
+          {}
+
+        Dirent(char ns, const QUnicodeString& title)
+        { setTitle(ns, title); }
+
         void setAid(const std::string&  aid_)      { aid = aid_; }
         const std::string& getAid() const          { return aid; }
 
@@ -44,11 +53,16 @@ namespace zim
 
     };
 
-    inline bool operator< (const Dirent& d1, const Dirent& d2)
+    inline bool compareTitle(const Dirent& d1, const Dirent& d2)
     {
       return d1.getNamespace() < d2.getNamespace()
          || (d1.getNamespace() == d2.getNamespace()
            && d1.getTitle() < d2.getTitle());
+    }
+
+    inline bool compareAid(const Dirent& d1, const Dirent& d2)
+    {
+      return d1.getAid() < d2.getAid();
     }
 
   }

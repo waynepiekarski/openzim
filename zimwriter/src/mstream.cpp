@@ -35,8 +35,7 @@ namespace zim
     Pagefile::PageNumber Pagefile::getNewPage()
     {
       PageNumber newPage = nextPage;
-      nextPage += PageSize;
-      log_debug("new page=" << newPage);
+      ++nextPage;
       return newPage;
     }
 
@@ -53,7 +52,7 @@ namespace zim
 
     void Pagefile::putPage(PageNumber num, const Page& page, unsigned size)
     {
-      log_debug("put page " << num << " (" << size << ", " << page.ppos << ')');
+      log_debug("put page " << num << " (size=" << size << ", ppos=" << page.ppos << ')');
 
       backfile.seekp(static_cast<std::streampos>(num) * PageSize, std::ios::beg);
       backfile.write(reinterpret_cast<const char*>(&page), size);

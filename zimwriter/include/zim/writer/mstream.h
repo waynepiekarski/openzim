@@ -25,6 +25,8 @@
 #include <map>
 #include <string>
 #include <stdint.h>
+#include <cxxtools/smartptr.h>
+#include <cxxtools/refcounted.h>
 
 #ifndef MSTREAM_PAGESIZE
 #define MSTREAM_PAGESIZE 8192
@@ -72,7 +74,7 @@ namespace zim
     {
         friend class Stream;
 
-        class Stream
+        class Stream : public cxxtools::RefCounted
         {
             Pagefile* pagefile;
 
@@ -80,9 +82,11 @@ namespace zim
             Pagefile::PageNumber currentPage;
             uint16_t ppos;
 
-            static const unsigned buffersize = 128 - 2 * sizeof(Pagefile::PageNumber) - sizeof(uint16_t);
+            static const unsigned minBuffersize = 16;
+            static const unsigned maxBuffersize = 1024;
 
-            char data[buffersize];
+            unsigned buffersize;
+            char* data;
 
             void overflow();
 
@@ -92,8 +96,13 @@ namespace zim
               : pagefile(&pagefile_),
                 firstPage(Pagefile::noPage),
                 currentPage(Pagefile::noPage),
-                ppos(0)
+                ppos(0),
+                buffersize(minBuffersize),
+                data(new char[minBuffersize])
               { }
+
+            ~Stream()
+            { delete[] data; }
 
             void put(char ch)
             {
@@ -111,7 +120,7 @@ namespace zim
             void read(std::string& s);
         };
 
-        typedef std::map<std::string, Stream> StreamMap;
+        typedef std::map<std::string, cxxtools::SmartPtr<Stream> > StreamMap;
         StreamMap streams;
         Pagefile pagefile;
 
@@ -145,7 +154,7 @@ namespace zim
         {
           iterator it = find(streamname);
           if (it != end())
-            it->second.read(s);
+            it->second->read(s);
         }
 
         std::string read(const std::string& streamname)

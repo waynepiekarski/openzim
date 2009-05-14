@@ -111,7 +111,7 @@ namespace zim
       }
 
       std::string data;
-      it->second.read(data);
+      it->second->read(data);
       log_debug("data has " << data.size() << " bytes");
 
       typedef std::vector<IndexEntry> IndexEntriesVector;

@@ -63,7 +63,8 @@ namespace zim
 
     const Pagefile::PageNumber Pagefile::noPage;
     const unsigned Pagefile::Page::dataSize;
-    const unsigned MStream::Stream::buffersize;
+    const unsigned MStream::Stream::minBuffersize;
+    const unsigned MStream::Stream::maxBuffersize;
 
     void MStream::Stream::overflow()
     {
@@ -74,6 +75,16 @@ namespace zim
 
       if (ppos == 0)
         return;
+
+      if (buffersize < maxBuffersize)
+      {
+        char* newdata = new char[buffersize * 2];
+        memcpy(newdata, data, buffersize);
+        buffersize *= 2;
+        delete[] data;
+        data = newdata;
+        return;
+      }
 
       Pagefile::Page page;
 
@@ -159,8 +170,11 @@ namespace zim
         p = page.nextPage;
       }
 
-      log_debug("append " << ppos << " bytes");
-      s.append(data, ppos);
+      if (data)
+      {
+        log_debug("append " << ppos << " bytes");
+        s.append(data, ppos);
+      }
     }
 
     //////////////////////////////////////////////////////////////////////
@@ -171,8 +185,8 @@ namespace zim
       log_debug("write " << size << " bytes to stream \"" << streamname << '"');
       StreamMap::iterator it = streams.find(streamname);
       if (it == streams.end())
-        it = streams.insert(StreamMap::value_type(streamname, Stream(pagefile))).first;
-      it->second.write(ptr, size);
+        it = streams.insert(StreamMap::value_type(streamname, new Stream(pagefile))).first;
+      it->second->write(ptr, size);
     }
   }
 }

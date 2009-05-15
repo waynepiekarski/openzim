@@ -41,6 +41,10 @@ namespace zim
         _currentArticle(_mstream)
     {
       cxxtools::Arg<const char*> trivialWordsFile(argc, argv, 'T');
+      cxxtools::Arg<unsigned> memoryFactor(argc, argv, 'M', 64);
+      MStream::setMinBuffersize(18);
+      MStream::setMaxBuffersize(memoryFactor*18);
+
       createIndex(infile, trivialWordsFile);
     }
 

@@ -74,6 +74,9 @@ namespace zim
     {
         friend class Stream;
 
+        static unsigned minBuffersize;
+        static unsigned maxBuffersize;
+
         class Stream : public cxxtools::RefCounted
         {
             Pagefile* pagefile;
@@ -81,9 +84,6 @@ namespace zim
             Pagefile::PageNumber firstPage;
             Pagefile::PageNumber currentPage;
             uint16_t ppos;
-
-            static const unsigned minBuffersize = 16;
-            static const unsigned maxBuffersize = 1024;
 
             unsigned buffersize;
             char* data;
@@ -163,6 +163,11 @@ namespace zim
           read(streamname, s);
           return s;
         }
+
+        static void setMinBuffersize(unsigned m)   { minBuffersize = m; }
+        static void setMaxBuffersize(unsigned m)   { maxBuffersize = m; }
+        static unsigned getMinBuffersize()         { return minBuffersize; }
+        static unsigned getMaxBuffersize()         { return maxBuffersize; }
     };
 
   }

@@ -63,8 +63,8 @@ namespace zim
 
     const Pagefile::PageNumber Pagefile::noPage;
     const unsigned Pagefile::Page::dataSize;
-    const unsigned MStream::Stream::minBuffersize;
-    const unsigned MStream::Stream::maxBuffersize;
+    unsigned MStream::minBuffersize = 18;
+    unsigned MStream::maxBuffersize = 64*18;
 
     void MStream::Stream::overflow()
     {

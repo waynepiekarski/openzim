@@ -205,15 +205,21 @@ namespace zim
 
     const Article* Indexer::getNextArticle()
     {
+      log_trace("getNextArticle()");
       if (_currentStream == _mstream.end())
       {
+        log_debug("article pointer is at end - start iteration");
         _countArticles = _mstream.size();
         _progress = _count = 0;
         _currentStream = _mstream.begin();
       }
+      else
+      {
+        log_debug("skip to next article");
+        ++_currentStream;
+      }
 
-      if (_currentStream == _mstream.end()
-        || ++_currentStream == _mstream.end())
+      if (_currentStream == _mstream.end())
       {
         log_debug("last article found");
         return 0;
@@ -223,7 +229,8 @@ namespace zim
       _currentArticle.setWord(_currentStream->first);
       _currentArticle.setParameter(_currentParameter);
 
-      while (_progress < ++_count * 100 / _countArticles + 1)
+      ++_count;
+      while (_progress < _count * 100 / _countArticles + 1)
       {
         log_info(_progress << "% ready");
         _progress += 10;

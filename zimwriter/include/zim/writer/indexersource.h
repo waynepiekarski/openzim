@@ -57,10 +57,9 @@ namespace zim
       public:
         IndexEntry() {}
         IndexEntry(zim::size_type index_, zim::size_type pos_)
-        {
-          setIndex(index_);
-          setPos(pos_);
-        }
+          : index(index_),
+            pos(pos_)
+        { }
 
         zim::size_type getIndex() const        { return index; }
         void        setIndex(zim::size_type o) { index = o; }

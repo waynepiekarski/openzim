@@ -34,11 +34,18 @@ int create(int argc, char* argv[], zim::writer::ArticleSource& articleSource)
   if (argc != 2)
   {
     std::cout << "usage: " << argv[0] << " [options] output-filename\n"
+                 "\t\".zim\" is appended to the output filename if not already given.\n"
                  "\n"
                  "options:\n"
+                 "\t-s <number>       specify chunk size for compression in kB (default 1024)\n"
                  "\t--db <dburl>      specify a db source (default: postgresql:dbname=zim, tntdb is used here)\n"
                  "\t-Z <articlefile>  create a fulltext index for specified article\n"
-                 "\t-s <number>       specify chunk size for compression in kB (default 1024)\n";
+                 "\n"
+                 "additional options for full text indexer:\n"
+                 "\t-T <file>         trivial words file for full text index (a text file with words, which are not indexed)\n"
+                 "\t-M <number>       memory factor (default 64, smaller factors reduce memory usage but makes indexer slower,\n"
+                 "\t                  try smaller values when you run out of memory)\n"
+                 "\t-t <filename>     temorary file name (default zimwriter.tmp)\n";
     return 1;
   }
 

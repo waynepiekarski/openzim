@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <fstream>
 #include <unistd.h>
+#include <stdio.h>
 #include <limits>
 #include <stdexcept>
 
@@ -44,21 +45,27 @@ namespace zim
 
     void ZimCreator::create(const std::string& fname)
     {
+      std::string basename = fname;
+      basename =  (fname.size() > 4 && fname.compare(fname.size() - 4, 4, ".zim") == 0)
+                     ? fname.substr(0, fname.size() - 4)
+                     : fname;
+      log_debug("basename " << basename);
+
       log_info("create directory entries");
       createDirents();
       log_info(dirents.size() << " directory entries created");
 
       log_info("create clusters");
-      createClusters(fname + ".tmp");
+      createClusters(basename + ".tmp");
       log_info(clusterOffsets.size() << " clusters created");
 
       log_info("fill header");
       fillHeader();
 
       log_info("write zimfile");
-      write(fname + ".zim", fname + ".tmp");
+      write(basename + ".zim", basename + ".tmp");
 
-      ::unlink((fname + ".tmp").c_str());
+      ::remove((basename + ".tmp").c_str());
 
       log_info("ready");
     }

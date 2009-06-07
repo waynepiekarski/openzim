@@ -22,6 +22,8 @@
 #include <algorithm>
 #include <cxxtools/log.h>
 #include <string.h>
+#include <stdio.h>  // remove
+#include <errno.h>
 
 log_define("zim.writer.mstream")
 
@@ -31,6 +33,13 @@ namespace zim
   {
     ////////////////////////////////////////////////////////////////////
     // Pagefile
+
+    Pagefile::~Pagefile()
+    {
+      int r = ::remove(backfilename.c_str());
+      if (r != 0)
+        log_error("error " << errno << " removing temporary file \"" << backfilename << '"');
+    }
 
     Pagefile::PageNumber Pagefile::getNewPage()
     {

@@ -44,14 +44,17 @@ namespace zim
         static const unsigned PageSize = MSTREAM_PAGESIZE;
 
       private:
+        std::string backfilename;
         std::fstream backfile;
         PageNumber nextPage;
 
       public:
         explicit Pagefile(const char* fname)
-          : backfile(fname, std::ios::in | std::ios::out | std::ios::trunc),
+          : backfilename(fname),
+            backfile(fname, std::ios::in | std::ios::out | std::ios::trunc),
             nextPage(0)
           { }
+        ~Pagefile();
 
         struct Page
         {

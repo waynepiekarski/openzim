@@ -1,4 +1,4 @@
-AC_INIT(zimwriter, 0.1, [Tommi Maekitalo <tommi@tntnet.org>])
+AC_INIT(zimwriter, 0.90, [Tommi Maekitalo <tommi@tntnet.org>])
 AM_INIT_AUTOMAKE([subdir-objects])
 
 abi_current=0
@@ -8,7 +8,7 @@ sonumber=${abi_current}:${abi_revision}:${abi_age}
 AC_SUBST(sonumber)
 
 AC_CONFIG_HEADERS([src/config.h])
-AC_CONFIG_SRCDIR([src/zimwriter.cpp])
+AC_CONFIG_SRCDIR([src/main.cpp])
 
 AC_PROG_CXX
 AC_PROG_LIBTOOL
@@ -22,7 +22,7 @@ AC_CHECK_HEADER([tntdb/connect.h], , AC_MSG_ERROR([tntdb headers not found]))
 AC_CONFIG_FILES([
   Makefile
   src/Makefile
-  zimindexer/Makefile
+  include/Makefile
   ])
 
 AC_OUTPUT

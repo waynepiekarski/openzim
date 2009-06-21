@@ -77,17 +77,16 @@ namespace zim
     }
 
     DbSource::DbSource(int& argc, char* argv[])
-      : initialized(false)
+      : initialized(false),
+        dburl(cxxtools::Arg<std::string>(argc, argv, "--db", "postgresql:dbname=zim"))
     {
-      cxxtools::Arg<const char*> dburl(argc, argv, "--db", "postgresql:dbname=zim");
-
-      conn = tntdb::connect(dburl.getValue());
-
-      selData = conn.prepare("select data from article where aid = :aid");
     }
 
     void DbSource::setFilename(const std::string& fname)
     {
+      conn = tntdb::connect(dburl);
+      selData = conn.prepare("select data from article where aid = :aid");
+
       tntdb::Statement s = conn.prepare("select zid from zimfile where filename = :filename");
       try
       {

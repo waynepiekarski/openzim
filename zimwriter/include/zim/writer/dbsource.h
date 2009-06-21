@@ -50,6 +50,7 @@ namespace zim
 
     class DbSource : public ArticleSource
     {
+        std::string dburl;
         tntdb::Connection conn;
         tntdb::Statement stmt;
         tntdb::Statement::const_iterator current;

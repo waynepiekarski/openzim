@@ -21,6 +21,7 @@
 #define ZIM_WRIER_ARTICLEPARSER_H
 
 #include <string>
+#include <stdint.h>
 
 namespace zim
 {

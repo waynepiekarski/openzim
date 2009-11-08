@@ -45,7 +45,7 @@ int create(int argc, char* argv[], zim::writer::ArticleSource& articleSource)
                  "\t-T <file>         trivial words file for full text index (a text file with words, which are not indexed)\n"
                  "\t-M <number>       memory factor (default 64, smaller factors reduce memory usage but makes indexer slower,\n"
                  "\t                  try smaller values when you run out of memory)\n"
-                 "\t-t <filename>     temorary file name (default zimwriter.tmp)\n";
+                 "\t-t <filename>     temporary file name (default zimwriter.tmp)\n";
     return 1;
   }
 

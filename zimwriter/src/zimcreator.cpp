@@ -173,7 +173,7 @@ namespace zim
       cluster.setCompression(zimcompBzip2);
 
       DirentsType::size_type count = 0, progress = 0;
-      for (DirentsType::iterator di = dirents.begin(); di != dirents.end(); ++di, ++count)
+      for (DirentsType::iterator di = dirents.begin(); out && di != dirents.end(); ++di, ++count)
       {
         while (progress < count * 100 / dirents.size() + 1)
         {
@@ -224,6 +224,9 @@ namespace zim
         cluster.setCompression(zimcompBzip2);
         out << cluster;
       }
+
+      if (!out)
+        throw std::runtime_error("failed to write temporary cluster file");
     }
 
     void ZimCreator::fillHeader()
@@ -312,6 +315,9 @@ namespace zim
 
       std::ifstream blobsfile(tmpfname.c_str());
       zimfile << blobsfile.rdbuf();
+
+      if (!zimfile)
+        throw std::runtime_error("failed to write zimfile");
 
       log_debug("after writing clusterData - pos=" << zimfile.tellp());
     }

@@ -89,41 +89,11 @@ namespace zim
     if (zimFile.fail())
       throw ZimFileFormatError("error reading zim-file header");
 
-    // read index offsets
-    {
-      size_type indexOffsetsSize = header.getArticleCount() * sizeof(OffsetsType::value_type);
-      log_debug("read " << indexOffsetsSize << " bytes indexptr");
-      zimFile.seekg(header.getIndexPtrPos());
-      indexOffsets.resize(header.getArticleCount());
-      zimFile.read(reinterpret_cast<char*>(&indexOffsets[0]), indexOffsetsSize);
-    }
-
-    if (isBigEndian())
-    {
-      for (OffsetsType::iterator it = indexOffsets.begin(); it != indexOffsets.end(); ++it)
-        *it = fromLittleEndian(&*it);
-    }
-
-    // read cluster offsets
-    {
-      size_type clusterOffsetsSize = header.getClusterCount() * sizeof(OffsetsType::value_type);
-      log_debug("read " << clusterOffsetsSize << " bytes clusterptr");
-      zimFile.seekg(header.getClusterPtrPos());
-      clusterOffsets.resize(header.getClusterCount());
-      zimFile.read(reinterpret_cast<char*>(&clusterOffsets[0]), clusterOffsetsSize);
-    }
-
-    if (isBigEndian())
-    {
-      for (OffsetsType::iterator it = clusterOffsets.begin(); it != clusterOffsets.end(); ++it)
-        *it = fromLittleEndian(&*it);
-    }
-
-    if (clusterOffsets.empty())
+    if (getCountClusters() == 0)
       log_warn("no clusters found");
     else
     {
-      offset_type lastOffset = clusterOffsets.back();
+      offset_type lastOffset = getClusterOffset(getCountClusters() - 1);
       log_debug("last offset=" << lastOffset << " file size=" << st.st_size);
       if (lastOffset > st.st_size)
       {
@@ -137,7 +107,7 @@ namespace zim
   {
     log_trace("FileImpl::getDirent(" << idx << ')');
 
-    if (idx >= indexOffsets.size())
+    if (idx >= getCountArticles())
       throw ZimFileFormatError("article index out of range");
 
     if (!zimFile)
@@ -155,7 +125,13 @@ namespace zim
 
     log_debug("dirent " << idx << " not found in cache; hits " << direntCache.getHits() << " misses " << direntCache.getMisses() << " ratio " << direntCache.hitRatio() * 100 << "% fillfactor " << direntCache.fillfactor());
 
-    zimFile.seekg(indexOffsets[idx]);
+    zimFile.seekg(header.getIndexPtrPos() + sizeof(offset_type) * idx);
+    offset_type indexOffset;
+    zimFile.read(reinterpret_cast<char*>(&indexOffset), sizeof(offset_type));
+    if (isBigEndian())
+      indexOffset = fromLittleEndian(&indexOffset);
+
+    zimFile.seekg(indexOffset);
     if (!zimFile)
     {
       log_warn("failed to seek to directory entry");
@@ -171,7 +147,7 @@ namespace zim
       throw ZimFileFormatError("failed to read directory entry");
     }
 
-    log_debug("dirent read from " << indexOffsets[idx]);
+    log_debug("dirent read from " << indexOffset);
     direntCache.put(idx, dirent);
 
     return dirent;
@@ -181,8 +157,8 @@ namespace zim
   {
     log_trace("getCluster(" << idx << ')');
 
-    if (idx >= clusterOffsets.size())
-      throw ZimFileFormatError("article index out of range");
+    if (idx >= getCountClusters())
+      throw ZimFileFormatError("cluster index out of range");
 
     Cluster cluster = clusterCache.get(idx);
     if (cluster)
@@ -191,8 +167,9 @@ namespace zim
       return cluster;
     }
 
-    log_debug("read cluster " << idx << " from offset " << clusterOffsets[idx]);
-    zimFile.seekg(clusterOffsets[idx]);
+    offset_type clusterOffset = getClusterOffset(idx);
+    log_debug("read cluster " << idx << " from offset " << clusterOffset);
+    zimFile.seekg(clusterOffset);
     zimFile >> cluster;
 
     if (zimFile.fail())
@@ -207,6 +184,16 @@ namespace zim
       log_debug("cluster " << idx << " is not compressed - do not cache");
 
     return cluster;
+  }
+
+  offset_type FileImpl::getClusterOffset(size_type idx)
+  {
+    zimFile.seekg(header.getClusterPtrPos() + sizeof(offset_type) * idx);
+    offset_type indexOffset;
+    zimFile.read(reinterpret_cast<char*>(&indexOffset), sizeof(offset_type));
+    if (isBigEndian())
+      indexOffset = fromLittleEndian(&indexOffset);
+    return indexOffset;
   }
 
   size_type FileImpl::getNamespaceBeginOffset(char ch)

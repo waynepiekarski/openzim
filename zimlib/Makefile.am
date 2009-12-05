@@ -4,10 +4,16 @@ SUBDIRS = \
 
 if WITH_CXXTOOLS
 SUBDIRS += \
-	test \
 	zimDump
+
+if MAKE_UNITTEST
+
+SUBDIRS += \
+	test
 
 test: all
 	test/zimlib-test
+
+endif
 
 endif

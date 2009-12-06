@@ -191,7 +191,7 @@ namespace zim
     {
       titleIdx.resize(dirents.size());
       for (DirentsType::size_type n = 0; n < dirents.size(); ++n)
-        titleIdx[dirents[n].getIdx()];
+        titleIdx[n] = dirents[n].getIdx();
 
       CompareTitle compareTitle(dirents);
       std::sort(titleIdx.begin(), titleIdx.end(), compareTitle);
@@ -292,6 +292,7 @@ namespace zim
       header.setUuid( src.getUuid() );
       header.setArticleCount( dirents.size() );
       header.setUrlPtrPos( urlPtrPos() );
+      header.setTitleIdxPos( titleIdxPos() );
       header.setClusterCount( clusterOffsets.size() );
       header.setClusterPtrPos( clusterPtrPos() );
 
@@ -306,7 +307,7 @@ namespace zim
 
       log_debug("articleCount=" << dirents.size()
         << " urlPtrPos=" << header.getUrlPtrPos()
-        << " titlePtrPos=" << header.getTitlePtrPos()
+        << " titleIdxPos=" << header.getTitleIdxPos()
         << " clusterCount=" << header.getClusterCount()
         << " clusterPtrPos=" << header.getClusterPtrPos());
     }
@@ -318,7 +319,7 @@ namespace zim
 
       log_debug("after writing header - pos=" << zimfile.tellp());
 
-      offset_type off = Fileheader::size + dirents.size() * sizeof(offset_type);
+      offset_type off = indexPos();
       for (DirentsType::const_iterator it = dirents.begin(); it != dirents.end(); ++it)
       {
         offset_type ptr0 = fromLittleEndian<offset_type>(&off);

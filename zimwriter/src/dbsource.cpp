@@ -132,7 +132,7 @@ namespace zim
       }
       else
       {
-        log_debug("initalize cursor");
+        log_debug("initialize cursor");
         current = stmt.begin();
         initialized = true;
       }

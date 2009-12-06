@@ -1,5 +1,5 @@
 bin_PROGRAMS = zimwriter
-include_HEADERS = zimwriter.h
+noinst_HEADERS = zimwriter.h
 
 AM_CPPFLAGS=-I$(top_builddir)/include
 

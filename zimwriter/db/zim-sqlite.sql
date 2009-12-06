@@ -2,8 +2,8 @@ create table article
 (
   aid          integer primary key autoincrement,
   namespace    text    not null,
-  title        text    not null,
   url          text    not null,
+  title        text    not null,
   redirect     text,     -- title of redirect target
   mimetype     integer,
   data         bytea

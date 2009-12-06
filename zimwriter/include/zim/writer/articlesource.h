@@ -35,7 +35,9 @@ namespace zim
       public:
         virtual std::string getAid() const = 0;
         virtual char getNamespace() const = 0;
+        virtual std::string getUrl() const = 0;
         virtual std::string getTitle() const = 0;
+        virtual size_type getVersion() const;
         virtual bool isRedirect() const = 0;
         virtual MimeType getMimeType() const = 0;
         virtual std::string getRedirectAid() const = 0;

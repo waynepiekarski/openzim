@@ -45,35 +45,41 @@ namespace zim
       return row[1].getChar();
     }
 
-    std::string DbArticle::getTitle() const
+    std::string DbArticle::getUrl() const
     {
       log_debug("getTitle");
       return row[2].getString();
     }
 
+    std::string DbArticle::getTitle() const
+    {
+      log_debug("getTitle");
+      return row[3].getString();
+    }
+
     bool DbArticle::isRedirect() const
     {
       log_debug("isRedirect");
-      return !row[4].isNull();
+      return !row[5].isNull();
     }
 
     MimeType DbArticle::getMimeType() const
     {
       log_debug("getMimeType");
-      if (row[3].isNull())
+      if (row[4].isNull())
       {
         std::ostringstream msg;
         msg << "article " << getNamespace() << '/' << getTitle() << " has no mime type";
         throw std::runtime_error(msg.str());
       }
 
-      return static_cast<MimeType>(row[3].getInt());
+      return static_cast<MimeType>(row[4].getInt());
     }
 
     std::string DbArticle::getRedirectAid() const
     {
       log_debug("getRedirectAid");
-      return row[4].getString();
+      return row[5].getString();
     }
 
     DbSource::DbSource(int& argc, char* argv[])
@@ -101,7 +107,7 @@ namespace zim
       }
 
       stmt = conn.prepare(
-        "select a.aid, a.namespace, a.title, a.mimetype, r.aid"
+        "select a.aid, a.namespace, a.url, a.title, a.mimetype, r.aid"
         "  from article a"
         "  join zimarticles z"
         "    on a.aid = z.aid"

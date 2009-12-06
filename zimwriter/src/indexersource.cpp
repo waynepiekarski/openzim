@@ -92,7 +92,7 @@ namespace zim
 
         zim::Blob data = article.getData();
 
-        zimindexer.process(article.getIndex(), article.getTitle().toUtf8(), data.data(), data.size());
+        zimindexer.process(article.getIndex(), article.getTitle(), data.data(), data.size());
 
         while (progress < count * 100 / zimfile.getCountArticles() + 1)
         {
@@ -134,7 +134,7 @@ namespace zim
       {
         log_debug("raw data of category " << c << " has " << currentData[c].size() << " entries");
 
-        zim::OZIntStream zdatastream(zdata[c]);
+        zim::ZIntStream zdatastream(zdata[c]);
         if (!currentData[c].empty())
         {
           zim::size_type lastidx = 0;
@@ -172,7 +172,7 @@ namespace zim
       }
 
       std::ostringstream parameter;
-      zim::OZIntStream zparameter(parameter);
+      zim::ZIntStream zparameter(parameter);
 
       log_debug("flags:" << flags);
       zparameter.put(flags);
@@ -259,9 +259,14 @@ namespace zim
       return 'X';
     }
 
-    std::string IndexArticle::getTitle() const
+    std::string IndexArticle::getUrl() const
     {
       return _word;
+    }
+
+    std::string IndexArticle::getTitle() const
+    {
+      return std::string();
     }
 
     bool IndexArticle::isRedirect() const

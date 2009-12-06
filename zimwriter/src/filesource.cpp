@@ -41,9 +41,14 @@ namespace zim
       return ns;
     }
 
-    std::string FileArticle::getTitle() const
+    std::string FileArticle::getUrl() const
     {
       return fname;
+    }
+
+    std::string FileArticle::getTitle() const
+    {
+      return std::string();
     }
 
     bool FileArticle::isRedirect() const

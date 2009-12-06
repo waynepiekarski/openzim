@@ -23,6 +23,11 @@ namespace zim
 {
   namespace writer
   {
+    size_type Article::getVersion() const
+    {
+      return 0;
+    }
+
     std::string Article::getParameter() const
     {
       return std::string();

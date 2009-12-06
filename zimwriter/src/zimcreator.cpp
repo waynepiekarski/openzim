@@ -55,6 +55,10 @@ namespace zim
       createDirents();
       log_info(dirents.size() << " directory entries created");
 
+      log_info("create title index");
+      createTitleIndex();
+      log_info(dirents.size() << " title index created");
+
       log_info("create clusters");
       createClusters(basename + ".tmp");
       log_info(clusterOffsets.size() << " clusters created");
@@ -79,10 +83,11 @@ namespace zim
       {
         Dirent dirent;
         dirent.setAid(article->getAid());
-        dirent.setTitle(article->getNamespace(), QUnicodeString::fromUtf8(article->getTitle()));
+        dirent.setUrl(article->getNamespace(), article->getUrl());
+        dirent.setTitle(article->getTitle());
         dirent.setParameter(article->getParameter());
 
-        log_debug("article " << dirent.getNamespace() << '/' << dirent.getTitle().toUtf8() << " fetched");
+        log_debug("article " << dirent.getLongUrl() << " fetched");
 
         if (article->isRedirect())
         {
@@ -124,8 +129,8 @@ namespace zim
       }
 
       // sort
-      log_info("sort " << dirents.size() << " directory entries (title)");
-      std::sort(dirents.begin(), dirents.end(), compareTitle);
+      log_info("sort " << dirents.size() << " directory entries (url)");
+      std::sort(dirents.begin(), dirents.end(), compareUrl);
 
       // set index
       log_info("set index");
@@ -160,9 +165,36 @@ namespace zim
       }
 
       // sort
-      log_debug("sort " << dirents.size() << " directory entries (title)");
-      std::sort(dirents.begin(), dirents.end(), compareTitle);
+      log_debug("sort " << dirents.size() << " directory entries (url)");
+      std::sort(dirents.begin(), dirents.end(), compareUrl);
 
+    }
+
+    namespace
+    {
+      class CompareTitle
+      {
+          ZimCreator::DirentsType& dirents;
+
+        public:
+          explicit CompareTitle(ZimCreator::DirentsType& dirents_)
+            : dirents(dirents_)
+            { }
+          bool operator() (size_type titleIdx1, size_type titleIdx2) const
+          {
+            return dirents[titleIdx1].getTitle() < dirents[titleIdx2].getTitle();
+          }
+      };
+    }
+
+    void ZimCreator::createTitleIndex()
+    {
+      titleIdx.resize(dirents.size());
+      for (DirentsType::size_type n = 0; n < dirents.size(); ++n)
+        titleIdx[dirents[n].getIdx()];
+
+      CompareTitle compareTitle(dirents);
+      std::sort(titleIdx.begin(), titleIdx.end(), compareTitle);
     }
 
     void ZimCreator::createClusters(const std::string& tmpfname)
@@ -259,12 +291,12 @@ namespace zim
 
       header.setUuid( src.getUuid() );
       header.setArticleCount( dirents.size() );
-      header.setIndexPtrPos( indexPtrPos() );
+      header.setUrlPtrPos( urlPtrPos() );
       header.setClusterCount( clusterOffsets.size() );
       header.setClusterPtrPos( clusterPtrPos() );
 
-      log_debug("indexPtrSize=" << indexPtrSize()
-        << " indexPtrPos=" << indexPtrPos()
+      log_debug("indexPtrSize=" << urlPtrSize()
+        << " indexPtrPos=" << urlPtrPos()
         << " indexSize=" << indexSize()
         << " indexPos=" << indexPos()
         << " clusterPtrSize=" << clusterPtrSize()
@@ -273,7 +305,8 @@ namespace zim
         << " articleCount=" << articleCount());
 
       log_debug("articleCount=" << dirents.size()
-        << " indexPtrPos=" << header.getIndexPtrPos()
+        << " urlPtrPos=" << header.getUrlPtrPos()
+        << " titlePtrPos=" << header.getTitlePtrPos()
         << " clusterCount=" << header.getClusterCount()
         << " clusterPtrPos=" << header.getClusterPtrPos());
     }
@@ -294,6 +327,14 @@ namespace zim
       }
 
       log_debug("after writing direntPtr - pos=" << zimfile.tellp());
+
+      for (SizeVectorType::const_iterator it = titleIdx.begin(); it != titleIdx.end(); ++it)
+      {
+        size_type v = fromLittleEndian<size_type>(&*it);
+        zimfile.write(reinterpret_cast<const char*>(&v), sizeof(v));
+      }
+
+      log_debug("after writing fileIdxList - pos=" << zimfile.tellp());
 
       for (DirentsType::const_iterator it = dirents.begin(); it != dirents.end(); ++it)
       {

@@ -39,8 +39,8 @@ namespace zim
           : aid(aid_)
           {}
 
-        Dirent(char ns, const QUnicodeString& title)
-        { setTitle(ns, title); }
+        Dirent(char ns, const std::string& url)
+        { setUrl(ns, url); }
 
         void setAid(const std::string&  aid_)      { aid = aid_; }
         const std::string& getAid() const          { return aid; }
@@ -53,11 +53,11 @@ namespace zim
 
     };
 
-    inline bool compareTitle(const Dirent& d1, const Dirent& d2)
+    inline bool compareUrl(const Dirent& d1, const Dirent& d2)
     {
       return d1.getNamespace() < d2.getNamespace()
          || (d1.getNamespace() == d2.getNamespace()
-           && d1.getTitle() < d2.getTitle());
+           && d1.getUrl() < d2.getUrl());
     }
 
     inline bool compareAid(const Dirent& d1, const Dirent& d2)

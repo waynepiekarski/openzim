@@ -38,6 +38,7 @@ namespace zim
 
         std::string getAid() const;
         char getNamespace() const;
+        std::string getUrl() const;
         std::string getTitle() const;
         bool isRedirect() const;
         MimeType getMimeType() const;

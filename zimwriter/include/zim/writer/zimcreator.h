@@ -30,29 +30,36 @@ namespace zim
   {
     class ZimCreator
     {
+      public:
+        typedef std::vector<Dirent> DirentsType;
+        typedef std::vector<size_type> SizeVectorType;
+        typedef std::vector<offset_type> OffsetsType;
+
+      private:
         ArticleSource& src;
 
         unsigned minChunkSize;
 
         Fileheader header;
 
-        typedef std::vector<Dirent> DirentsType;
         DirentsType dirents;
-
-        typedef std::vector<offset_type> OffsetsType;
+        SizeVectorType titleIdx;
         OffsetsType clusterOffsets;
 
         void createDirents();
+        void createTitleIndex();
         void createClusters(const std::string& tmpfname);
         void fillHeader();
         void write(const std::string& fname, const std::string& tmpfname);
 
         size_type clusterCount() const        { return clusterOffsets.size(); }
         size_type articleCount() const        { return dirents.size(); }
-        offset_type indexPtrSize() const      { return articleCount() * sizeof(offset_type); }
-        offset_type indexPtrPos() const       { return Fileheader::size; }
+        offset_type urlPtrSize() const        { return articleCount() * sizeof(offset_type); }
+        offset_type urlPtrPos() const         { return Fileheader::size; }
+        offset_type titleIdxSize() const      { return articleCount() * sizeof(size_type); }
+        offset_type titleIdxPos() const       { return urlPtrPos() + urlPtrSize(); }
         offset_type indexSize() const;
-        offset_type indexPos() const          { return indexPtrPos() + indexPtrSize(); }
+        offset_type indexPos() const          { return titleIdxPos() + titleIdxSize(); }
         offset_type clusterPtrSize() const    { return clusterCount() * sizeof(offset_type); }
         offset_type clusterPtrPos() const     { return indexPos() + indexSize(); }
 

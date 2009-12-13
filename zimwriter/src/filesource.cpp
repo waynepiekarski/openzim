@@ -62,9 +62,9 @@ namespace zim
       return s > 0;
     }
 
-    MimeType FileArticle::getMimeType() const
+    std::string FileArticle::getMimeType() const
     {
-      return zimMimeTextHtml;  // TODO
+      return "text/html";  // TODO
     }
 
     std::string FileArticle::getRedirectAid() const

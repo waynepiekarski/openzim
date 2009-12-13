@@ -5,7 +5,7 @@ create table article
   url          text    not null,
   title        text    not null,
   redirect     text,     -- title of redirect target
-  mimetype     integer,
+  mimetype     text,
   data         bytea
 );
 

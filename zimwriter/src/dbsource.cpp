@@ -63,7 +63,7 @@ namespace zim
       return !row[5].isNull();
     }
 
-    MimeType DbArticle::getMimeType() const
+    std::string DbArticle::getMimeType() const
     {
       log_debug("getMimeType");
       if (row[4].isNull())
@@ -73,7 +73,7 @@ namespace zim
         throw std::runtime_error(msg.str());
       }
 
-      return static_cast<MimeType>(row[4].getInt());
+      return row[4].getString();
     }
 
     std::string DbArticle::getRedirectAid() const

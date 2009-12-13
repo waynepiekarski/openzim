@@ -74,11 +74,18 @@ namespace zim
       {
         zim::Article article = *it;
 
+        if (article.isRedirect())
+        {
+          log_debug("skip redirect \"" << article.getTitle() << "\" id " << article.getIndex());
+          continue;
+        }
+
         log_debug("process article \"" << article.getTitle() << "\" id " << article.getIndex() << " mime type " << article.getLibraryMimeType());
 
-        if (article.getLibraryMimeType() != zimMimeTextHtml
-          && article.getLibraryMimeType() != zimMimeTextXml
-          && article.getLibraryMimeType() != zimMimeTextHtmlTemplate)
+        std::string mimeType = article.getMimeType();
+        if (mimeType.compare(0, 9, "text/html") != 0
+          && mimeType.compare(0, 8, "text/xml") != 0
+          && mimeType != MimeHtmlTemplate)
         {
           log_debug("mimetype " << article.getLibraryMimeType() << " not indexed");
           continue;
@@ -274,9 +281,9 @@ namespace zim
       return false;
     }
 
-    MimeType IndexArticle::getMimeType() const
+    std::string IndexArticle::getMimeType() const
     {
-      return zimMimeIndex;
+      return "application/x-zim-index-data";
     }
 
     std::string IndexArticle::getRedirectAid() const

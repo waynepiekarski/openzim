@@ -23,6 +23,7 @@
 #include <zim/writer/articlesource.h>
 #include <zim/writer/dirent.h>
 #include <vector>
+#include <map>
 
 namespace zim
 {
@@ -34,6 +35,8 @@ namespace zim
         typedef std::vector<Dirent> DirentsType;
         typedef std::vector<size_type> SizeVectorType;
         typedef std::vector<offset_type> OffsetsType;
+        typedef std::map<std::string, uint16_t> MimeTypes;
+        typedef std::map<uint16_t, std::string> RMimeTypes;
 
       private:
         ArticleSource& src;
@@ -45,6 +48,9 @@ namespace zim
         DirentsType dirents;
         SizeVectorType titleIdx;
         OffsetsType clusterOffsets;
+        MimeTypes mimeTypes;
+        RMimeTypes rmimeTypes;
+        uint16_t nextMimeIdx;
 
         void createDirents();
         void createTitleIndex();
@@ -54,8 +60,10 @@ namespace zim
 
         size_type clusterCount() const        { return clusterOffsets.size(); }
         size_type articleCount() const        { return dirents.size(); }
+        offset_type mimeListSize() const;
+        offset_type mimeListPos() const       { return Fileheader::size; }
         offset_type urlPtrSize() const        { return articleCount() * sizeof(offset_type); }
-        offset_type urlPtrPos() const         { return Fileheader::size; }
+        offset_type urlPtrPos() const         { return mimeListPos() + mimeListSize(); }
         offset_type titleIdxSize() const      { return articleCount() * sizeof(size_type); }
         offset_type titleIdxPos() const       { return urlPtrPos() + urlPtrSize(); }
         offset_type indexSize() const;
@@ -63,17 +71,15 @@ namespace zim
         offset_type clusterPtrSize() const    { return clusterCount() * sizeof(offset_type); }
         offset_type clusterPtrPos() const     { return indexPos() + indexSize(); }
 
+        uint16_t getMimeTypeIdx(const std::string& mimeType);
+        const std::string& getMimeType(uint16_t mimeTypeIdx) const;
+
       public:
         ZimCreator(int& argc, char* argv[], ArticleSource& src_);
 
         void create(const std::string& fname);
 
-        static bool mimeDoCompress(zim::MimeType t)
-        { return t == zimMimeTextHtml
-              || t == zimMimeTextPlain
-              || t == zimMimeTextCss
-              || t == zimMimeIndex
-              || t == zimMimeApplicationJavaScript; }
+        bool mimeDoCompress(uint16_t mimeTypeIdx);
     };
 
   }

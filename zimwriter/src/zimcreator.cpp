@@ -38,7 +38,8 @@ namespace zim
   namespace writer
   {
     ZimCreator::ZimCreator(int& argc, char* argv[], ArticleSource& src_)
-      : src(src_)
+      : src(src_),
+        nextMimeIdx(0)
     {
       minChunkSize = cxxtools::Arg<unsigned>(argc, argv, 's', 1024);
     }
@@ -74,6 +75,16 @@ namespace zim
       log_info("ready");
     }
 
+    bool ZimCreator::mimeDoCompress(uint16_t mimeTypeIdx)
+    {
+      std::string mt = getMimeType(mimeTypeIdx);
+      return mt != "image/jpeg"
+          && mt != "image/png"
+          && mt != "image/tiff"
+          && mt != "image/gif"
+          && mt != "application/zip";
+    }
+
     void ZimCreator::createDirents()
     {
       log_info("collect articles");
@@ -97,7 +108,7 @@ namespace zim
         }
         else
         {
-          dirent.setArticle(article->getMimeType(), 0, 0);
+          dirent.setArticle(getMimeTypeIdx(article->getMimeType()), 0, 0);
           log_debug("is article; mimetype " << dirent.getMimeType());
         }
 
@@ -292,18 +303,22 @@ namespace zim
       header.setUuid( src.getUuid() );
       header.setArticleCount( dirents.size() );
       header.setUrlPtrPos( urlPtrPos() );
+      header.setMimeListPos( mimeListPos() );
       header.setTitleIdxPos( titleIdxPos() );
       header.setClusterCount( clusterOffsets.size() );
       header.setClusterPtrPos( clusterPtrPos() );
 
-      log_debug("indexPtrSize=" << urlPtrSize()
-        << " indexPtrPos=" << urlPtrPos()
-        << " indexSize=" << indexSize()
-        << " indexPos=" << indexPos()
-        << " clusterPtrSize=" << clusterPtrSize()
-        << " clusterPtrPos=" << clusterPtrPos()
-        << " clusterCount=" << clusterCount()
-        << " articleCount=" << articleCount());
+      log_debug(
+            "mimeListSize=" << mimeListSize() <<
+           " mimeListPos=" << mimeListPos() <<
+           " indexPtrSize=" << urlPtrSize() <<
+           " indexPtrPos=" << urlPtrPos() <<
+           " indexSize=" << indexSize() <<
+           " indexPos=" << indexPos() <<
+           " clusterPtrSize=" << clusterPtrSize() <<
+           " clusterPtrPos=" << clusterPtrPos() <<
+           " clusterCount=" << clusterCount() <<
+           " articleCount=" << articleCount());
 
       log_debug("articleCount=" << dirents.size()
         << " urlPtrPos=" << header.getUrlPtrPos()
@@ -319,6 +334,17 @@ namespace zim
 
       log_debug("after writing header - pos=" << zimfile.tellp());
 
+      // write mime type list
+
+      for (RMimeTypes::const_iterator it = rmimeTypes.begin(); it != rmimeTypes.end(); ++it)
+      {
+        zimfile << it->second << '\0';
+      }
+
+      zimfile << '\0';
+
+      // write url ptr list
+
       offset_type off = indexPos();
       for (DirentsType::const_iterator it = dirents.begin(); it != dirents.end(); ++it)
       {
@@ -329,6 +355,8 @@ namespace zim
 
       log_debug("after writing direntPtr - pos=" << zimfile.tellp());
 
+      // write title index
+
       for (SizeVectorType::const_iterator it = titleIdx.begin(); it != titleIdx.end(); ++it)
       {
         size_type v = fromLittleEndian<size_type>(&*it);
@@ -337,6 +365,8 @@ namespace zim
 
       log_debug("after writing fileIdxList - pos=" << zimfile.tellp());
 
+      // write directory entries
+
       for (DirentsType::const_iterator it = dirents.begin(); it != dirents.end(); ++it)
       {
         zimfile << *it;
@@ -344,6 +374,8 @@ namespace zim
       }
 
       log_debug("after writing dirents - pos=" << zimfile.tellp());
+
+      // write cluster offset list
 
       off += clusterOffsets.size() * sizeof(offset_type);
       for (OffsetsType::const_iterator it = clusterOffsets.begin(); it != clusterOffsets.end(); ++it)
@@ -355,6 +387,8 @@ namespace zim
 
       log_debug("after writing clusterOffsets - pos=" << zimfile.tellp());
 
+      // write cluster data
+
       std::ifstream blobsfile(tmpfname.c_str());
       zimfile << blobsfile.rdbuf();
 
@@ -362,6 +396,14 @@ namespace zim
         throw std::runtime_error("failed to write zimfile");
 
       log_debug("after writing clusterData - pos=" << zimfile.tellp());
+    }
+
+    offset_type ZimCreator::mimeListSize() const
+    {
+      offset_type ret = 1;
+      for (RMimeTypes::const_iterator it = rmimeTypes.begin(); it != rmimeTypes.end(); ++it)
+        ret += (it->second.size() + 1);
+      return ret;
     }
 
     offset_type ZimCreator::indexSize() const
@@ -372,6 +414,29 @@ namespace zim
         s += it->getDirentSize();
 
       return s;
+    }
+
+    uint16_t ZimCreator::getMimeTypeIdx(const std::string& mimeType)
+    {
+      MimeTypes::const_iterator it = mimeTypes.find(mimeType);
+      if (it == mimeTypes.end())
+      {
+        if (nextMimeIdx >= std::numeric_limits<uint16_t>::max())
+          throw std::runtime_error("too many distinct mime types");
+        mimeTypes[mimeType] = nextMimeIdx;
+        rmimeTypes[nextMimeIdx] = mimeType;
+        return nextMimeIdx++;
+      }
+
+      return it->second;
+    }
+
+    const std::string& ZimCreator::getMimeType(uint16_t mimeTypeIdx) const
+    {
+      RMimeTypes::const_iterator it = rmimeTypes.find(mimeTypeIdx);
+      if (it == rmimeTypes.end())
+        throw std::runtime_error("mime type index not found");
+      return it->second;
     }
 
   }

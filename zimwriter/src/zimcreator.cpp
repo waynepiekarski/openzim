@@ -39,7 +39,8 @@ namespace zim
   {
     ZimCreator::ZimCreator(int& argc, char* argv[], ArticleSource& src_)
       : src(src_),
-        nextMimeIdx(0)
+        nextMimeIdx(0),
+        compression(zimcompLzma)
     {
       minChunkSize = cxxtools::Arg<unsigned>(argc, argv, 's', 1024);
     }
@@ -213,7 +214,7 @@ namespace zim
       std::ofstream out(tmpfname.c_str());
 
       Cluster cluster;
-      cluster.setCompression(zimcompBzip2);
+      cluster.setCompression(compression);
 
       DirentsType::size_type count = 0, progress = 0;
       for (DirentsType::iterator di = dirents.begin(); out && di != dirents.end(); ++di, ++count)
@@ -238,7 +239,7 @@ namespace zim
             clusterOffsets.push_back(out.tellp());
             out << cluster;
             cluster.clear();
-            cluster.setCompression(zimcompBzip2);
+            cluster.setCompression(compression);
           }
         }
         else
@@ -246,10 +247,10 @@ namespace zim
           if (cluster.count() > 0)
           {
             clusterOffsets.push_back(out.tellp());
-            cluster.setCompression(zimcompBzip2);
+            cluster.setCompression(compression);
             out << cluster;
             cluster.clear();
-            cluster.setCompression(zimcompBzip2);
+            cluster.setCompression(compression);
           }
 
           di->setCluster(clusterOffsets.size(), cluster.count());
@@ -264,7 +265,7 @@ namespace zim
       if (cluster.count() > 0)
       {
         clusterOffsets.push_back(out.tellp());
-        cluster.setCompression(zimcompBzip2);
+        cluster.setCompression(compression);
         out << cluster;
       }
 

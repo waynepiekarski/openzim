@@ -51,6 +51,7 @@ namespace zim
         MimeTypes mimeTypes;
         RMimeTypes rmimeTypes;
         uint16_t nextMimeIdx;
+        CompressionType compression;
 
         void createDirents();
         void createTitleIndex();

@@ -40,6 +40,7 @@ int create(int argc, char* argv[], zim::writer::ArticleSource& articleSource)
                  "\t-s <number>       specify chunk size for compression in kB (default 1024)\n"
                  "\t--db <dburl>      specify a db source (default: postgresql:dbname=zim, tntdb is used here)\n"
                  "\t-Z <articlefile>  create a fulltext index for specified article\n"
+                 "\t--lzma            use lzma compression (default is bzip2)\n"
                  "\n"
                  "additional options for full text indexer:\n"
                  "\t-T <file>         trivial words file for full text index (a text file with words, which are not indexed)\n"

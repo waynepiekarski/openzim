@@ -33,6 +33,12 @@
 
 log_define("zim.writer.creator")
 
+#define INFO(e) \
+    do { \
+        log_info(e); \
+        std::cout << e << std::endl; \
+    } while(false)
+
 namespace zim
 {
   namespace writer
@@ -55,27 +61,27 @@ namespace zim
                      : fname;
       log_debug("basename " << basename);
 
-      log_info("create directory entries");
+      INFO("create directory entries");
       createDirents();
-      log_info(dirents.size() << " directory entries created");
+      INFO(dirents.size() << " directory entries created");
 
-      log_info("create title index");
+      INFO("create title index");
       createTitleIndex();
-      log_info(dirents.size() << " title index created");
+      INFO(dirents.size() << " title index created");
 
-      log_info("create clusters");
+      INFO("create clusters");
       createClusters(basename + ".tmp");
-      log_info(clusterOffsets.size() << " clusters created");
+      INFO(clusterOffsets.size() << " clusters created");
 
-      log_info("fill header");
+      INFO("fill header");
       fillHeader();
 
-      log_info("write zimfile");
+      INFO("write zimfile");
       write(basename + ".zim", basename + ".tmp");
 
       ::remove((basename + ".tmp").c_str());
 
-      log_info("ready");
+      INFO("ready");
     }
 
     bool ZimCreator::mimeDoCompress(uint16_t mimeTypeIdx)
@@ -90,7 +96,7 @@ namespace zim
 
     void ZimCreator::createDirents()
     {
-      log_info("collect articles");
+      INFO("collect articles");
 
       const Article* article;
       while ((article = src.getNextArticle()) != 0)
@@ -119,11 +125,11 @@ namespace zim
       }
 
       // sort
-      log_info("sort " << dirents.size() << " directory entries (aid)");
+      INFO("sort " << dirents.size() << " directory entries (aid)");
       std::sort(dirents.begin(), dirents.end(), compareAid);
 
       // remove invalid redirects
-      log_info("remove invalid redirects from " << dirents.size() << " directory entries");
+      INFO("remove invalid redirects from " << dirents.size() << " directory entries");
       DirentsType::size_type di = 0;
       while (di < dirents.size())
       {
@@ -143,11 +149,11 @@ namespace zim
       }
 
       // sort
-      log_info("sort " << dirents.size() << " directory entries (url)");
+      INFO("sort " << dirents.size() << " directory entries (url)");
       std::sort(dirents.begin(), dirents.end(), compareUrl);
 
       // set index
-      log_info("set index");
+      INFO("set index");
       unsigned idx = 0;
       for (DirentsType::iterator di = dirents.begin(); di != dirents.end(); ++di)
         di->setIdx(idx++);
@@ -157,7 +163,7 @@ namespace zim
       std::sort(dirents.begin(), dirents.end(), compareAid);
 
       // translate redirect aid to index
-      log_info("translate redirect aid to index");
+      INFO("translate redirect aid to index");
       for (DirentsType::iterator di = dirents.begin(); di != dirents.end(); ++di)
       {
         if (di->isRedirect())
@@ -223,7 +229,7 @@ namespace zim
       {
         while (progress < count * 100 / dirents.size() + 1)
         {
-          log_info(progress << "% ready");
+          INFO(progress << "% ready");
           progress += 10;
         }
 

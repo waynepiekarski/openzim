@@ -29,6 +29,12 @@
 
 log_define("zim.writer.indexersource")
 
+#define INFO(e) \
+    do { \
+        log_info(e); \
+        std::cout << e << std::endl; \
+    } while(false)
+
 namespace zim
 {
   namespace writer
@@ -65,7 +71,7 @@ namespace zim
         std::string word;
         while (tw >> word)
           zimindexer.addTrivialWord(word);
-        log_info("ignore " << zimindexer.countTrivialWords() << " trivial words");
+        INFO("ignore " << zimindexer.countTrivialWords() << " trivial words");
       }
 
       size_type count = 0;
@@ -103,7 +109,7 @@ namespace zim
 
         while (progress < count * 100 / zimfile.getCountArticles() + 1)
         {
-          log_info(progress << "% ready");
+          INFO(progress << "% ready");
           progress += 10;
         }
       }
@@ -239,7 +245,7 @@ namespace zim
       ++_count;
       while (_progress < _count * 100 / _countArticles + 1)
       {
-        log_info(_progress << "% ready");
+        INFO(_progress << "% ready");
         _progress += 10;
       }
 

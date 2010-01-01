@@ -27,6 +27,12 @@
 
 log_define("zim.writer.main")
 
+#define INFO(e) \
+    do { \
+        log_info(e); \
+        std::cout << e << std::endl; \
+    } while(false)
+
 int create(int argc, char* argv[], zim::writer::ArticleSource& articleSource)
 {
   zim::writer::ZimCreator creator(argc, argv, articleSource);
@@ -53,7 +59,7 @@ int create(int argc, char* argv[], zim::writer::ArticleSource& articleSource)
   std::string fname = argv[1];
   articleSource.setFilename(fname);
   creator.create(fname);
-  log_info("zim file ready");
+  INFO("zim file ready");
 }
 
 int main(int argc, char* argv[])
@@ -66,13 +72,13 @@ int main(int argc, char* argv[])
 
     if (fulltextIndex.isSet())
     {
-      log_info("create full text index");
+      INFO("create full text index");
       zim::writer::Indexer source(fulltextIndex, argc, argv);
       return create(argc, argv, source);
     }
     else
     {
-      log_info("create zim file from db");
+      INFO("create zim file from db");
       zim::writer::DbSource dbSource(argc, argv);
       return create(argc, argv, dbSource);
     }

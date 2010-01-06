@@ -46,9 +46,11 @@ namespace zim
     ZimCreator::ZimCreator(int& argc, char* argv[], ArticleSource& src_)
       : src(src_),
         nextMimeIdx(0),
-        compression(zimcompBzip2)
+        compression(zimcompLzma)
     {
       minChunkSize = cxxtools::Arg<unsigned>(argc, argv, 's', 1024);
+      if (cxxtools::Arg<bool>(argc, argv, "--bzip2"))
+        compression = zimcompBzip2;
       if (cxxtools::Arg<bool>(argc, argv, "--lzma"))
         compression = zimcompLzma;
     }

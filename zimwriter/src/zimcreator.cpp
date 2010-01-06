@@ -204,7 +204,11 @@ namespace zim
             { }
           bool operator() (size_type titleIdx1, size_type titleIdx2) const
           {
-            return dirents[titleIdx1].getTitle() < dirents[titleIdx2].getTitle();
+            Dirent d1 = dirents[titleIdx1];
+            Dirent d2 = dirents[titleIdx2];
+            return d1.getNamespace() < d2.getNamespace()
+               || (d1.getNamespace() == d2.getNamespace()
+                && d1.getTitle() < d2.getTitle());
           }
       };
     }

@@ -112,7 +112,7 @@ namespace zim
         "  join zimarticles z"
         "    on a.aid = z.aid"
         "  left outer join article r"
-        "    on a.redirect = r.title"
+        "    on a.redirect = r.url"
         " where z.zid = :zid"
         "   and (a.redirect is null"
         "          or r.aid is not null)");

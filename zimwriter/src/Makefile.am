@@ -10,6 +10,7 @@ zimwriter_SOURCES = \
     indexersource.cpp \
     main.cpp \
     mstream.cpp \
+    search.cpp \
     zimcreator.cpp \
     zimindexer.cpp
 

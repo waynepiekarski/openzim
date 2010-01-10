@@ -22,6 +22,7 @@
 #include <cxxtools/arg.h>
 #include <zim/writer/dbsource.h>
 #include <zim/writer/indexersource.h>
+#include <zim/writer/search.h>
 #include <zim/writer/filesource.h>
 #include <zim/writer/zimcreator.h>
 
@@ -47,6 +48,9 @@ int create(int argc, char* argv[], zim::writer::ArticleSource& articleSource)
                  "\t--db <dburl>      specify a db source (default: postgresql:dbname=zim, tntdb is used here)\n"
                  "\t-Z <articlefile>  create a fulltext index for specified article\n"
                  "\t--bzip2           use lzma compression (default is lzma)\n"
+                 "\t-S <words>        search in zim file for articles\n"
+                 "\t-I <articlefile>  article file for search\n"
+                 "\t-X <indexfile>    use indexfile as full text search index\n"
                  "\n"
                  "additional options for full text indexer:\n"
                  "\t-T <file>         trivial words file for full text index (a text file with words, which are not indexed)\n"
@@ -69,11 +73,18 @@ int main(int argc, char* argv[])
     log_init();
 
     cxxtools::Arg<const char*> fulltextIndex(argc, argv, 'Z'); // get zimfile for fulltext index
+    cxxtools::Arg<const char*> search(argc, argv, 'S'); // get zimfile for search
 
     if (fulltextIndex.isSet())
     {
       INFO("create full text index");
       zim::writer::Indexer source(fulltextIndex, argc, argv);
+      return create(argc, argv, source);
+    }
+    else if (search.isSet())
+    {
+      INFO("create zim file from search result");
+      zim::writer::SearchSource source(search.getValue(), argc, argv);
       return create(argc, argv, source);
     }
     else

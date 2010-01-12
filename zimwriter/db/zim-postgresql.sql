@@ -9,7 +9,7 @@ create table article
   data         bytea
 );
 
-create unique index article_ix1 on article(namespace, title);
+create unique index article_ix1 on article(namespace, url);
 
 create table category
 (

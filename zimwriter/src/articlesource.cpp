@@ -28,6 +28,16 @@ namespace zim
       return 0;
     }
 
+    bool Article::shouldCompress() const
+    {
+      std::string mimeType = getMimeType();
+      return mimeType != "image/jpeg"
+          && mimeType != "image/png"
+          && mimeType != "image/tiff"
+          && mimeType != "image/gif"
+          && mimeType != "application/zip";
+    }
+
     std::string Article::getParameter() const
     {
       return std::string();

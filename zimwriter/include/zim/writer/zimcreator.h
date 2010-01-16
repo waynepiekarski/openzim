@@ -79,8 +79,6 @@ namespace zim
         ZimCreator(int& argc, char* argv[], ArticleSource& src_);
 
         void create(const std::string& fname);
-
-        bool mimeDoCompress(uint16_t mimeTypeIdx);
     };
 
   }

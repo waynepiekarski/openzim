@@ -86,16 +86,6 @@ namespace zim
       INFO("ready");
     }
 
-    bool ZimCreator::mimeDoCompress(uint16_t mimeTypeIdx)
-    {
-      std::string mt = getMimeType(mimeTypeIdx);
-      return mt != "image/jpeg"
-          && mt != "image/png"
-          && mt != "image/tiff"
-          && mt != "image/gif"
-          && mt != "application/zip";
-    }
-
     void ZimCreator::createDirents()
     {
       INFO("collect articles");
@@ -120,6 +110,7 @@ namespace zim
         else
         {
           dirent.setArticle(getMimeTypeIdx(article->getMimeType()), 0, 0);
+          dirent.setCompress(article->shouldCompress());
           log_debug("is article; mimetype " << dirent.getMimeType());
         }
 
@@ -244,7 +235,7 @@ namespace zim
 
         Blob blob = src.getData(di->getAid());
 
-        if (mimeDoCompress(di->getMimeType()))
+        if (di->isCompress())
         {
           di->setCluster(clusterOffsets.size(), cluster.count());
           cluster.addBlob(blob);

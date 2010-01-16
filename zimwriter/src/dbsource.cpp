@@ -76,6 +76,12 @@ namespace zim
       return row[4].getString();
     }
 
+    bool DbArticle::shouldCompress() const
+    {
+      log_debug("shouldCompress");
+      return row[6].getBool();
+    }
+
     std::string DbArticle::getRedirectAid() const
     {
       log_debug("getRedirectAid");
@@ -107,9 +113,11 @@ namespace zim
       }
 
       stmt = conn.prepare(
-        "select a.aid, a.namespace, a.url, a.title, a.mimetype, r.aid"
+        "select a.aid, a.namespace, a.url, a.title, m.mimetype, r.aid, m.compress"
         "  from article a"
-        "  join zimarticles z"
+        "  left outer join mimetype m"
+        "    on m.id = a.mimetype"
+        "  join zimarticle z"
         "    on a.aid = z.aid"
         "  left outer join article r"
         "    on a.redirect = r.url"

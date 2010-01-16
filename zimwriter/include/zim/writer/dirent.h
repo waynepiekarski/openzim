@@ -31,6 +31,7 @@ namespace zim
         std::string aid;
         std::string redirectAid;
         size_type idx;
+        bool compress;
 
       public:
         Dirent() {}
@@ -51,6 +52,8 @@ namespace zim
         void setIdx(size_type idx_)      { idx = idx_; }
         size_type getIdx() const         { return idx; }
 
+        void setCompress(bool sw = true)  { compress = sw; }
+        bool isCompress() const           { return compress; }
     };
 
     inline bool compareUrl(const Dirent& d1, const Dirent& d2)

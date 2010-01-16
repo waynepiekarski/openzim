@@ -46,6 +46,7 @@ namespace zim
         virtual std::string getTitle() const;
         virtual bool isRedirect() const;
         virtual std::string getMimeType() const;
+        virtual bool shouldCompress() const;
         virtual std::string getRedirectAid() const;
     };
 

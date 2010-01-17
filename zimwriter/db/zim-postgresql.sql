@@ -14,7 +14,7 @@ create table article
   redirect     text,     -- title of redirect target
   mimetype     integer,
   data         bytea,
-  foreign key (mimetype) references mimetypes
+  foreign key (mimetype) references mimetype
 );
 
 create unique index article_ix1 on article(namespace, url);

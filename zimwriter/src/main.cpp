@@ -47,10 +47,11 @@ int create(int argc, char* argv[], zim::writer::ArticleSource& articleSource)
                  "\t-s <number>       specify chunk size for compression in kB (default 1024)\n"
                  "\t--db <dburl>      specify a db source (default: postgresql:dbname=zim, tntdb is used here)\n"
                  "\t-Z <articlefile>  create a fulltext index for specified article\n"
-                 "\t--bzip2           use lzma compression (default is lzma)\n"
+                 "\t--bzip2           use bzip2 compression (default is lzma)\n"
                  "\t-S <words>        search in zim file for articles\n"
                  "\t-I <articlefile>  article file for search\n"
                  "\t-X <indexfile>    use indexfile as full text search index\n"
+                 "\t-D <directory>    create zim file from directory content\n"
                  "\n"
                  "additional options for full text indexer:\n"
                  "\t-T <file>         trivial words file for full text index (a text file with words, which are not indexed)\n"
@@ -72,8 +73,9 @@ int main(int argc, char* argv[])
   {
     log_init();
 
-    cxxtools::Arg<const char*> fulltextIndex(argc, argv, 'Z'); // get zimfile for fulltext index
-    cxxtools::Arg<const char*> search(argc, argv, 'S'); // get zimfile for search
+    cxxtools::Arg<const char*> fulltextIndex(argc, argv, 'Z'); // create full text index
+    cxxtools::Arg<std::string> search(argc, argv, 'S'); // create zimfile from search result
+    cxxtools::Arg<std::string> filesource(argc, argv, 'D'); // create zimfile from directory in filesystem
 
     if (fulltextIndex.isSet())
     {
@@ -84,7 +86,12 @@ int main(int argc, char* argv[])
     else if (search.isSet())
     {
       INFO("create zim file from search result");
-      zim::writer::SearchSource source(search.getValue(), argc, argv);
+      zim::writer::SearchSource source(search, argc, argv);
+      return create(argc, argv, source);
+    }
+    else if (filesource.isSet())
+    {
+      zim::writer::FileSource source(filesource);
       return create(argc, argv, source);
     }
     else

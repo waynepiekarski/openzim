@@ -14,4 +14,4 @@ zimwriter_SOURCES = \
     zimcreator.cpp \
     zimindexer.cpp
 
-AM_LDFLAGS = -lzim -ltntdb
+AM_LDFLAGS = -lcxxtools -lzim -ltntdb

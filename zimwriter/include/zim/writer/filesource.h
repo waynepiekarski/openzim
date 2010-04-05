@@ -22,6 +22,7 @@
 
 #include <zim/writer/articlesource.h>
 #include <iosfwd>
+#include <stack>
 #include <cxxtools/directory.h>
 
 namespace zim
@@ -41,6 +42,11 @@ namespace zim
             path(path_),
             fname(fname_)
           { }
+        FileArticle(char ns_, const std::string& path_)
+          : ns(ns_),
+            path(path_),
+            fname(path_)
+          { }
 
         virtual std::string getAid() const;
         virtual char getNamespace() const;
@@ -53,21 +59,18 @@ namespace zim
 
     class FileSource : public ArticleSource
     {
-        cxxtools::Directory directory;
-        cxxtools::Directory::const_iterator current;
+        std::stack<cxxtools::DirectoryIterator> current;
+        std::string dirName;
         FileArticle article;
         std::string data;
 
-      public:
-        FileSource(int& argc, char* argv[]);
+        const Article* advance();
 
-        bool ok() const  { return !directory.path().empty(); }
+      public:
+        explicit FileSource(const std::string& path);
 
         virtual const Article* getNextArticle();
         virtual Blob getData(const std::string& aid);
-        virtual Uuid getUuid();
-        virtual std::string getMainPage();
-        virtual std::string getLayoutPage();
     };
 
   }

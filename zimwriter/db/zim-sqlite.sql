@@ -1,3 +1,10 @@
+create table mimetype
+(
+  id           integer not null primary key,
+  mimetype     text not null,
+  compress     boolean not null
+);
+
 create table article
 (
   aid          integer primary key autoincrement,
@@ -5,50 +12,76 @@ create table article
   url          text    not null,
   title        text    not null,
   redirect     text,     -- title of redirect target
-  mimetype     text,
-  data         bytea
+  mimetype     integer,
+  data         bytea,
+  foreign key (mimetype) references mimetype
 );
 
 create unique index article_ix1 on article(namespace, title);
 
+create table category
+(
+  cid          integer primary key autoincrement,
+  title        text    not null,
+  description  bytea   not null
+);
+
+create table categoryarticle
+(
+  cid          integer not null,
+  aid          integer not null,
+  primary key (cid, aid),
+  foreign key (cid) references category,
+  foreign key (aid) references article
+);
+
 create table zimfile
 (
   zid          integer primary key autoincrement,
-  filename     text    not null
+  filename     text    not null,
+  mainpage     integer,
+  layoutpage   integer,
+  foreign key (mainpage) references article,
+  foreign key (layoutpage) references article
 );
 
-create table zimdata
-(
-  zid          integer not null,
-  did          integer not null,
-  data         bytea not null,
-  primary key (zid, did)
-);
-
-create table zimarticles
+create table zimarticle
 (
   zid          integer not null,
   aid          integer not null,
-  sort         integer,
-  direntlen    bigint,
-  datapos      bigint,
-  dataoffset   bigint,
-  datasize     bigint,
-  did          bigint,
 
   primary key (zid, aid),
   foreign key (zid) references zimfile,
   foreign key (aid) references article
 );
 
-create index zimarticles_ix1 on zimarticles(zid, direntlen);
-create index zimarticles_ix2 on zimarticles(zid, sort);
+create table indexarticle
+(
+  zid          integer not null,
+  xid          serial  not null,
+  namespace    text    not null,
+  title        text    not null,
+
+  primary key (zid, namespace, title),
+  foreign key (zid) references zimfile
+);
+
+create index indexarticle_ix1 on indexarticle(zid, xid);
 
 create table words
 (
-  word     text not null primary key,
-  aid      integer not null,
+  word     text not null,
   pos      integer not null,
+  aid      integer not null,
+  weight   integer not null, -- 0: title/header, 1: subheader, 3: paragraph
 
+  primary key (word, aid, pos),
   foreign key (aid) references article
+);
+
+create index words_ix1 on words(aid);
+
+create table trivialwords
+(
+  word     text not null primary key
 );

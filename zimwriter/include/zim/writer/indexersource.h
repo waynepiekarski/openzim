@@ -73,6 +73,7 @@ namespace zim
 
     class Indexer : public ArticleSource
     {
+        const char* _trivialWordsFile;
         MStream _mstream;
         IndexArticle _currentArticle;
         MStream::iterator _currentStream;
@@ -83,12 +84,14 @@ namespace zim
         MStream::size_type _count;
         MStream::size_type _progress;
 
-        void createIndex(const char* infile, const char* trivialWordsFile);
         void transformData(const char* srcdata, unsigned srcsize);
         void fetchData(const std::string& aid);
 
       public:
-        Indexer(const char* infile, int& argc, char* argv[]);
+        Indexer(const char* tmpfilename, const char* trivialWordsFile, unsigned memoryFactor);
+
+        void createIndex(const char* infile);
+
         const Article* getNextArticle();
         Blob getData(const std::string& aid);
     };

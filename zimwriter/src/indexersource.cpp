@@ -42,19 +42,16 @@ namespace zim
     //////////////////////////////////////////////////////////////////////
     // Indexer
 
-    Indexer::Indexer(const char* infile, int& argc, char* argv[])
-      : _mstream(cxxtools::Arg<const char*>(argc, argv, 't', "zimwriter.tmp")),
+    Indexer::Indexer(const char* tmpfilename, const char* trivialWordsFile, unsigned memoryFactor)
+      : _trivialWordsFile(trivialWordsFile),
+        _mstream(tmpfilename),
         _currentArticle(_mstream)
     {
-      cxxtools::Arg<const char*> trivialWordsFile(argc, argv, 'T');
-      cxxtools::Arg<unsigned> memoryFactor(argc, argv, 'M', 64);
       MStream::setMinBuffersize(18);
       MStream::setMaxBuffersize(memoryFactor*18);
-
-      createIndex(infile, trivialWordsFile);
     }
 
-    void Indexer::createIndex(const char* infile, const char* trivialWordsFile)
+    void Indexer::createIndex(const char* infile)
     {
       log_trace("create index for file " << infile);
 
@@ -62,12 +59,12 @@ namespace zim
 
       Zimindexer zimindexer(_mstream);
 
-      if (trivialWordsFile)
+      if (_trivialWordsFile)
       {
-        log_debug("read trivial words from " << trivialWordsFile);
-        std::ifstream tw(trivialWordsFile);
+        log_debug("read trivial words from " << _trivialWordsFile);
+        std::ifstream tw(_trivialWordsFile);
         if (!tw)
-          throw std::runtime_error(std::string("cannot open trivial words file ") + trivialWordsFile);
+          throw std::runtime_error(std::string("cannot open trivial words file ") + _trivialWordsFile);
         std::string word;
         while (tw >> word)
           zimindexer.addTrivialWord(word);

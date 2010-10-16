@@ -39,8 +39,6 @@ namespace zim
         typedef std::map<uint16_t, std::string> RMimeTypes;
 
       private:
-        ArticleSource& src;
-
         unsigned minChunkSize;
 
         Fileheader header;
@@ -53,10 +51,10 @@ namespace zim
         uint16_t nextMimeIdx;
         CompressionType compression;
 
-        void createDirents();
-        void createTitleIndex();
-        void createClusters(const std::string& tmpfname);
-        void fillHeader();
+        void createDirents(ArticleSource& src);
+        void createTitleIndex(ArticleSource& src);
+        void createClusters(ArticleSource& src, const std::string& tmpfname);
+        void fillHeader(ArticleSource& src);
         void write(const std::string& fname, const std::string& tmpfname);
 
         size_type clusterCount() const        { return clusterOffsets.size(); }
@@ -76,9 +74,9 @@ namespace zim
         const std::string& getMimeType(uint16_t mimeTypeIdx) const;
 
       public:
-        ZimCreator(int& argc, char* argv[], ArticleSource& src_);
+        ZimCreator(int& argc, char* argv[]);
 
-        void create(const std::string& fname);
+        void create(const std::string& fname, ArticleSource& src);
     };
 
   }

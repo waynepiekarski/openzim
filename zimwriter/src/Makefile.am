@@ -1,17 +1,37 @@
-bin_PROGRAMS = zimwriter
+lib_LTLIBRARIES = libzimwriter.la
+bin_PROGRAMS = zimwriterdb zimindexer zimcreatorsearch
 
 AM_CPPFLAGS=-I$(top_builddir)/include
 
-zimwriter_SOURCES = \
-    articleparser.cpp \
+# libzimwriter
+#
+libzimwriter_la_SOURCES = \
     articlesource.cpp \
+    zimcreator.cpp
+libzimwriter_la_LDFLAGS = -lcxxtools -lzim
+
+# zimwriterdb
+#
+zimwriterdb_SOURCES = \
     dbsource.cpp \
     filesource.cpp \
-    indexersource.cpp \
-    main.cpp \
-    mstream.cpp \
-    search.cpp \
-    zimcreator.cpp \
-    zimindexer.cpp
+    zimwriterdb.cpp
 
-AM_LDFLAGS = -lcxxtools -lzim -ltntdb
+zimwriterdb_LDADD = $(top_builddir)/src/libzimwriter.la
+zimwriterdb_LDFLAGS = -lcxxtools -lzim -ltntdb
+
+# zimindexer
+#
+zimindexer_SOURCES = \
+    articleparser.cpp \
+    indexersource.cpp \
+    mstream.cpp \
+    zimindexer.cpp
+zimindexer_LDADD = $(top_builddir)/src/libzimwriter.la
+
+# zimcreataorsearch
+#
+zimcreatorsearch_SOURCES = \
+    zimcreatorsearch.cpp \
+    search.cpp
+zimcreatorsearch_LDADD = $(top_builddir)/src/libzimwriter.la

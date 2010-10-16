@@ -18,7 +18,9 @@
  */
 
 #include "zim/writer/zimindexer.h"
-#include <set>
+#include "zim/writer/indexersource.h"
+#include "zim/writer/zimcreator.h"
+#include <cxxtools/arg.h>
 #include <cxxtools/log.h>
 
 log_define("zim.writer.indexer")
@@ -87,3 +89,45 @@ namespace zim
 
   }
 }
+
+int main(int argc, char* argv[])
+{
+  try
+  {
+    log_init();
+
+    cxxtools::Arg<const char*> tmpfilename(argc, argv, 't', "zimindexer.tmp");
+    cxxtools::Arg<const char*> trivialWordsFile(argc, argv, 'T');
+    cxxtools::Arg<unsigned> memoryFactor(argc, argv, 'M', 64);
+
+    zim::writer::ZimCreator creator(argc, argv);
+    zim::writer::Indexer indexer(tmpfilename, trivialWordsFile, memoryFactor);
+
+    if (argc != 3)
+    {
+        std::cout << "usage: " << argv[0] << " [options] zim-file index-filename\n";
+                     "options:\n"
+                     "\t--min-chung-size <number>       specify chunk size for compression in kB (default 1024)\n"
+                     "\t--zlib            use zlib compression (default is lzma)\n"
+                     "\t--bzip2           use bzip2 compression (default is lzma)\n"
+                     "\t-T <file>         trivial words file for full text index (a text file with words, which are not indexed)\n"
+                     "\t-M <number>       memory factor (default 64, smaller factors reduce memory usage but makes indexer slower,\n"
+                     "\t                  try smaller values when you run out of memory)\n"
+                     "\t-t <filename>     temporary file name (default zimindexer.tmp)\n";
+        return -1;
+    }
+
+    const char* sourcefile = argv[1];
+    const char* outfile = argv[2];
+
+    indexer.setFilename(outfile);
+    indexer.createIndex(sourcefile);
+    creator.create(outfile, indexer);
+  }
+  catch (const std::exception& e)
+  {
+    log_fatal(e.what());
+    std::cerr << e.what() << std::endl;
+  }
+}
+

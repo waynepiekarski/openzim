@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <limits>
 #include <stdexcept>
+#include "config.h"
 
 log_define("zim.writer.creator")
 
@@ -43,19 +44,34 @@ namespace zim
 {
   namespace writer
   {
-    ZimCreator::ZimCreator(int& argc, char* argv[], ArticleSource& src_)
-      : src(src_),
-        nextMimeIdx(0),
+    ZimCreator::ZimCreator(int& argc, char* argv[])
+      : nextMimeIdx(0),
+#ifdef ENABLE_LZMA
         compression(zimcompLzma)
+#elif ENABLE_BZIP2
+        compression(zimcompBzip2)
+#elif ENABLE_ZLIB
+        compression(zimcompZip)
+#else
+        compression(zimcompNone)
+#endif
     {
-      minChunkSize = cxxtools::Arg<unsigned>(argc, argv, 's', 1024);
+      minChunkSize = cxxtools::Arg<unsigned>(argc, argv, "--min-chunk-size", 1024);
+#ifdef ENABLE_ZLIB
+      if (cxxtools::Arg<bool>(argc, argv, "--zlib"))
+        compression = zimcompZip;
+#endif
+#ifdef ENABLE_BZIP2
       if (cxxtools::Arg<bool>(argc, argv, "--bzip2"))
         compression = zimcompBzip2;
+#endif
+#ifdef ENABLE_LZMA
       if (cxxtools::Arg<bool>(argc, argv, "--lzma"))
         compression = zimcompLzma;
+#endif
     }
 
-    void ZimCreator::create(const std::string& fname)
+    void ZimCreator::create(const std::string& fname, ArticleSource& src)
     {
       std::string basename = fname;
       basename =  (fname.size() > 4 && fname.compare(fname.size() - 4, 4, ".zim") == 0)
@@ -64,19 +80,19 @@ namespace zim
       log_debug("basename " << basename);
 
       INFO("create directory entries");
-      createDirents();
+      createDirents(src);
       INFO(dirents.size() << " directory entries created");
 
       INFO("create title index");
-      createTitleIndex();
+      createTitleIndex(src);
       INFO(dirents.size() << " title index created");
 
       INFO("create clusters");
-      createClusters(basename + ".tmp");
+      createClusters(src, basename + ".tmp");
       INFO(clusterOffsets.size() << " clusters created");
 
       INFO("fill header");
-      fillHeader();
+      fillHeader(src);
 
       INFO("write zimfile");
       write(basename + ".zim", basename + ".tmp");
@@ -86,7 +102,7 @@ namespace zim
       INFO("ready");
     }
 
-    void ZimCreator::createDirents()
+    void ZimCreator::createDirents(ArticleSource& src)
     {
       INFO("collect articles");
 
@@ -204,7 +220,7 @@ namespace zim
       };
     }
 
-    void ZimCreator::createTitleIndex()
+    void ZimCreator::createTitleIndex(ArticleSource& src)
     {
       titleIdx.resize(dirents.size());
       for (DirentsType::size_type n = 0; n < dirents.size(); ++n)
@@ -214,7 +230,7 @@ namespace zim
       std::sort(titleIdx.begin(), titleIdx.end(), compareTitle);
     }
 
-    void ZimCreator::createClusters(const std::string& tmpfname)
+    void ZimCreator::createClusters(ArticleSource& src, const std::string& tmpfname)
     {
       std::ofstream out(tmpfname.c_str());
 
@@ -278,7 +294,7 @@ namespace zim
         throw std::runtime_error("failed to write temporary cluster file");
     }
 
-    void ZimCreator::fillHeader()
+    void ZimCreator::fillHeader(ArticleSource& src)
     {
       std::string mainAid = src.getMainPage();
       std::string layoutAid = src.getLayoutPage();

@@ -50,6 +50,7 @@ namespace zim
         RMimeTypes rmimeTypes;
         uint16_t nextMimeIdx;
         CompressionType compression;
+        bool isEmpty;
 
         void createDirents(ArticleSource& src);
         void createTitleIndex(ArticleSource& src);

@@ -24,6 +24,8 @@
 #include <zim/endian.h>
 #include <cxxtools/arg.h>
 #include <cxxtools/log.h>
+#include <cxxtools/md5stream.h>
+#include <cxxtools/tee.h>
 #include <algorithm>
 #include <fstream>
 #include <unistd.h>
@@ -73,6 +75,8 @@ namespace zim
 
     void ZimCreator::create(const std::string& fname, ArticleSource& src)
     {
+      isEmpty = true;
+
       std::string basename = fname;
       basename =  (fname.size() > 4 && fname.compare(fname.size() - 4, 4, ".zim") == 0)
                      ? fname.substr(0, fname.size() - 4)
@@ -250,6 +254,8 @@ namespace zim
           continue;
 
         Blob blob = src.getData(di->getAid());
+        if (blob.size() > 0)
+          isEmpty = false;
 
         if (di->isCompress())
         {
@@ -352,7 +358,10 @@ namespace zim
     void ZimCreator::write(const std::string& fname, const std::string& tmpfname)
     {
       std::ofstream zimfile(fname.c_str());
-      zimfile << header;
+      cxxtools::Md5stream md5;
+      cxxtools::Tee out(zimfile, md5);
+
+      out << header;
 
       log_debug("after writing header - pos=" << zimfile.tellp());
 
@@ -360,10 +369,10 @@ namespace zim
 
       for (RMimeTypes::const_iterator it = rmimeTypes.begin(); it != rmimeTypes.end(); ++it)
       {
-        zimfile << it->second << '\0';
+        out << it->second << '\0';
       }
 
-      zimfile << '\0';
+      out << '\0';
 
       // write url ptr list
 
@@ -371,31 +380,31 @@ namespace zim
       for (DirentsType::const_iterator it = dirents.begin(); it != dirents.end(); ++it)
       {
         offset_type ptr0 = fromLittleEndian<offset_type>(&off);
-        zimfile.write(reinterpret_cast<const char*>(&ptr0), sizeof(ptr0));
+        out.write(reinterpret_cast<const char*>(&ptr0), sizeof(ptr0));
         off += it->getDirentSize();
       }
 
-      log_debug("after writing direntPtr - pos=" << zimfile.tellp());
+      log_debug("after writing direntPtr - pos=" << out.tellp());
 
       // write title index
 
       for (SizeVectorType::const_iterator it = titleIdx.begin(); it != titleIdx.end(); ++it)
       {
         size_type v = fromLittleEndian<size_type>(&*it);
-        zimfile.write(reinterpret_cast<const char*>(&v), sizeof(v));
+        out.write(reinterpret_cast<const char*>(&v), sizeof(v));
       }
 
-      log_debug("after writing fileIdxList - pos=" << zimfile.tellp());
+      log_debug("after writing fileIdxList - pos=" << out.tellp());
 
       // write directory entries
 
       for (DirentsType::const_iterator it = dirents.begin(); it != dirents.end(); ++it)
       {
-        zimfile << *it;
-        log_debug("write " << it->getTitle() << " dirent.size()=" << it->getDirentSize() << " pos=" << zimfile.tellp());
+        out << *it;
+        log_debug("write " << it->getTitle() << " dirent.size()=" << it->getDirentSize() << " pos=" << out.tellp());
       }
 
-      log_debug("after writing dirents - pos=" << zimfile.tellp());
+      log_debug("after writing dirents - pos=" << out.tellp());
 
       // write cluster offset list
 
@@ -404,20 +413,28 @@ namespace zim
       {
         offset_type o = (off + *it);
         offset_type ptr0 = fromLittleEndian<offset_type>(&o);
-        zimfile.write(reinterpret_cast<const char*>(&ptr0), sizeof(ptr0));
+        out.write(reinterpret_cast<const char*>(&ptr0), sizeof(ptr0));
       }
 
-      log_debug("after writing clusterOffsets - pos=" << zimfile.tellp());
+      log_debug("after writing clusterOffsets - pos=" << out.tellp());
 
       // write cluster data
 
-      std::ifstream blobsfile(tmpfname.c_str());
-      zimfile << blobsfile.rdbuf();
+      if (!isEmpty)
+      {
+        std::ifstream blobsfile(tmpfname.c_str());
+        out << blobsfile.rdbuf();
+      }
+      else
+        log_warn("no data found");
 
-      if (!zimfile)
+      if (!out)
         throw std::runtime_error("failed to write zimfile");
 
-      log_debug("after writing clusterData - pos=" << zimfile.tellp());
+      log_debug("after writing clusterData - pos=" << out.tellp());
+      unsigned char digest[16];
+      md5.getDigest(digest);
+      zimfile.write(reinterpret_cast<const char*>(digest), 16);
     }
 
     offset_type ZimCreator::mimeListSize() const

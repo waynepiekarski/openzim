@@ -51,6 +51,7 @@ namespace zim
         uint16_t nextMimeIdx;
         CompressionType compression;
         bool isEmpty;
+        offset_type clustersSize;
 
         void createDirents(ArticleSource& src);
         void createTitleIndex(ArticleSource& src);
@@ -70,6 +71,7 @@ namespace zim
         offset_type indexPos() const          { return titleIdxPos() + titleIdxSize(); }
         offset_type clusterPtrSize() const    { return clusterCount() * sizeof(offset_type); }
         offset_type clusterPtrPos() const     { return indexPos() + indexSize(); }
+        offset_type checksumPos() const       { return clusterPtrPos() + clusterPtrSize() + clustersSize; }
 
         uint16_t getMimeTypeIdx(const std::string& mimeType);
         const std::string& getMimeType(uint16_t mimeTypeIdx) const;

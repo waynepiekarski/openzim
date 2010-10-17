@@ -298,6 +298,8 @@ namespace zim
 
       if (!out)
         throw std::runtime_error("failed to write temporary cluster file");
+
+      clustersSize = out.tellp();
     }
 
     void ZimCreator::fillHeader(ArticleSource& src)
@@ -335,6 +337,7 @@ namespace zim
       header.setTitleIdxPos( titleIdxPos() );
       header.setClusterCount( clusterOffsets.size() );
       header.setClusterPtrPos( clusterPtrPos() );
+      header.setChecksumPos( checksumPos() );
 
       log_debug(
             "mimeListSize=" << mimeListSize() <<
@@ -346,13 +349,14 @@ namespace zim
            " clusterPtrSize=" << clusterPtrSize() <<
            " clusterPtrPos=" << clusterPtrPos() <<
            " clusterCount=" << clusterCount() <<
-           " articleCount=" << articleCount());
-
-      log_debug("articleCount=" << dirents.size()
-        << " urlPtrPos=" << header.getUrlPtrPos()
-        << " titleIdxPos=" << header.getTitleIdxPos()
-        << " clusterCount=" << header.getClusterCount()
-        << " clusterPtrPos=" << header.getClusterPtrPos());
+           " articleCount=" << articleCount() <<
+           " articleCount=" << dirents.size() <<
+           " urlPtrPos=" << header.getUrlPtrPos() <<
+           " titleIdxPos=" << header.getTitleIdxPos() <<
+           " clusterCount=" << header.getClusterCount() <<
+           " clusterPtrPos=" << header.getClusterPtrPos() <<
+           " checksumPos=" << checksumPos()
+           );
     }
 
     void ZimCreator::write(const std::string& fname, const std::string& tmpfname)

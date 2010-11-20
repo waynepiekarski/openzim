@@ -107,9 +107,7 @@ int main(int argc, char* argv[])
     {
         std::cout << "usage: " << argv[0] << " [options] zim-file index-filename\n";
                      "options:\n"
-                     "\t--min-chung-size <number>       specify chunk size for compression in kB (default 1024)\n"
-                     "\t--zlib            use zlib compression (default is lzma)\n"
-                     "\t--bzip2           use bzip2 compression (default is lzma)\n"
+                     "\t-s <number>       specify chunk size for compression in kB (default 1024)\n"
                      "\t-T <file>         trivial words file for full text index (a text file with words, which are not indexed)\n"
                      "\t-M <number>       memory factor (default 64, smaller factors reduce memory usage but makes indexer slower,\n"
                      "\t                  try smaller values when you run out of memory)\n"

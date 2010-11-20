@@ -37,6 +37,23 @@ int main(int argc, char* argv[])
   {
     cxxtools::Arg<std::string> search(argc, argv, 'S'); // create zimfile from search result
 
+    if (argc != 2)
+    {
+      std::cout << "usage: " << argv[0] << " [options] output-filename\n"
+                   "\t\".zim\" is appended to the output filename if not already given.\n"
+                   "\n"
+                   "options:\n"
+                   "\t-s <number>       specify chunk size for compression in kB (default 1024)\n"
+                   "\t-I <articlefile>  article file for search\n"
+                   "\t-S <words>        search in zim file for articles\n"
+                   "\t-X <indexfile>    use indexfile as full text search index\n"
+                   "\t-T <file>         trivial words file for full text index (a text file with words, which are not indexed)\n"
+                   "\t-M <number>       memory factor (default 64, smaller factors reduce memory usage but makes indexer slower,\n"
+                   "\t                  try smaller values when you run out of memory)\n"
+                   "\t-t <filename>     temporary file name (default zimwriter.tmp)\n";
+      return 1;
+    }
+
     INFO("create zim file from search result");
     std::string fname = argv[1];
     zim::writer::ZimCreator creator(argc, argv);

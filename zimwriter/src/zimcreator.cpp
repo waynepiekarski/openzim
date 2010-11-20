@@ -58,7 +58,12 @@ namespace zim
         compression(zimcompNone)
 #endif
     {
-      minChunkSize = cxxtools::Arg<unsigned>(argc, argv, "--min-chunk-size", 1024);
+      cxxtools::Arg<unsigned> minChunkSizeArg(argc, argv, "--min-chunk-size");
+      if (minChunkSizeArg.isSet())
+        minChunkSize = minChunkSizeArg;
+      else
+        minChunkSize = cxxtools::Arg<unsigned>(argc, argv, 's', 1024);
+
 #ifdef ENABLE_ZLIB
       if (cxxtools::Arg<bool>(argc, argv, "--zlib"))
         compression = zimcompZip;

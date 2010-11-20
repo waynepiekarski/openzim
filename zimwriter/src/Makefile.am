@@ -1,5 +1,5 @@
 lib_LTLIBRARIES = libzimwriter.la
-bin_PROGRAMS = zimwriterdb zimindexer zimcreatorsearch
+bin_PROGRAMS = zimwriterdb zimindexer zimcreatorsearch wikizim
 
 AM_CPPFLAGS=-I$(top_builddir)/include
 
@@ -9,6 +9,13 @@ libzimwriter_la_SOURCES = \
     articlesource.cpp \
     zimcreator.cpp
 libzimwriter_la_LDFLAGS = -lcxxtools -lzim
+
+# wikizim
+#
+wikizim_SOURCES = \
+	wikizim.cpp
+wikizim_LDFLAGS = -lcxxtools -lcxxtools-http -lcxxtools-xml -lzim
+wikizim_LDADD = $(top_builddir)/src/libzimwriter.la
 
 # zimwriterdb
 #

@@ -27,6 +27,7 @@
 #include <cxxtools/http/client.h>
 #include <cxxtools/query_params.h>
 #include <cxxtools/utf8codec.h>
+#include <cxxtools/clock.h>
 #include <zim/writer/articlesource.h>
 #include <zim/writer/zimcreator.h>
 #include <zim/blob.h>
@@ -59,7 +60,7 @@ std::string WikiArticle::getAid() const
 
 char WikiArticle::getNamespace() const
 {
-  return ns;
+  return 'A';
 }
 
 std::string WikiArticle::getUrl() const
@@ -109,13 +110,17 @@ class WikiSource : public zim::writer::ArticleSource
     // body of the last article fetched
     std::string body;
 
+    // statistics
+    unsigned long bytesRead;
+
     void queryPagesInfo(const std::string& apfrom);
 
   public:
     WikiSource(const std::string& host, unsigned short int port, const std::string& url_)
       : client(host, port),
         url(url_),
-        xmlReader(xmlStream)
+        xmlReader(xmlStream),
+        bytesRead(0)
     {
       if (url.empty() || url[url.size()-1] != '/')
         url += '/';
@@ -123,6 +128,7 @@ class WikiSource : public zim::writer::ArticleSource
 
     virtual const zim::writer::Article* getNextArticle();
     virtual zim::Blob getData(const std::string& aid);
+    unsigned long getBytesRead() const  { return bytesRead; }
 };
 
 void WikiSource::queryPagesInfo(const std::string& apfrom)
@@ -136,6 +142,7 @@ void WikiSource::queryPagesInfo(const std::string& apfrom)
    q.add("apfrom", apfrom);
 
   std::string body = client.get(url + "api.php?" + q.getUrl());
+  bytesRead += body.size();
   xmlStream.str(body);
   xmlStream.seekg(0);
   xmlReader.reset(xmlStream);
@@ -194,6 +201,7 @@ zim::Blob WikiSource::getData(const std::string& aid)
   q.add("action", "render")
    .add("title", aid);
   body = client.get(url + "index.php?" + q.getUrl());
+  bytesRead += body.size();
   return zim::Blob(body.data(), body.size());
 }
 
@@ -222,7 +230,15 @@ int main(int argc, char* argv[])
 
     std::string fname = cxxtools::Arg<std::string>(argc, argv);
     source.setFilename(fname);
+
+    cxxtools::Clock clock;
+    clock.start();
+
     creator.create(fname, source);
+
+    cxxtools::Timespan t = clock.stop();
+
+    std::cout << source.getBytesRead() << " bytes in " << t.totalMSecs() / 1000.0 << " seconds; " << (source.getBytesRead() * 1000.0 / t.totalMSecs()) << " bytes per second" << std::endl;
   }
   catch (const std::exception& e)
   {

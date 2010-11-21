@@ -133,6 +133,7 @@ class WikiSource : public zim::writer::ArticleSource
 
 void WikiSource::queryPagesInfo(const std::string& apfrom)
 {
+  log_info("read pages starting from \"" << apfrom << '"');
   cxxtools::QueryParams q;
   q.add("action", "query")
    .add("list", "allpages")

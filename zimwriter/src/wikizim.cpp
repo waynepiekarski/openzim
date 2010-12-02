@@ -25,12 +25,14 @@
 #include <cxxtools/xml/startelement.h>
 #include <cxxtools/xml/endelement.h>
 #include <cxxtools/http/client.h>
+#include <cxxtools/http/request.h>
 #include <cxxtools/query_params.h>
 #include <cxxtools/utf8codec.h>
 #include <cxxtools/clock.h>
 #include <zim/writer/articlesource.h>
 #include <zim/writer/zimcreator.h>
 #include <zim/blob.h>
+#include "config.h"
 
 log_define("zim.writer.wiki")
 
@@ -98,6 +100,7 @@ class WikiSource : public zim::writer::ArticleSource
     // parameters to fetch
     cxxtools::http::Client client;
     std::string url;
+    std::string userAgent;
 
     // xml parser stuff
     std::istringstream xmlStream;
@@ -128,7 +131,12 @@ class WikiSource : public zim::writer::ArticleSource
 
     virtual const zim::writer::Article* getNextArticle();
     virtual zim::Blob getData(const std::string& aid);
-    unsigned long getBytesRead() const  { return bytesRead; }
+
+    void setUserAgent(const std::string& ua)
+        { userAgent = ua; }
+
+    unsigned long getBytesRead() const
+        { return bytesRead; }
 };
 
 void WikiSource::queryPagesInfo(const std::string& apfrom)
@@ -142,8 +150,14 @@ void WikiSource::queryPagesInfo(const std::string& apfrom)
   if (!apfrom.empty())
    q.add("apfrom", apfrom);
 
-  std::string body = client.get(url + "api.php?" + q.getUrl());
+  cxxtools::http::Request request(url + "api.php?" + q.getUrl());
+  request.setHeader("User-Agent", userAgent.c_str());
+
+  client.execute(request);
+  std::string body = client.readBody();
+
   bytesRead += body.size();
+
   xmlStream.str(body);
   xmlStream.seekg(0);
   xmlReader.reset(xmlStream);
@@ -198,10 +212,17 @@ const zim::writer::Article* WikiSource::getNextArticle()
 zim::Blob WikiSource::getData(const std::string& aid)
 {
   log_debug("fetch data for aid " << aid);
+
   cxxtools::QueryParams q;
   q.add("action", "render")
    .add("title", aid);
-  body = client.get(url + "index.php?" + q.getUrl());
+
+  cxxtools::http::Request request(url + "index.php?" + q.getUrl());
+  request.setHeader("User-Agent", userAgent.c_str());
+
+  client.execute(request);
+  body = client.readBody();
+
   bytesRead += body.size();
   return zim::Blob(body.data(), body.size());
 }
@@ -215,12 +236,16 @@ int main(int argc, char* argv[])
     if (argc != 3)
     {
       std::cout << "usage: " << argv[0] << " [options] wiki-url output-filename\n"
-                << "example: " << argv[0] << " http://openzim.org/ openzim-org\n"
-                << "            generates openzim-org.zim with the content of the openzim.org wiki\n";
+                   "example: " << argv[0] << " http://openzim.org/ openzim-org\n"
+                   "            generates openzim-org.zim with the content of the openzim.org wiki\n"
+                   "options:\n"
+                   "\t-s <number>        specify chunk size for compression in kB (default 1024)\n"
+                   "\t--user-agent <ua>  set the user agent used for downloading (default \"wikizim " PACKAGE_VERSION "\")\n";
       return 1;
     }
 
     cxxtools::net::Uri uri = cxxtools::net::Uri(cxxtools::Arg<std::string>(argc, argv));
+    cxxtools::Arg<std::string> userAgent(argc, argv, "--user-agent", "wikizim " PACKAGE_VERSION);
 
     std::cout << "host: " << uri.host() << "\n"
                  "port: " << uri.port() << "\n"

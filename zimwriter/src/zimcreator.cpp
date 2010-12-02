@@ -268,6 +268,8 @@ namespace zim
           cluster.addBlob(blob);
           if (cluster.size() >= minChunkSize * 1024)
           {
+            log_info("compress cluster with " << cluster.count() << " articles, " << cluster.size() << " bytes; current title \"" << di->getTitle() << '\"');
+
             clusterOffsets.push_back(out.tellp());
             out << cluster;
             cluster.clear();

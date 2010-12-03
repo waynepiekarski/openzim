@@ -272,6 +272,7 @@ namespace zim
 
             clusterOffsets.push_back(out.tellp());
             out << cluster;
+            log_debug("cluster compressed");
             cluster.clear();
             cluster.setCompression(compression);
           }

@@ -43,6 +43,7 @@ class WikiArticle : public zim::writer::Article
     char ns;
     std::string aid;
     std::string title;
+    std::string redirectAid;
 
   public:
     virtual std::string getAid() const;
@@ -82,7 +83,7 @@ zim::size_type WikiArticle::getVersion() const
 
 bool WikiArticle::isRedirect() const
 {
-  return false;
+  return !redirectAid.empty();
 }
 
 std::string WikiArticle::getMimeType() const
@@ -92,7 +93,7 @@ std::string WikiArticle::getMimeType() const
 
 std::string WikiArticle::getRedirectAid() const
 {
-  return std::string();
+  return redirectAid;
 }
 
 class WikiSource : public zim::writer::ArticleSource
@@ -109,6 +110,7 @@ class WikiSource : public zim::writer::ArticleSource
 
     // current article
     WikiArticle article;
+    bool readingRedirects;
 
     // body of the last article fetched
     std::string body;
@@ -117,12 +119,14 @@ class WikiSource : public zim::writer::ArticleSource
     unsigned long bytesRead;
 
     void queryPagesInfo(const std::string& apfrom);
+    std::string getRedirectAid(const std::string& aid);
 
   public:
     WikiSource(const std::string& host, unsigned short int port, const std::string& url_)
       : client(host, port),
         url(url_),
         xmlReader(xmlStream),
+        readingRedirects(false),
         bytesRead(0)
     {
       if (url.empty() || url[url.size()-1] != '/')
@@ -141,15 +145,17 @@ class WikiSource : public zim::writer::ArticleSource
 
 void WikiSource::queryPagesInfo(const std::string& apfrom)
 {
-  log_info("read pages starting from \"" << apfrom << '"');
+  log_info("read pages starting from \"" << apfrom << "\" redirect=" << readingRedirects);
   cxxtools::QueryParams q;
   q.add("action", "query")
    .add("list", "allpages")
    .add("format", "xml")
-   .add("aplimit", "500");
+   .add("aplimit", "500")
+   .add("apfilterredir", readingRedirects ? "redirects" : "nonredirects");
   if (!apfrom.empty())
    q.add("apfrom", apfrom);
 
+  log_debug("request "<< url << "api.php?" << q.getUrl());
   cxxtools::http::Request request(url + "api.php?" + q.getUrl());
   request.setHeader("User-Agent", userAgent.c_str());
 
@@ -164,6 +170,43 @@ void WikiSource::queryPagesInfo(const std::string& apfrom)
   xmlIterator = xmlReader.current();
 }
 
+std::string WikiSource::getRedirectAid(const std::string& aid)
+{
+  cxxtools::QueryParams q;
+  q.add("action", "query")
+   .add("format", "xml")
+   .add("titles", aid)
+   .add("redirects");
+
+  log_debug("request redirect aid "<< url << "api.php?" << q.getUrl());
+  cxxtools::http::Request request(url + "api.php?" + q.getUrl());
+  request.setHeader("User-Agent", userAgent.c_str());
+
+  client.execute(request);
+  std::string body = client.readBody();
+
+  std::istringstream xmlStream(body);
+  cxxtools::xml::XmlReader xmlReader(xmlStream);
+  cxxtools::xml::XmlReader::Iterator xmlIterator = xmlReader.current();
+
+  while ((++xmlIterator)->type() != cxxtools::xml::Node::EndDocument)
+  {
+    if (xmlIterator->type() == cxxtools::xml::Node::StartElement)
+    {
+      const cxxtools::xml::StartElement& startElement = dynamic_cast<const cxxtools::xml::StartElement&>(*xmlIterator);
+      if (startElement.name() == L"r")
+      {
+        std::string to = cxxtools::Utf8Codec::encode(startElement.attribute(L"to"));
+        log_debug("redirect article <" << aid << "> is <" << to << '>');
+        return to;
+      }
+    }
+  }
+
+  log_warn("redirect for article <" << aid << "> not found");
+  return std::string();
+}
+
 const zim::writer::Article* WikiSource::getNextArticle()
 {
   if (xmlIterator == xmlReader.end())
@@ -171,12 +214,24 @@ const zim::writer::Article* WikiSource::getNextArticle()
     queryPagesInfo(std::string());
   }
 
-  while ((++xmlIterator)->type() != cxxtools::xml::Node::EndDocument)
+  while (true)
   {
-    if (xmlIterator->type() == cxxtools::xml::Node::StartElement)
+    ++xmlIterator;
+
+    if (xmlIterator->type() == cxxtools::xml::Node::EndDocument)
+    {
+      if (readingRedirects)
+      {
+        log_debug("reading redirects finished");
+        break;
+      }
+      readingRedirects = true;
+      log_debug("read redirects");
+      queryPagesInfo(std::string());
+    }
+    else if (xmlIterator->type() == cxxtools::xml::Node::StartElement)
     {
       const cxxtools::xml::StartElement& startElement = dynamic_cast<const cxxtools::xml::StartElement&>(*xmlIterator);
-      log_debug("element name=" << startElement.name().narrow());
       if (startElement.name() == L"p")
       {
         // page found - fill attributes and return article
@@ -187,6 +242,10 @@ const zim::writer::Article* WikiSource::getNextArticle()
         article.aid   = cxxtools::Utf8Codec::encode(startElement.attribute(L"pageid"));
         article.ns    = cxxtools::Utf8Codec::encode(startElement.attribute(L"ns"))[0];
         article.title = cxxtools::Utf8Codec::encode(startElement.attribute(L"title"));
+        if (readingRedirects)
+          article.redirectAid = getRedirectAid(article.title);
+        else
+          article.redirectAid.clear();
 
         log_debug("title=\"" << article.title << '"');
 

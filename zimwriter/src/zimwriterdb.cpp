@@ -69,8 +69,6 @@ int main(int argc, char* argv[])
   {
     log_init();
 
-    cxxtools::Arg<std::string> filesource(argc, argv, 'D'); // create zimfile from directory in filesystem
-
     INFO("create zim file from db");
     zim::writer::DbSource dbSource(argc, argv);
     return create(argc, argv, dbSource);

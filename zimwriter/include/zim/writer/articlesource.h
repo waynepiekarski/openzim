@@ -43,6 +43,16 @@ namespace zim
         virtual bool shouldCompress() const;
         virtual std::string getRedirectAid() const = 0;
         virtual std::string getParameter() const;
+
+        virtual std::string getNextCategory() const;
+    };
+
+    class Category
+    {
+      public:
+        virtual Blob getData() = 0;
+        virtual std::string getUrl() const = 0;
+        virtual std::string getTitle() const = 0;
     };
 
     class ArticleSource
@@ -54,6 +64,8 @@ namespace zim
         virtual Uuid getUuid();
         virtual std::string getMainPage();
         virtual std::string getLayoutPage();
+
+        virtual Category* getCategory(const std::string& cid);
     };
 
   }

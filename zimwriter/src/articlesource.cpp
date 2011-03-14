@@ -43,6 +43,11 @@ namespace zim
       return std::string();
     }
 
+    std::string Article::getNextCategory()
+    {
+      return std::string();
+    }
+
     Uuid ArticleSource::getUuid()
     {
       return Uuid::generate();
@@ -56,6 +61,11 @@ namespace zim
     std::string ArticleSource::getLayoutPage()
     {
       return std::string();
+    }
+
+    Category* ArticleSource::getCategory(const std::string& cid)
+    {
+      return 0;
     }
 
   }

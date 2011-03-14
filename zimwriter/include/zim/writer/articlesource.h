@@ -44,7 +44,8 @@ namespace zim
         virtual std::string getRedirectAid() const = 0;
         virtual std::string getParameter() const;
 
-        virtual std::string getNextCategory() const;
+        // returns the next category id, to which the article is assigned to
+        virtual std::string getNextCategory();
     };
 
     class Category
@@ -65,6 +66,10 @@ namespace zim
         virtual std::string getMainPage();
         virtual std::string getLayoutPage();
 
+        // After fetching the articles and for each article the category ids
+        // using Article::getNextCategory, the writer has a list of category
+        // ids. Using this list, the writer fetches the category data using
+        // this method.
         virtual Category* getCategory(const std::string& cid);
     };
 

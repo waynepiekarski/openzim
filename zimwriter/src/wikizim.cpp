@@ -308,9 +308,9 @@ int main(int argc, char* argv[])
 
     std::cout << "host: " << uri.host() << "\n"
                  "port: " << uri.port() << "\n"
-                 "url: " << uri.url() << std::endl;
+                 "url: " << uri.path() << std::endl;
 
-    WikiSource source(uri.host(), uri.port(), uri.url());
+    WikiSource source(uri.host(), uri.port(), uri.path());
     zim::writer::ZimCreator creator(argc, argv);
 
     std::string fname = cxxtools::Arg<std::string>(argc, argv);

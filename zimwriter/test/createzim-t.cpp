@@ -28,11 +28,12 @@ struct A
 {
   char ns;
   const char* title;
-  const char* mime;
-  const char* content;
+  const char* mime;  // 0 for redirect
+  const char* content;  // or redirect target
 } a[] = {
   { 'A', "Auto", "text/html", "<h1>Auto</h1>" },
-  { 'B', "Auto", "text/x-zim-htmltemplate", "<html><body><%A/Auto%></body></html>" },
+  { 'B', "Auto", "text/plain", "Auto" },
+  { 'A', "Automobile", 0, "0" },
   { '\0', 0, 0, 0 }
 };
 
@@ -78,7 +79,7 @@ std::string Article::getTitle() const
 
 bool Article::isRedirect() const
 {
-  return false;
+  return a[n].mime == 0;
 }
 
 std::string Article::getMimeType() const
@@ -88,7 +89,7 @@ std::string Article::getMimeType() const
 
 std::string Article::getRedirectAid() const
 {
-  return std::string();
+  return a[n].content;
 }
 
 class ArticleSource : public zim::writer::ArticleSource

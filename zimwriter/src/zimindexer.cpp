@@ -105,7 +105,7 @@ int main(int argc, char* argv[])
 
     if (argc != 3)
     {
-        std::cout << "usage: " << argv[0] << " [options] zim-file index-filename\n";
+        std::cout << "usage: " << argv[0] << " [options] zim-file index-filename\n"
                      "options:\n"
                      "\t-s <number>       specify chunk size for compression in kB (default 1024)\n"
                      "\t-T <file>         trivial words file for full text index (a text file with words, which are not indexed)\n"

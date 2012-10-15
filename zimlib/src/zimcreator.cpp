@@ -22,10 +22,6 @@
 #include <zim/cluster.h>
 #include <zim/blob.h>
 #include <zim/endian.h>
-#include <cxxtools/arg.h>
-#include <cxxtools/log.h>
-#include <cxxtools/md5stream.h>
-#include <cxxtools/tee.h>
 #include <algorithm>
 #include <fstream>
 #include <unistd.h>
@@ -33,6 +29,10 @@
 #include <limits>
 #include <stdexcept>
 #include "config.h"
+#include "arg.h"
+#include "md5stream.h"
+#include "tee.h"
+#include "log.h"
 
 log_define("zim.writer.creator")
 
@@ -58,22 +58,22 @@ namespace zim
         compression(zimcompNone)
 #endif
     {
-      cxxtools::Arg<unsigned> minChunkSizeArg(argc, argv, "--min-chunk-size");
+      Arg<unsigned> minChunkSizeArg(argc, argv, "--min-chunk-size");
       if (minChunkSizeArg.isSet())
         minChunkSize = minChunkSizeArg;
       else
-        minChunkSize = cxxtools::Arg<unsigned>(argc, argv, 's', 1024);
+        minChunkSize = Arg<unsigned>(argc, argv, 's', 1024-64);
 
 #ifdef ENABLE_ZLIB
-      if (cxxtools::Arg<bool>(argc, argv, "--zlib"))
+      if (Arg<bool>(argc, argv, "--zlib"))
         compression = zimcompZip;
 #endif
 #ifdef ENABLE_BZIP2
-      if (cxxtools::Arg<bool>(argc, argv, "--bzip2"))
+      if (Arg<bool>(argc, argv, "--bzip2"))
         compression = zimcompBzip2;
 #endif
 #ifdef ENABLE_LZMA
-      if (cxxtools::Arg<bool>(argc, argv, "--lzma"))
+      if (Arg<bool>(argc, argv, "--lzma"))
         compression = zimcompLzma;
 #endif
     }
@@ -370,8 +370,8 @@ namespace zim
     void ZimCreator::write(const std::string& fname, const std::string& tmpfname)
     {
       std::ofstream zimfile(fname.c_str());
-      cxxtools::Md5stream md5;
-      cxxtools::Tee out(zimfile, md5);
+      Md5stream md5;
+      Tee out(zimfile, md5);
 
       out << header;
 

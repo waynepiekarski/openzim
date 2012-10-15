@@ -8,7 +8,7 @@ sonumber=${abi_current}:${abi_revision}:${abi_age}
 AC_SUBST(sonumber)
 
 AC_CONFIG_HEADERS([src/config.h])
-AC_CONFIG_SRCDIR([src/zimcreator.cpp])
+AC_CONFIG_SRCDIR([src/filesource.cpp])
 
 AC_PROG_CXX
 AC_PROG_LIBTOOL
@@ -18,10 +18,10 @@ AC_LANG(C++)
 AC_CHECK_HEADER([zim/file.h], , AC_MSG_ERROR([zimlib headers not found]))
 AC_CHECK_HEADER([tntdb/connect.h], , AC_MSG_ERROR([tntdb headers not found]))
 
-AC_COMPILE_IFELSE([
-    #include <zim/article.h>
-    void foo() { zim::Article a; a.getUrl(); }
-    ],,
+AC_COMPILE_IFELSE(
+    [AC_LANG_SOURCE([#include <zim/article.h>
+    void foo() { zim::Article a; a.getUrl(); }])]
+    ,,
     AC_MSG_ERROR([zimlibrary do not work - please update]))
 
 #

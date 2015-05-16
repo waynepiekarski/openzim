@@ -7,6 +7,7 @@ configure
 createZimExample
 depcomp
 .deps
+.dirstamp
 INSTALL
 install-sh
 *.kate-swp
@@ -28,3 +29,4 @@ zimdiff
 zimdump
 zimpatch
 zimsearch
+zimwriterfs

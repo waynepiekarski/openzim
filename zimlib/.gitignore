@@ -4,7 +4,6 @@ autom4te.cache
 compile
 config.*
 configure
-createZimExample
 depcomp
 .deps
 .dirstamp
@@ -25,8 +24,6 @@ stamp-h1
 .svn
 .*.swp
 *.zim
-zimdiff
-zimdump
-zimpatch
-zimsearch
-zimwriterfs
+examples/createZimExample
+src/tools/zimdump
+src/tools/zimsearch

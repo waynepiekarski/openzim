@@ -1,0 +1,7 @@
+#!/bin/bash
+
+apt-get install liblzma-dev libmagic-dev zlib1g-dev libgumbo-dev
+
+# We build libzim now
+# apt-get install libzim-dev
+apt-get install automake autoconf libtool pkg-config icu-devtools libicu-dev libxapian-dev

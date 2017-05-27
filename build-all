@@ -1,3 +1,6 @@
 #!/bin/bash
 
-cd ../zimlib && ./autogen.sh && ./configure && make && cd ../zimwriterfs && ./autogen.sh && ./configure CXXFLAGS=-I../zimlib/include LDFLAGS=-L../zimlib/src/.libs && make
+cd `dirname $0`
+
+set -xv
+cd zimlib && ./autogen.sh && ./configure && make && cd ../zimwriterfs && ./autogen.sh && ./configure CXXFLAGS=-I../zimlib/include LDFLAGS=-L../zimlib/src/.libs && make
